@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投資信託シミュレーション</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        .background-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(74, 222, 128, 0.1);
+            animation: float 20s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="background-shapes" id="background-shapes"></div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-900">投資信託 比較シミュレーター</h1>
+            <p class="mt-2 md:mt-4 text-gray-600 text-lg">積立額の違いで、未来がどう変わるか見てみよう</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 設定パネル -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-200 self-start">
+                <h2 class="text-xl font-bold mb-6 border-b pb-3">シミュレーション設定</h2>
+                <div class="space-y-6">
+                    <div>
+                        <p class="block text-sm font-medium text-gray-700 mb-2">毎月の積立額</p>
+                        <p class="text-gray-800 font-semibold">1万円, 3万円, 5万円, 10万円を同時に比較します。</p>
+                    </div>
+                    <div>
+                        <label for="annual-return" class="block text-sm font-medium text-gray-700 mb-2">想定利回り（年率）</label>
+                         <div class="relative">
+                            <input type="number" id="annual-return" class="w-full pl-4 pr-8 py-3 bg-gray-100 border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" value="5" min="0" max="20" step="0.1">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="investment-period" class="block text-sm font-medium text-gray-700 mb-2">積立期間</label>
+                         <div class="relative">
+                            <input type="number" id="investment-period" class="w-full pl-4 pr-8 py-3 bg-gray-100 border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" value="35" min="1" max="50">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">年</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <button id="start-simulation" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md">
+                        シミュレーション開始
+                    </button>
+                    <button id="reset-simulation" class="w-full mt-3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md hidden">
+                        リセット
+                    </button>
+                </div>
+                 <p id="error-message" class="text-red-500 text-sm mt-4 text-center"></p>
+            </div>
+
+            <!-- 結果表示エリア -->
+            <div id="results-panel" class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">シミュレーション結果</h2>
+                    <div class="text-right">
+                        <p class="text-lg font-medium text-gray-600">経過期間</p>
+                        <p id="elapsed-time" class="text-3xl font-bold text-green-600">0年</p>
+                    </div>
+                </div>
+                
+                <div id="chart-container" class="w-full h-80 md:h-96 bg-gray-50 rounded-lg p-4 relative">
+                    <svg id="chart" class="w-full h-full" preserveAspectRatio="xMidYMid meet"></svg>
+                    <div id="chart-tooltip" class="absolute bg-white p-3 rounded-lg shadow-lg text-sm opacity-0 pointer-events-none transition-opacity"></div>
+                </div>
+                <div id="legend-container" class="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2"></div>
+                <div id="results-container" class="mt-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DOM要素の取得 ---
+            const annualReturnEl = document.getElementById('annual-return');
+            const investmentPeriodEl = document.getElementById('investment-period');
+            const startBtn = document.getElementById('start-simulation');
+            const resetBtn = document.getElementById('reset-simulation');
+            const errorMessageEl = document.getElementById('error-message');
+            const elapsedTimeEl = document.getElementById('elapsed-time');
+            const chartEl = document.getElementById('chart');
+            const chartContainer = document.getElementById('chart-container');
+            const tooltipEl = document.getElementById('chart-tooltip');
+            const legendContainer = document.getElementById('legend-container');
+            const resultsContainer = document.getElementById('results-container');
+            const resultsPanel = document.getElementById('results-panel');
+
+            let simulationInterval = null;
+            const investmentScenarios = [
+                { amount: 10000, color: '#3b82f6' },
+                { amount: 30000, color: '#16a34a' },
+                { amount: 50000, color: '#f97316' },
+                { amount: 100000, color: '#ef4444' }
+            ];
+
+            const backgroundShapes = document.getElementById('background-shapes');
+            for (let i = 0; i < 20; i++) {
+                const shape = document.createElement('div');
+                shape.classList.add('shape');
+                shape.style.left = `${Math.random() * 100}vw`;
+                shape.style.width = `${Math.random() * 80 + 20}px`;
+                shape.style.height = shape.style.width;
+                shape.style.animationDelay = `${Math.random() * 20}s`;
+                shape.style.animationDuration = `${Math.random() * 15 + 15}s`;
+                backgroundShapes.appendChild(shape);
+            }
+
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(Math.round(value));
+            };
+
+            // ▼▼▼【修正点】万以下の単位も表示するフォーマット関数 ▼▼▼
+            const formatJapaneseCurrencyDetailed = (value) => {
+                const num = Math.round(value);
+                if (num === 0) return '0円';
+
+                const oku = Math.floor(num / 100000000);
+                const man = Math.floor((num % 100000000) / 10000);
+                const en = num % 10000;
+
+                let parts = [];
+                if (oku > 0) parts.push(`${oku.toLocaleString()}億`);
+                if (man > 0) parts.push(`${man.toLocaleString()}万`);
+                if (en > 0) parts.push(`${en.toLocaleString()}円`);
+                
+                if (parts.length === 0) return '0円';
+                
+                // 「〇〇万円」のように円単位がなくても成立する場合の調整
+                if (parts.length > 1 && parts[parts.length - 1].includes('円')) {
+                    parts[parts.length - 1] = parts[parts.length - 1].replace('円', '');
+                }
+
+                let result = parts.join('');
+                if (!result.endsWith('円')) {
+                     result += '円';
+                }
+                
+                return result;
+            };
+            // ▲▲▲【修正点】▲▲▲
+
+            const drawChart = (scenariosData, periodInYears) => {
+                chartEl.innerHTML = '';
+                const svgWidth = chartEl.clientWidth;
+                const svgHeight = chartEl.clientHeight;
+                const margin = { top: 20, right: 20, bottom: 30, left: 70 };
+                const width = svgWidth - margin.left - margin.right;
+                const height = svgHeight - margin.top - margin.bottom;
+
+                if (scenariosData.length === 0 || scenariosData[0].data.length < 2) return;
+                
+                const maxAsset = scenariosData[scenariosData.length - 1].fullData[periodInYears].asset;
+                const totalYears = periodInYears;
+
+                const xScale = (year) => margin.left + (year / totalYears) * width;
+                const yScale = (value) => margin.top + height - (value / maxAsset) * height;
+
+                const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const yAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxisLine.setAttribute('x1', margin.left); yAxisLine.setAttribute('y1', margin.top);
+                yAxisLine.setAttribute('x2', margin.left); yAxisLine.setAttribute('y2', height + margin.top);
+                yAxisLine.setAttribute('stroke', '#9ca3af');
+                yAxis.appendChild(yAxisLine);
+                for (let i = 0; i <= 5; i++) {
+                    const value = maxAsset * (i / 5);
+                    const y = yScale(value);
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', margin.left - 10); label.setAttribute('y', y);
+                    label.setAttribute('dy', '0.3em'); label.setAttribute('text-anchor', 'end');
+                    label.setAttribute('fill', '#6b7280'); label.setAttribute('font-size', '12px');
+                    const labelValue = value >= 100000000 ? `${Math.floor(value / 100000000)}億` : `${Math.floor(value / 10000)}万`;
+                    label.textContent = labelValue;
+                    yAxis.appendChild(label);
+                }
+                chartEl.appendChild(yAxis);
+                
+                const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const xAxisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxisLine.setAttribute('x1', margin.left); xAxisLine.setAttribute('y1', height + margin.top);
+                xAxisLine.setAttribute('x2', width + margin.left); xAxisLine.setAttribute('y2', height + margin.top);
+                xAxisLine.setAttribute('stroke', '#9ca3af');
+                xAxis.appendChild(xAxisLine);
+                const yearInterval = Math.max(1, Math.floor(totalYears / 5));
+                for (let year = 0; year <= totalYears; year += yearInterval) {
+                     const x = xScale(year);
+                     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                     label.setAttribute('x', x); label.setAttribute('y', height + margin.top + 20);
+                     label.setAttribute('text-anchor', 'middle');
+                     label.setAttribute('fill', '#6b7280'); label.setAttribute('font-size', '12px');
+                     label.textContent = `${year}年`;
+                     xAxis.appendChild(label);
+                }
+                chartEl.appendChild(xAxis);
+                
+                scenariosData.forEach(scenario => {
+                    const assetPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let assetD = `M${xScale(0)} ${yScale(0)}`;
+                    scenario.data.forEach(d => { assetD += ` L${xScale(d.year)} ${yScale(d.asset)}`; });
+                    assetPath.setAttribute('d', assetD);
+                    assetPath.setAttribute('fill', 'none');
+                    assetPath.setAttribute('stroke', scenario.color);
+                    assetPath.setAttribute('stroke-width', '3');
+                    assetPath.setAttribute('stroke-linejoin', 'round');
+                    assetPath.setAttribute('stroke-linecap', 'round');
+                    chartEl.appendChild(assetPath);
+                });
+
+                chartContainer.addEventListener('mousemove', (e) => {
+                    const rect = chartContainer.getBoundingClientRect();
+                    const x = e.clientX - rect.left - margin.left;
+                    if (x >= 0 && x <= width) {
+                        const yearIndex = Math.round((x / width) * totalYears);
+                        if(yearIndex < 0 || yearIndex > totalYears) return;
+
+                        let tooltipContent = `<strong class="text-base">${yearIndex}年後</strong>`;
+                        scenariosData.forEach(scenario => {
+                           const pointData = scenario.fullData[yearIndex];
+                           if(pointData){
+                             tooltipContent += `<br><div class="legend-item mt-1"><div class="legend-color" style="background-color: ${scenario.color};"></div><span class="text-sm">${formatCurrency(pointData.asset)}</span></div>`;
+                           }
+                        });
+                        
+                        tooltipEl.innerHTML = tooltipContent;
+                        tooltipEl.style.opacity = '1';
+                        tooltipEl.style.left = `${e.clientX - rect.left + 15}px`;
+                        tooltipEl.style.top = `${e.clientY - rect.top + 15}px`;
+
+                    } else { tooltipEl.style.opacity = '0'; }
+                });
+                chartContainer.addEventListener('mouseleave', () => { tooltipEl.style.opacity = '0'; });
+            };
+
+            const drawLegend = () => {
+                legendContainer.innerHTML = '';
+                investmentScenarios.forEach(scenario => {
+                    const legendItem = document.createElement('div');
+                    legendItem.classList.add('legend-item');
+                    legendItem.innerHTML = `<div class="legend-color" style="background-color: ${scenario.color};"></div><span>${(scenario.amount / 10000)}万円/月</span>`;
+                    legendContainer.appendChild(legendItem);
+                });
+            };
+            
+            const displayFinalResults = (scenariosData, period) => {
+                resultsContainer.innerHTML = ''; 
+
+                const title = document.createElement('h3');
+                title.className = 'text-lg font-bold p-2 text-gray-800 text-center mb-4';
+                title.textContent = `最終結果 (${period}年後)`;
+                resultsContainer.appendChild(title);
+                
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+                
+                scenariosData.forEach(scenario => {
+                    const finalData = scenario.fullData[period];
+                    const finalGain = finalData.asset - finalData.principal;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'border rounded-lg p-4 flex flex-col';
+                    card.style.borderColor = scenario.color;
+
+                    card.innerHTML = `
+                        <div class="font-bold text-lg mb-3 pb-2 border-b" style="border-color: ${scenario.color}; color: ${scenario.color};">
+                            積立額: ${scenario.amount / 10000}万円/月
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">投資元本</span>
+                                <!-- ▼▼▼【修正点】新しいフォーマット関数を使用 ▼▼▼ -->
+                                <span class="font-medium">${formatJapaneseCurrencyDetailed(finalData.principal)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">運用収益</span>
+                                <span class="font-medium">${formatJapaneseCurrencyDetailed(finalGain)}</span>
+                            </div>
+                            <div class="flex justify-between text-base mt-2 pt-2 border-t border-gray-200">
+                                <span class="font-bold">最終資産額</span>
+                                <span class="font-bold" style="color: ${scenario.color};">${formatJapaneseCurrencyDetailed(finalData.asset)}</span>
+                                <!-- ▲▲▲【修正点】▲▲▲ -->
+                            </div>
+                        </div>
+                    `;
+                    gridContainer.appendChild(card);
+                });
+
+                resultsContainer.appendChild(gridContainer);
+            }
+
+            const runSimulation = () => {
+                errorMessageEl.textContent = '';
+                const annualReturn = parseFloat(annualReturnEl.value);
+                const investmentPeriod = parseInt(investmentPeriodEl.value);
+
+                if (isNaN(annualReturn) || annualReturn < 0 || isNaN(investmentPeriod) || investmentPeriod <= 0) {
+                    errorMessageEl.textContent = '有効な数値を入力してください。';
+                    return;
+                }
+
+                resultsPanel.scrollIntoView({ behavior: 'smooth' });
+                
+                startBtn.classList.add('hidden');
+                resetBtn.classList.remove('hidden');
+                [annualReturnEl, investmentPeriodEl].forEach(el => el.disabled = true);
+                resultsContainer.innerHTML = ''; 
+                drawLegend();
+
+                const allScenariosData = investmentScenarios.map(scenario => {
+                    const yearlyData = [{ year: 0, principal: 0, asset: 0 }];
+                    const monthlyReturn = annualReturn / 100 / 12;
+                    let currentAssets = 0;
+                    let currentPrincipal = 0;
+                    for (let year = 1; year <= investmentPeriod; year++) {
+                        for (let month = 1; month <= 12; month++) {
+                            currentAssets = (currentAssets + scenario.amount) * (1 + monthlyReturn);
+                            currentPrincipal += scenario.amount;
+                        }
+                        yearlyData.push({ year: year, principal: currentPrincipal, asset: currentAssets });
+                    }
+                    return { ...scenario, fullData: yearlyData, data: [] };
+                });
+                
+                let currentYear = 0;
+                const animationSpeed = 100;
+
+                simulationInterval = setInterval(() => {
+                    if (currentYear >= investmentPeriod) {
+                        clearInterval(simulationInterval);
+                        displayFinalResults(allScenariosData, investmentPeriod);
+                        // ▼▼▼【追加点】結果表示後に再度スクロール ▼▼▼
+                        setTimeout(() => {
+                             resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 100);
+                        // ▲▲▲【追加点】▲▲▲
+                        return;
+                    }
+                    currentYear++;
+                    allScenariosData.forEach(scenario => {
+                        scenario.data = scenario.fullData.slice(0, currentYear + 1);
+                    });
+                    elapsedTimeEl.textContent = `${currentYear}年`;
+                    drawChart(allScenariosData, investmentPeriod);
+                }, animationSpeed);
+            };
+            
+            const resetSimulation = () => {
+                 clearInterval(simulationInterval);
+                 startBtn.classList.remove('hidden');
+                 resetBtn.classList.add('hidden');
+                 [annualReturnEl, investmentPeriodEl].forEach(el => el.disabled = false);
+                 errorMessageEl.textContent = '';
+                 elapsedTimeEl.textContent = '0年';
+                 chartEl.innerHTML = '';
+                 legendContainer.innerHTML = '';
+                 resultsContainer.innerHTML = '';
+            };
+
+            startBtn.addEventListener('click', runSimulation);
+            resetBtn.addEventListener('click', resetSimulation);
+        });
+    </script>
+</body>
+</html>
