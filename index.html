@@ -40,21 +40,23 @@
         .card {
             background-color: var(--dark-gray);
             border: 1px solid var(--light-gray);
-            transition: transform .2s, box-shadow .2s;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
             color: var(--text-color);
         }
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border-color: var(--orange);
         }
         .social-links a {
             font-size: 1.5rem;
             color: var(--white);
             margin: 0 0.5rem;
-            transition: color .2s;
+            transition: color .2s, transform .2s;
         }
         .social-links a:hover {
             color: var(--orange);
+            transform: scale(1.1);
         }
         .project-card-footer {
             background-color: transparent;
@@ -62,11 +64,19 @@
         }
         .card-title a {
             text-decoration: none;
-            color: var(--white);
+            color: var(--orange);
+            transition: color .2s;
         }
         .card-title a:hover {
-            color: var(--orange);
-            text-decoration: none;
+            color: var(--orange-hover);
+            text-decoration: underline;
+        }
+        .card-title a i {
+            margin-left: 0.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .card-title a:hover i {
+            transform: translateX(2px) translateY(-2px);
         }
         .tech-point {
             font-size: 0.85rem;
@@ -90,10 +100,13 @@
             background-color: #343a40;
             border-color: #343a40;
             color: var(--white);
+            transition: background-color .2s, border-color .2s, transform .2s, box-shadow .2s;
         }
         .btn-dark:hover {
-            background-color: #495057;
-            border-color: #495057;
+            background-color: var(--orange);
+            border-color: var(--orange-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .footer {
             background-color: var(--dark-gray);
@@ -128,7 +141,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://aegisfleet.github.io/share-deepresearch/" target="_blank">Share DeepResearch</a></h5>
+                            <h5 class="card-title"><a href="https://aegisfleet.github.io/share-deepresearch/" target="_blank">Share DeepResearch<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">Google GeminiによるDeepResearchの結果を共有・公開するためのGitHub Pagesサイト。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">GitHub ActionsでGA4のメトリクスを自動更新し、コンテンツの人気度を可視化。</p>
@@ -147,7 +160,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://aegisfleet.github.io/live-stream-summarizer/" target="_blank">Live Stream Summarizer</a></h5>
+                            <h5 class="card-title"><a href="https://aegisfleet.github.io/live-stream-summarizer/" target="_blank">Live Stream Summarizer<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">YouTubeライブ配信をAIが自動要約するWebサイト。ファンが多くのコンテンツに触れる機会を創出します。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">全ての処理を無料サービス（GitHub Actions, Gemini API, GitHub Pages）のみで実現。</p>
@@ -165,7 +178,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://mermaid-editor-genai.vercel.app/" target="_blank">Mermaid Editor GenAI</a></h5>
+                            <h5 class="card-title"><a href="https://mermaid-editor-genai.vercel.app/" target="_blank">Mermaid Editor GenAI<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">自然言語の指示でMermaidダイアグラムを生成・編集できるWebアプリケーション。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">ファイルアップロードによる既存ダイアグラムの解析・更新機能。</p>
@@ -185,7 +198,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://svg-editor-genai.vercel.app/" target="_blank">SVG Editor GenAI</a></h5>
+                            <h5 class="card-title"><a href="https://svg-editor-genai.vercel.app/" target="_blank">SVG Editor GenAI<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">自然言語の指示でSVG画像を生成・編集できるWebアプリケーション。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">CodeMirrorと連携し、リアルタイムでのコード編集とプレビューを実現。</p>
@@ -205,7 +218,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://github.com/aegisfleet/voicevox2video" target="_blank">Voicevox2Video</a></h5>
+                            <h5 class="card-title"><a href="https://github.com/aegisfleet/voicevox2video" target="_blank">Voicevox2Video<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">URLやテキストから対話シナリオを生成し、VOICEVOXで音声と字幕付き動画を自動生成するツール。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">対話の雰囲気や絵文字に応じてBGMや動画エフェクトを自動適用する機能。</p>
@@ -225,7 +238,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygithubtrends.bsky.social" target="_blank">GitHub Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygithubtrends.bsky.social" target="_blank">GitHub Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">GitHubのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
@@ -244,7 +257,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyqiitatrends.bsky.social" target="_blank">Qiita Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyqiitatrends.bsky.social" target="_blank">Qiita Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">Qiitaのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
@@ -263,7 +276,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyzenntrends.bsky.social" target="_blank">Zenn Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyzenntrends.bsky.social" target="_blank">Zenn Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">Zennのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
@@ -282,7 +295,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygenaitrends.bsky.social" target="_blank">GenAI Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygenaitrends.bsky.social" target="_blank">GenAI Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">AI関連ニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
@@ -301,7 +314,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/huggingfacetrends.bsky.social" target="_blank">Hugging Face Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/huggingfacetrends.bsky.social" target="_blank">Hugging Face Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">Hugging Faceのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
@@ -320,7 +333,7 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><a href="https://bsky.app/profile/dailymarkettrends.bsky.social" target="_blank">Markets Trending to Bluesky</a></h5>
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailymarkettrends.bsky.social" target="_blank">Markets Trending to Bluesky<i class="fas fa-external-link-alt fa-xs"></i></a></h5>
                             <p class="card-text small">市場の指標値やニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
