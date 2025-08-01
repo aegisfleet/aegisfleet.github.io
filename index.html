@@ -1,11 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;URL=https://aegisfleet.github.io/share-deepresearch/">
-<title>Redirecting...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポちのポートフォリオ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
+    <link rel="icon" href="favicon.png">
+    <style>
+        :root {
+            --dark-gray: #1a1a1a;
+            --light-gray: #2d2d2d;
+            --orange: #ff7733;
+            --orange-hover: #ff9966;
+            --text-color: #e0e0e0;
+            --white: #ffffff;
+        }
+        body {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+        .hero {
+            background-color: var(--dark-gray);
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--orange-hover);
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--white);
+        }
+        .hero .lead {
+            font-size: 1.1rem;
+        }
+        h2 {
+            color: var(--white);
+        }
+        .card {
+            background-color: var(--dark-gray);
+            border: 1px solid var(--light-gray);
+            transition: transform .2s, box-shadow .2s;
+            color: var(--text-color);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .social-links a {
+            font-size: 1.5rem;
+            color: var(--white);
+            margin: 0 0.5rem;
+            transition: color .2s;
+        }
+        .social-links a:hover {
+            color: var(--orange);
+        }
+        .project-card-footer {
+            background-color: transparent;
+            border-top: none;
+        }
+        .card-title a {
+            text-decoration: none;
+            color: var(--white);
+        }
+        .card-title a:hover {
+            color: var(--orange);
+            text-decoration: none;
+        }
+        .tech-point {
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--orange);
+        }
+        .tech-stack span {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .tech-stack i {
+            font-size: 1.5rem;
+            margin-right: 0.3rem;
+            color: var(--orange);
+        }
+        .btn-dark {
+            background-color: #343a40;
+            border-color: #343a40;
+            color: var(--white);
+        }
+        .btn-dark:hover {
+            background-color: #495057;
+            border-color: #495057;
+        }
+        .footer {
+            background-color: var(--dark-gray);
+            border-top: 1px solid var(--orange-hover);
+        }
+    </style>
 </head>
 <body>
-<p>If you are not redirected automatically, follow this <a href="https://aegisfleet.github.io/share-deepresearch/">link to the destination page</a>.</p>
+
+    <!-- Header -->
+    <header class="hero text-center">
+        <div class="container">
+            <h1 class="display-4">ポちのポートフォリオ</h1>
+            <p class="lead">AI技術を活用したアプリケーション開発や、技術トレンドの自動収集・発信を行っています。<br>このサイトでは、これまでに開発したプロジェクトを紹介します。</p>
+            <div class="social-links mt-4">
+                <a href="https://github.com/aegisfleet" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://x.com/aegisfleet" target="_blank" aria-label="X"><i class="fab fa-twitter"></i></a>
+                <a href="https://note.com/aegisfleet" target="_blank" aria-label="Note"><i class="fa-solid fa-note-sticky"></i></a>
+                <a href="https://www.instagram.com/aegisfleet" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        
+        <!-- Projects Section -->
+        <section id="projects">
+            <h2 class="text-center mb-4">Projects</h2>
+            <div class="row">
+                <!-- share-deepresearch -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://aegisfleet.github.io/share-deepresearch/" target="_blank">Share DeepResearch</a></h5>
+                            <p class="card-text small">Google GeminiによるDeepResearchの結果を共有・公開するためのGitHub Pagesサイト。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">GitHub ActionsでGA4のメトリクスを自動更新し、コンテンツの人気度を可視化。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-jekyll-plain"></i> Jekyll</span>
+                                <span><i class="devicon-github-original"></i> GitHub Actions</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/share-deepresearch" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- live-stream-summarizer -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://aegisfleet.github.io/live-stream-summarizer/" target="_blank">Live Stream Summarizer</a></h5>
+                            <p class="card-text small">YouTubeライブ配信をAIが自動要約するWebサイト。ファンが多くのコンテンツに触れる機会を創出します。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">全ての処理を無料サービス（GitHub Actions, Gemini API, GitHub Pages）のみで実現。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="devicon-github-original"></i> GitHub Actions</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/live-stream-summarizer" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- mermaid-editor-genai -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://mermaid-editor-genai.vercel.app/" target="_blank">Mermaid Editor GenAI</a></h5>
+                            <p class="card-text small">自然言語の指示でMermaidダイアグラムを生成・編集できるWebアプリケーション。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">ファイルアップロードによる既存ダイアグラムの解析・更新機能。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-nextjs-plain original"></i> Next.js</span>
+                                <span><i class="devicon-react-original"></i> React</span>
+                                <span><i class="devicon-typescript-plain"></i> TypeScript</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/mermaid-editor-genai" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- svg-editor-genai -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://svg-editor-genai.vercel.app/" target="_blank">SVG Editor GenAI</a></h5>
+                            <p class="card-text small">自然言語の指示でSVG画像を生成・編集できるWebアプリケーション。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">CodeMirrorと連携し、リアルタイムでのコード編集とプレビューを実現。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-nextjs-plain original"></i> Next.js</span>
+                                <span><i class="devicon-react-original"></i> React</span>
+                                <span><i class="devicon-typescript-plain"></i> TypeScript</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/svg-editor-genai" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- voicevox2video -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://github.com/aegisfleet/voicevox2video" target="_blank">Voicevox2Video</a></h5>
+                            <p class="card-text small">URLやテキストから対話シナリオを生成し、VOICEVOXで音声と字幕付き動画を自動生成するツール。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">対話の雰囲気や絵文字に応じてBGMや動画エフェクトを自動適用する機能。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-volume-up"></i> VOICEVOX</span>
+                                <span><i class="fas fa-film"></i> ffmpeg</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/voicevox2video" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- github-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygithubtrends.bsky.social" target="_blank">GitHub Trending to Bluesky</a></h5>
+                            <p class="card-text small">GitHubのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/github-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- qiita-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyqiitatrends.bsky.social" target="_blank">Qiita Trending to Bluesky</a></h5>
+                            <p class="card-text small">Qiitaのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/qiita-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- zenn-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailyzenntrends.bsky.social" target="_blank">Zenn Trending to Bluesky</a></h5>
+                            <p class="card-text small">Zennのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/zenn-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- genai-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailygenaitrends.bsky.social" target="_blank">GenAI Trending to Bluesky</a></h5>
+                            <p class="card-text small">AI関連ニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/genai-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- hugging-face-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/huggingfacetrends.bsky.social" target="_blank">Hugging Face Trending to Bluesky</a></h5>
+                            <p class="card-text small">Hugging Faceのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/hugging-face-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- markets-trending-to-bluesky -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="https://bsky.app/profile/dailymarkettrends.bsky.social" target="_blank">Markets Trending to Bluesky</a></h5>
+                            <p class="card-text small">市場の指標値やニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
+                            <p class="tech-point fw-bold">実装で工夫している点:</p>
+                            <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
+                            <div class="mt-auto tech-stack flex-wrap">
+                                <span><i class="devicon-python-plain"></i> Python</span>
+                                <span><i class="fas fa-brain"></i> Gemini API</span>
+                                <span><i class="fas fa-cloud"></i> Bluesky API</span>
+                            </div>
+                        </div>
+                        <div class="card-footer project-card-footer">
+                            <a href="https://github.com/aegisfleet/markets-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer text-white text-center py-3">
+        <div class="container">
+            <p class="m-0">&copy; 2025 aegisfleet. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
