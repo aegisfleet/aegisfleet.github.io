@@ -50,12 +50,12 @@
         }
         .social-links a {
             font-size: 1.5rem;
-            color: var(--white);
+            color: var(--orange);
             margin: 0 0.5rem;
             transition: color .2s, transform .2s;
         }
         .social-links a:hover {
-            color: var(--orange);
+            color: var(--orange-hover);
             transform: scale(1.1);
         }
         .project-card-footer {
@@ -94,7 +94,7 @@
         .tech-stack i {
             font-size: 1.5rem;
             margin-right: 0.3rem;
-            color: var(--orange);
+            color: var(--white);
         }
         .btn-dark {
             background-color: #343a40;
@@ -145,13 +145,11 @@
                             <p class="card-text small">Google GeminiによるDeepResearchの結果を共有・公開するためのGitHub Pagesサイト。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">GitHub ActionsでGA4のメトリクスを自動更新し、コンテンツの人気度を可視化。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-jekyll-plain"></i> Jekyll</span>
                                 <span><i class="devicon-github-original"></i> GitHub Actions</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/share-deepresearch" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -164,12 +162,10 @@
                             <p class="card-text small">YouTubeライブ配信をAIが自動要約するWebサイト。ファンが多くのコンテンツに触れる機会を創出します。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">全ての処理を無料サービス（GitHub Actions, Gemini API, GitHub Pages）のみで実現。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="devicon-github-original"></i> GitHub Actions</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/live-stream-summarizer" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -182,14 +178,12 @@
                             <p class="card-text small">自然言語の指示でMermaidダイアグラムを生成・編集できるWebアプリケーション。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">ファイルアップロードによる既存ダイアグラムの解析・更新機能。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-nextjs-plain original"></i> Next.js</span>
                                 <span><i class="devicon-react-original"></i> React</span>
                                 <span><i class="devicon-typescript-plain"></i> TypeScript</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/mermaid-editor-genai" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -202,14 +196,12 @@
                             <p class="card-text small">自然言語の指示でSVG画像を生成・編集できるWebアプリケーション。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">CodeMirrorと連携し、リアルタイムでのコード編集とプレビューを実現。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-nextjs-plain original"></i> Next.js</span>
                                 <span><i class="devicon-react-original"></i> React</span>
                                 <span><i class="devicon-typescript-plain"></i> TypeScript</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/svg-editor-genai" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -222,14 +214,12 @@
                             <p class="card-text small">URLやテキストから対話シナリオを生成し、VOICEVOXで音声と字幕付き動画を自動生成するツール。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">対話の雰囲気や絵文字に応じてBGMや動画エフェクトを自動適用する機能。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-volume-up"></i> VOICEVOX</span>
                                 <span><i class="fas fa-film"></i> ffmpeg</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/voicevox2video" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -242,13 +232,11 @@
                             <p class="card-text small">GitHubのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/github-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -261,13 +249,11 @@
                             <p class="card-text small">Qiitaのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/qiita-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -280,13 +266,11 @@
                             <p class="card-text small">Zennのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/zenn-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -299,13 +283,11 @@
                             <p class="card-text small">AI関連ニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/genai-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -318,13 +300,11 @@
                             <p class="card-text small">Hugging Faceのトレンド情報をAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/hugging-face-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
@@ -337,13 +317,11 @@
                             <p class="card-text small">市場の指標値やニュースをAIが要約し、Blueskyへ自動投稿するBOT。</p>
                             <p class="tech-point fw-bold">実装で工夫している点:</p>
                             <p class="card-text small">Webスクレイピングと生成AIを組み合わせ、最新技術トレンドを自動でSNS発信。</p>
-                            <div class="mt-auto tech-stack flex-wrap">
+                            <div class="mt-auto tech-stack flex-wrap mb-3">
                                 <span><i class="devicon-python-plain"></i> Python</span>
                                 <span><i class="fas fa-brain"></i> Gemini API</span>
                                 <span><i class="fas fa-cloud"></i> Bluesky API</span>
                             </div>
-                        </div>
-                        <div class="card-footer project-card-footer">
                             <a href="https://github.com/aegisfleet/markets-trending-to-bluesky" class="btn btn-dark btn-sm">GitHub</a>
                         </div>
                     </div>
