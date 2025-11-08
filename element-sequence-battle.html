@@ -2,10 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <!-- レスポンシブ対応・タッチ操作無効化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>エレメント・シーケンス・バトル</title>
-    <!-- Tone.js (BGM/SE用ライブラリ) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
         /* 共通スタイル */
@@ -262,22 +260,44 @@
             color: #3498DB;
         }
 
-        #skill-bar {
+        /* ----- ★変更: スキルバー ----- */
+        #skill-bar-wrapper {
             width: 100%;
+            position: relative; /* 区切り線配置のため */
+            margin-top: 10px;
+        }
+
+        #skill-bar {
+            /* width: 100%; */ /* wrapperが担当 */
             background-color: var(--color-hp-bg);
             height: 15px;
             border-radius: 4px;
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.2);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-            margin-top: 10px;
+            /* margin-top: 10px; */ /* wrapperが担当 */
+            position: relative; /* フィルと区切り線のため */
         }
+        
+        /* ★新規: スキル区切り線 */
+        .skill-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+            z-index: 10; /* フィルより手前 */
+        }
+
         #skill-bar .skill-fill {
             height: 100%;
             width: 0%;
             background-image: linear-gradient(to bottom, var(--color-skill), var(--color-skill-dark));
             transition: width 0.3s ease-out;
             border-radius: 4px 0 0 4px;
+            position: relative; /* z-indexのため */
+            z-index: 5;
         }
         #skill-bar.skill-ready .skill-fill {
             animation: pulse-yellow 1s infinite;
@@ -523,15 +543,12 @@
     </style>
 </head>
 <body>
-    <!-- 背景パーティクル用コンテナ -->
     <div id="particles-bg"></div>
 
     <div id="game-container">
         
-        <!-- VFX (フラッシュなど) 用オーバーレイ -->
         <div id="vfx-overlay"></div>
 
-        <!-- ===== 敵ステータス ===== -->
         <div class="status-area">
             <div id="enemy-hp" class="status-bar">
                 <div class="hp-fill" style="width: 100%;"></div>
@@ -542,7 +559,6 @@
             </div>
         </div>
 
-        <!-- ===== バトルエリア (敵・シーケンス) ===== -->
         <div class="battle-area">
             <div id="enemy-display">
                 <div id="enemy-visual">💧</div>
@@ -558,7 +574,6 @@
             <div id="input-feedback"></div>
         </div>
 
-        <!-- ===== プレイヤーステータス ===== -->
         <div class="status-area">
             <div id="player-hp" class="status-bar">
                 <div class="hp-fill" style="width: 100%;"></div>
@@ -567,12 +582,15 @@
                 <span id="player-hp-text">HP: 100 / 100</span>
                 <span id="combo-display">COMBO x 3</span>
             </div>
-            <div id="skill-bar">
-                <div class="skill-fill" style="width: 0%;"></div>
+            
+            <div id="skill-bar-wrapper">
+                <div id="skill-bar">
+                    <div class="skill-fill" style="width: 0%;"></div>
+                    </div>
             </div>
+            
         </div>
 
-        <!-- ===== 操作エリア ===== -->
         <div class="controls-area" id="controls">
             <button class="control-button" id="skill-button" disabled>スキル: 強攻撃 (0)</button>
             <button class="control-button" id="btn-fire" data-element="fire">火</button>
@@ -581,7 +599,6 @@
             <button class="control-button" id="btn-wind" data-element="wind">風</button>
         </div>
 
-        <!-- ===== メッセージオーバーレイ ===== -->
         <div id="message-overlay">
             <div id="message-text">メッセージ</div>
             <button id="message-button">OK</button>
@@ -613,7 +630,9 @@
             const playerHpBar = document.querySelector('#player-hp .hp-fill');
             const playerHpText = document.getElementById('player-hp-text');
             const comboDisplay = document.getElementById('combo-display');
-            const skillBarContainer = document.getElementById('skill-bar');
+            
+            // ★変更なし: #skill-bar がゲージのコンテナを指す
+            const skillBarContainer = document.getElementById('skill-bar'); 
             const skillBar = document.querySelector('#skill-bar .skill-fill');
             const skillButton = document.getElementById('skill-button');
 
@@ -632,7 +651,11 @@
             const CRITICAL_HIT_MULTIPLIER = 2.5;
             const BASE_PLAYER_RECOVERY = 15;
             
-            const SKILL_GAUGE_MAX = 10;
+            // ★変更: スキルゲージ設定
+            const SKILL_GAUGE_MAX_PER_LEVEL = 10; // 1レベルあたりのゲージ量
+            const MAX_SKILL_LEVEL = 3; // 最大スキルレベル (3段階まで)
+            const SKILL_GAUGE_MAX_TOTAL = SKILL_GAUGE_MAX_PER_LEVEL * MAX_SKILL_LEVEL; // 総合計 (30)
+
             const SKILL_GAIN_SUCCESS = 1;
             const SKILL_GAIN_CRITICAL = 2;
             const DANGER_MODE_CHANCE = 0.3;
@@ -763,6 +786,29 @@
 
             // === 5. ゲームロジック ===
 
+            // ★新規: スキルダメージ計算関数
+            /**
+             * スキルレベルに応じたダメージを計算する
+             * @param {number} level - スキルレベル (1, 2, 3...)
+             * @returns {number} 計算されたダメージ量
+             */
+            function calculateSkillDamage(level) {
+                if (level <= 0) return 0;
+                
+                // レベルごとのダメージ倍率 (インデックス 0 は使わない)
+                // Lv1: 3倍, Lv2: 6.5倍, Lv3: 11倍 (例)
+                const skillMultipliers = [0, 3.0, 6.5, 11.0];
+                
+                // level が 3 を超えた場合でも、Lv3 の倍率を使う
+                const multiplier = skillMultipliers[Math.min(level, MAX_SKILL_LEVEL)];
+                
+                // ステージボーナスもレベルに応じて少し増やす
+                const stageBonus = (currentStage * 5) * level;
+                
+                const damage = Math.floor((BASE_PLAYER_ATTACK * multiplier) + stageBonus);
+                return damage;
+            }
+
             function initParticles() {
                 particlesBg.innerHTML = '';
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -842,6 +888,16 @@
                 successfulAttacksInARow = 0;
                 skillGauge = 0;
                 initParticles();
+
+                // ★新規: スキルバーの区切り線を設定
+                skillBarContainer.querySelectorAll('.skill-divider').forEach(d => d.remove());
+                for (let i = 1; i < MAX_SKILL_LEVEL; i++) {
+                    const divider = document.createElement('div');
+                    divider.className = 'skill-divider';
+                    divider.style.left = `${(i / MAX_SKILL_LEVEL) * 100}%`;
+                    skillBarContainer.appendChild(divider);
+                }
+            
                 startBGM();
                 startStage();
                 updateSkillBar();
@@ -869,13 +925,30 @@
                 }
             }
 
+            // ★変更: スキルバー更新処理
             function updateSkillBar() {
-                const skillPercent = (skillGauge / SKILL_GAUGE_MAX) * 100;
+                const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
+                
+                // バーの表示 (最大 30/30 = 100%)
+                const skillPercent = (skillGauge / SKILL_GAUGE_MAX_TOTAL) * 100;
                 skillBar.style.width = `${skillPercent}%`;
                 
-                skillButton.textContent = `スキル: 強攻撃 (${skillGauge}/${SKILL_GAUGE_MAX})`;
+                // ボタンテキストの更新
+                let buttonText = "スキル: ";
+                if (currentSkillLevel > 0) {
+                    const damage = calculateSkillDamage(currentSkillLevel);
+                    // "Lv.3 (MAX)" のように表示
+                    const levelText = (currentSkillLevel === MAX_SKILL_LEVEL) ? `Lv.${currentSkillLevel} (MAX)` : `Lv.${currentSkillLevel}`;
+                    buttonText += `強攻撃 ${levelText} (DMG: ${damage})`;
+                } else {
+                    // ゲージが0ではないがレベル1未満の場合 (例: 5/10)
+                    const gaugeToShow = skillGauge % SKILL_GAUGE_MAX_PER_LEVEL;
+                    buttonText += `チャージ中 (${gaugeToShow}/${SKILL_GAUGE_MAX_PER_LEVEL})`;
+                }
+                skillButton.textContent = buttonText;
                 
-                const skillReady = skillGauge >= SKILL_GAUGE_MAX;
+                // ★変更: スキル準備完了の条件 (レベル1以上か)
+                const skillReady = currentSkillLevel >= 1;
                 skillBarContainer.classList.toggle('skill-ready', skillReady);
                 
                 if (!isPlayerTurn) {
@@ -1026,7 +1099,10 @@
                     button.classList.toggle('disabled', !enabled);
                 });
                 
-                const skillReady = skillGauge >= SKILL_GAUGE_MAX;
+                // ★変更: スキル使用可否の判定
+                const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
+                const skillReady = currentSkillLevel >= 1;
+
                 skillButton.disabled = !(enabled && skillReady);
                 skillButton.classList.toggle('disabled', !(enabled && skillReady));
             }
@@ -1085,26 +1161,33 @@
                 } catch (error) { console.error("入力処理エラー:", error, e); }
             }
 
+            // ★変更: スキル使用処理
             function useSkill() {
-                if (skillGauge < SKILL_GAUGE_MAX || !isPlayerTurn) return;
+                // スキルレベルでチェック
+                const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
+                if (currentSkillLevel < 1 || !isPlayerTurn) return;
 
                 playSE('critical'); 
-                skillGauge = 0;
+                
+                // 全ゲージ消費
+                skillGauge = 0; 
                 
                 isPlayerTurn = false;
                 setControlsEnabled(false); 
                 
                 playVFX('flash-white');
-                playVFX('shake-heavy');
-                
-                const damage = Math.floor((BASE_PLAYER_ATTACK * 3) + (currentStage * 5));
+                // レベルに応じてVFXを強化 (LvMAXならheavy)
+                playVFX(currentSkillLevel === MAX_SKILL_LEVEL ? 'shake-heavy' : 'shake-light');
+
+                // ダメージ計算 (全レベル分)
+                const damage = calculateSkillDamage(currentSkillLevel);
                 
                 setTimeout(() => {
                     enemyHp = Math.max(0, enemyHp - damage);
                     playVFX('hit-flash', enemyHpBarContainer);
                     playVFX('enemy-hit');
                     updateHealthBars();
-                    updateSkillBar(); 
+                    updateSkillBar(); // ゲージ消費を反映
                     
                     setTimeout(() => {
                         if (enemyHp <= 0) {
@@ -1113,9 +1196,10 @@
                             enemyTurn();
                         }
                     }, 1000);
-                }, 400);
+                }, 400); // タイムアウトは固定
             }
             
+            // ★変更: ゲージ蓄積処理
             function checkSequence() {
                 let isCorrect = playerInputSequence.length === currentSequence.length &&
                                 playerInputSequence.every((el, i) => el === currentSequence[i]);
@@ -1124,7 +1208,8 @@
 
                 if (isCorrect) {
                     successfulAttacksInARow++;
-                    skillGauge = Math.min(SKILL_GAUGE_MAX, skillGauge + SKILL_GAIN_SUCCESS);
+                    // ★変更: ゲージ上限を SKILL_GAUGE_MAX_TOTAL に
+                    skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_SUCCESS);
                     
                     let baseDamage = BASE_PLAYER_ATTACK + (currentStage * 2);
                     let affinityDamage = 0;
@@ -1137,7 +1222,8 @@
 
                     if (successfulAttacksInARow > 0 && successfulAttacksInARow % 3 === 0) {
                         didCritical = true;
-                        skillGauge = Math.min(SKILL_GAUGE_MAX, skillGauge + SKILL_GAIN_CRITICAL);
+                        // ★変更: ゲージ上限を SKILL_GAUGE_MAX_TOTAL に
+                        skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_CRITICAL);
                     }
                     
                     let totalDamage = baseDamage + affinityDamage;
@@ -1216,7 +1302,7 @@
                 }, 800);
 
                 setTimeout(() => {
-                     showMessage(
+                    showMessage(
                         `STAGE ${currentStage - 1} CLEAR!\nHPが ${recoveryAmount} 回復！`,
                         `STAGE ${currentStage}へ`,
                         startStage
