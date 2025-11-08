@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <!-- レスポンシブ対応・タッチ操作無効化 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>エレメント・シーケンス・バトル</title>
+    <!-- Tone.js (BGM/SE用ライブラリ) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* 共通スタイル */
+        :root {
+            --color-fire: #FF6B6B;
+            --color-fire-dark: #c0392b;
+            --color-water: #4ECDC4;
+            --color-water-dark: #2980b9;
+            --color-earth: #8D6E63;
+            --color-earth-dark: #6D4C41;
+            --color-wind: #AED581;
+            --color-wind-dark: #689F38;
+            --color-skill: #F1C40F;
+            --color-skill-dark: #f39c12;
+            
+            --color-bg-start: #3a506b; /* 背景グラデーション開始 */
+            --color-bg-end: #2C3E50; /* 背景グラデーション終了 */
+            --color-text: #ECF0F1;
+            --color-border: #34495E;
+            --color-border-light: #4a6572;
+            
+            --color-hp-player: #2ECC71;
+            --color-hp-player-dark: #27AE60;
+            --color-hp-enemy: #E74C3C;
+            --color-hp-enemy-dark: #C0392B;
+            --color-hp-bg: #5f6a73;
+            --color-feedback-success: var(--color-hp-player);
+            --color-feedback-fail: var(--color-hp-enemy);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-bg-end);
+            background-image: radial-gradient(circle, var(--color-bg-start) 0%, var(--color-bg-end) 70%);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* ★変更: vh -> dvh (Dynamic Viewport Height) */
+            /* ブラウザUI(アドレスバー等)に応じて高さを動的に調整 */
+            height: 100dvh; 
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ----- 背景パーティクル ----- */
+        #particles-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            background-color: rgba(236, 240, 241, 0.1);
+            border-radius: 50%;
+            animation: move-particle linear infinite;
+            bottom: -50px;
+        }
+        @keyframes move-particle {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
+        }
+
+        /* ----- ゲームコンテナ ----- */
+        #game-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%; /* 親(body)の 100dvh を継承 */
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ----- VFX用オーバーレイ (フラッシュエフェクト用) ----- */
+        #vfx-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 90;
+            pointer-events: none;
+            opacity: 0;
+            background-color: white;
+        }
+        /* アニメーションクラス */
+        .flash-red { animation: flash-red 0.3s ease-out; }
+        .flash-white { animation: flash-white 0.4s ease-out; }
+        .flash-green { animation: flash-green 0.4s ease-out; }
+        .shake-light { animation: shake 0.2s ease-in-out; }
+        .shake-heavy { animation: shake 0.4s ease-in-out; }
+
+        @keyframes flash-red {
+            0% { opacity: 0.6; background-color: var(--color-hp-enemy); }
+            100% { opacity: 0; background-color: var(--color-hp-enemy); }
+        }
+        @keyframes flash-white {
+            0% { opacity: 0.8; background-color: white; }
+            100% { opacity: 0; background-color: white; }
+        }
+         @keyframes flash-green {
+            0% { opacity: 0.7; background-color: var(--color-hp-player); }
+            100% { opacity: 0; background-color: var(--color-hp-player); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+
+        /* ----- メッセージエリア ----- */
+        #message-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #message-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        #message-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        #message-button {
+            font-size: 1.2rem;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            background-image: linear-gradient(to bottom, var(--color-fire), var(--color-fire-dark));
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        #message-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* ----- ステータスエリア ----- */
+        .status-area {
+            padding: 15px 20px;
+            background-color: var(--color-border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 20;
+            /* 高さが固定のエリア (flex-shrink: 0) */
+            flex-shrink: 0;
+        }
+
+        .status-bar {
+            width: 100%;
+            background-color: var(--color-hp-bg);
+            height: 25px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.2);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .status-bar.hit-flash::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: white;
+            opacity: 0;
+            animation: hit-flash 0.2s ease-out;
+        }
+        @keyframes hit-flash {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .hp-fill {
+            height: 100%;
+            transition: width 0.5s ease-out;
+            border-radius: 6px 0 0 6px;
+            background-image: linear-gradient(to bottom, 
+                rgba(255,255,255,0.3), 
+                rgba(255,255,255,0.05) 50%, 
+                rgba(0,0,0,0.1) 51%, 
+                rgba(0,0,0,0.2) 100%
+            );
+        }
+        #player-hp .hp-fill { 
+            background-color: var(--color-hp-player);
+            background-image: linear-gradient(to bottom, #5dd4a8, #27ae60 50%, #2ecc71 51%);
+        }
+        #enemy-hp .hp-fill { 
+            background-color: var(--color-hp-enemy);
+            background-image: linear-gradient(to bottom, #e74c3c, #c0392b 50%, #e74c3c 51%);
+        }
+        .low-hp .hp-fill {
+            animation: pulse-red 1s infinite;
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .status-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        #player-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #combo-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--color-skill);
+            visibility: hidden;
+            animation: pulse 1s infinite;
+        }
+        #stage-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #3498DB;
+        }
+
+        #skill-bar {
+            width: 100%;
+            background-color: var(--color-hp-bg);
+            height: 15px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.2);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            margin-top: 10px;
+        }
+        #skill-bar .skill-fill {
+            height: 100%;
+            width: 0%;
+            background-image: linear-gradient(to bottom, var(--color-skill), var(--color-skill-dark));
+            transition: width 0.3s ease-out;
+            border-radius: 4px 0 0 4px;
+        }
+        #skill-bar.skill-ready .skill-fill {
+            animation: pulse-yellow 1s infinite;
+        }
+        @keyframes pulse-yellow {
+             0% { filter: brightness(1); }
+            50% { filter: brightness(1.5); }
+            100% { filter: brightness(1); }
+        }
+
+
+        /* ----- バトルエリア ----- */
+        .battle-area {
+            flex-grow: 1; /* ★可変領域 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 20px 10px 20px; /* パディングを少し調整 */
+            position: relative;
+            /* ★追加: 縦幅が狭い時に縮小できるように */
+            min-height: 0; 
+        }
+
+        #enemy-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            min-height: 100px; /* 最小高さを少し詰める */
+        }
+        
+        #enemy-visual {
+            font-size: 4.5rem; /* 少し小さく */
+            margin-bottom: 10px;
+            animation: enemy-idle 2s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+        @keyframes enemy-idle {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.03); } /* 動きを少し小さく */
+        }
+        
+        /* 敵の登場・ヒット・敗北アニメーション */
+        #enemy-visual.appear { animation: enemy-appear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes enemy-appear {
+            0% { transform: scale(0.2) translateY(50px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        #enemy-visual.hit { animation: enemy-hit 0.3s ease-out; }
+        @keyframes enemy-hit {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        #enemy-visual.defeat { animation: enemy-defeat 0.8s ease-in forwards; }
+        @keyframes enemy-defeat {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0.1) rotate(360deg); opacity: 0; }
+        }
+
+        #enemy-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #enemy-element-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid var(--color-text);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #enemy-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: color 0.3s;
+            margin: 0;
+        }
+        #enemy-name.danger-mode {
+            color: var(--color-hp-enemy);
+            animation: pulse 0.7s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+
+        #sequence-display {
+            display: flex;
+            margin-bottom: 15px; /* 少し詰める */
+            height: 50px; /* 少し詰める */
+            align-items: center;
+        }
+
+        .sequence-icon {
+            width: 36px; /* 少し小さく */
+            height: 36px; /* 少し小さく */
+            border-radius: 50%;
+            margin: 0 6px; /* 少し詰める */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s, opacity 0.2s, border 0.2s;
+            transform: scale(0);
+            opacity: 0;
+            border: 3px solid transparent;
+        }
+        .sequence-icon.danger-mode {
+            border-color: var(--color-hp-enemy);
+        }
+
+        .fire { background-color: var(--color-fire); }
+        .water { background-color: var(--color-water); }
+        .earth { background-color: var(--color-earth); }
+        .wind { background-color: var(--color-wind); }
+        
+        .sequence-icon.visible {
+            transform: scale(1);
+            opacity: 1;
+            animation: icon-pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes icon-pop-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #input-indicator {
+            display: flex;
+            justify-content: center;
+            height: 15px;
+            margin-bottom: 15px; /* 少し詰める */
+        }
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--color-border);
+            margin: 0 5px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .indicator-dot.active { 
+            background-color: #ECF0F1; 
+            transform: scale(1.2);
+        }
+        .indicator-dot.success { background-color: var(--color-feedback-success); }
+        .indicator-dot.fail { background-color: var(--color-feedback-fail); }
+
+        /* ----- 入力フィードバック（テロップ） ----- */
+        #input-feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 3rem;
+            font-weight: bold;
+            opacity: 0;
+            z-index: 50;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.5);
+        }
+        #input-feedback.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        #input-feedback.success { color: var(--color-feedback-success); }
+        #input-feedback.fail { color: var(--color-hp-enemy); }
+        #input-feedback.danger { color: var(--color-hp-enemy); }
+
+
+        /* ----- 操作エリア ----- */
+        .controls-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 15px;
+            padding: 20px;
+            background-color: var(--color-border);
+            border-top: 2px solid var(--color-border-light);
+            z-index: 20;
+            /* 高さが固定のエリア (flex-shrink: 0) */
+            flex-shrink: 0;
+        }
+
+        .control-button {
+            padding: 18px 0; /* 少し詰める */
+            font-size: 1.3rem; /* 少し小さく */
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 10px rgba(0,0,0,0.2);
+            transition: transform 0.08s, box-shadow 0.08s, background-image 0.2s, opacity 0.2s, filter 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .control-button:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+        .control-button:active:not(:disabled) {
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3), 0 4px 5px rgba(0,0,0,0.2);
+        }
+        
+        .control-button.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+            background-color: var(--color-hp-bg);
+            background-image: none;
+        }
+        
+        #btn-fire { background-image: linear-gradient(to bottom, var(--color-fire), var(--color-fire-dark)); }
+        #btn-water { background-image: linear-gradient(to bottom, var(--color-water), var(--color-water-dark)); }
+        #btn-earth { background-image: linear-gradient(to bottom, var(--color-earth), var(--color-earth-dark)); }
+        #btn-wind { background-image: linear-gradient(to bottom, var(--color-wind), var(--color-wind-dark)); }
+
+        #skill-button {
+            grid-column: 1 / -1;
+            background-image: linear-gradient(to bottom, var(--color-skill), var(--color-skill-dark));
+            font-size: 1.2rem;
+            padding: 14px 0; /* 少し詰める */
+            margin-bottom: 0px; /* 詰める */
+        }
+        #skill-button.disabled {
+            background-image: linear-gradient(to bottom, #95a5a6, #7f8c8d);
+            opacity: 0.6;
+        }
+        #skill-button:not(.disabled) {
+             animation: pulse-yellow-border 1.5s infinite;
+        }
+        @keyframes pulse-yellow-border {
+             0% { box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 10px rgba(0,0,0,0.2), 0 0 10px var(--color-skill); }
+            50% { box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 10px rgba(0,0,0,0.2), 0 0 25px var(--color-skill); }
+            100% { box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 10px rgba(0,0,0,0.2), 0 0 10px var(--color-skill); }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 背景パーティクル用コンテナ -->
+    <div id="particles-bg"></div>
+
+    <div id="game-container">
+        
+        <!-- VFX (フラッシュなど) 用オーバーレイ -->
+        <div id="vfx-overlay"></div>
+
+        <!-- ===== 敵ステータス ===== -->
+        <div class="status-area">
+            <div id="enemy-hp" class="status-bar">
+                <div class="hp-fill" style="width: 100%;"></div>
+            </div>
+            <div class="status-text">
+                <span id="enemy-hp-text">HP: 100 / 100</span>
+                <span id="stage-display">STAGE 1</span>
+            </div>
+        </div>
+
+        <!-- ===== バトルエリア (敵・シーケンス) ===== -->
+        <div class="battle-area">
+            <div id="enemy-display">
+                <div id="enemy-visual">💧</div>
+                <div id="enemy-info">
+                    <div id="enemy-element-icon"></div>
+                    <h2 id="enemy-name">スライム</h2>
+                </div>
+            </div>
+            <div id="sequence-display">
+            </div>
+            <div id="input-indicator">
+            </div>
+            <div id="input-feedback"></div>
+        </div>
+
+        <!-- ===== プレイヤーステータス ===== -->
+        <div class="status-area">
+            <div id="player-hp" class="status-bar">
+                <div class="hp-fill" style="width: 100%;"></div>
+            </div>
+            <div id="player-stats" class="status-text">
+                <span id="player-hp-text">HP: 100 / 100</span>
+                <span id="combo-display">COMBO x 3</span>
+            </div>
+            <div id="skill-bar">
+                <div class="skill-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- ===== 操作エリア ===== -->
+        <div class="controls-area" id="controls">
+            <button class="control-button" id="skill-button" disabled>スキル: 強攻撃 (0)</button>
+            <button class="control-button" id="btn-fire" data-element="fire">火</button>
+            <button class="control-button" id="btn-water" data-element="water">水</button>
+            <button class="control-button" id="btn-earth" data-element="earth">地</button>
+            <button class="control-button" id="btn-wind" data-element="wind">風</button>
+        </div>
+
+        <!-- ===== メッセージオーバーレイ ===== -->
+        <div id="message-overlay">
+            <div id="message-text">メッセージ</div>
+            <button id="message-button">OK</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // === 1. DOM要素の取得 ===
+            const gameContainer = document.getElementById('game-container');
+            const vfxOverlay = document.getElementById('vfx-overlay');
+            const particlesBg = document.getElementById('particles-bg');
+            
+            const enemyHpBarContainer = document.getElementById('enemy-hp');
+            const enemyHpBar = document.querySelector('#enemy-hp .hp-fill');
+            const enemyHpText = document.getElementById('enemy-hp-text');
+            const enemyName = document.getElementById('enemy-name');
+            const enemyElementIcon = document.getElementById('enemy-element-icon');
+            const enemyVisual = document.getElementById('enemy-visual');
+            
+            const stageDisplay = document.getElementById('stage-display');
+            const sequenceDisplay = document.getElementById('sequence-display');
+            const inputIndicator = document.getElementById('input-indicator');
+            const inputFeedback = document.getElementById('input-feedback');
+
+            const playerHpBarContainer = document.getElementById('player-hp');
+            const playerHpBar = document.querySelector('#player-hp .hp-fill');
+            const playerHpText = document.getElementById('player-hp-text');
+            const comboDisplay = document.getElementById('combo-display');
+            const skillBarContainer = document.getElementById('skill-bar');
+            const skillBar = document.querySelector('#skill-bar .skill-fill');
+            const skillButton = document.getElementById('skill-button');
+
+            const controlButtons = document.querySelectorAll('.control-button[data-element]');
+
+            const messageOverlay = document.getElementById('message-overlay');
+            const messageText = document.getElementById('message-text');
+            let messageButton = document.getElementById('message-button');
+            
+            // === 2. ゲーム設定 (定数) ===
+            const ELEMENTS = ['fire', 'water', 'earth', 'wind'];
+            const PLAYER_MAX_HP = 100;
+            const BASE_ENEMY_HP = 50;
+            const BASE_PLAYER_ATTACK = 20;
+            const BASE_ENEMY_ATTACK = 10;
+            const CRITICAL_HIT_MULTIPLIER = 2.5;
+            const BASE_PLAYER_RECOVERY = 15;
+            
+            const SKILL_GAUGE_MAX = 10;
+            const SKILL_GAIN_SUCCESS = 1;
+            const SKILL_GAIN_CRITICAL = 2;
+            const DANGER_MODE_CHANCE = 0.3;
+            const DANGER_MODE_MULTIPLIER = 2.0;
+            const AFFINITY_BONUS = 8;
+            const AFFINITY_PENALTY = -5;
+            
+            const AFFINITY = {
+                fire:  { weak: 'water', strong: 'wind' },
+                water: { weak: 'earth', strong: 'fire' },
+                earth: { weak: 'wind',  strong: 'water' },
+                wind:  { weak: 'fire',  strong: 'earth' }
+            };
+            
+            const ENEMY_NAMES = [
+                'スライム', 'ゴブリン', 'コボルト', 'オーク', 'スケルトン', 
+                'リザードマン', 'ゴーレム', 'キメラ', 'ミノタウロス', 'ドラゴン'
+            ];
+            
+            const ENEMY_VISUALS = {
+                'スライム': '💧', 'ゴブリン': '👺', 'コボルト': '🐶', 'オーク': '🐷',
+                'スケルトン': '💀', 'リザードマン': '🦎', 'ゴーレム': '🗿',
+                'キメラ': '🦁', 'ミノタウロス': '🐂', 'ドラゴン': '🐉'
+            };
+            const DEFAULT_ENEMY_VISUAL = '👻';
+            const PARTICLE_COUNT = 20;
+
+            // === 3. ゲーム状態 (変数) ===
+            let playerHp = PLAYER_MAX_HP;
+            let enemyHp = BASE_ENEMY_HP;
+            let currentEnemyMaxHp = BASE_ENEMY_HP;
+            let currentStage = 1;
+            
+            let currentSequence = [];
+            let playerInputSequence = [];
+            let currentSequenceLength = 3;
+            
+            let isPlayerTurn = false;
+            let isAudioReady = false;
+            
+            let successfulAttacksInARow = 0;
+
+            let skillGauge = 0;
+            let isDangerMode = false;
+            let enemyElement = 'fire';
+            
+            let feedbackTimeout = null;
+            let bgmNoteIndex = 0;
+
+            // === 4. オーディオ (Tone.js) ===
+            // (既存のオーディオコードは変更なし)
+            let mainVol = new Tone.Volume(-14).toDestination();
+            const bgmFilter = new Tone.AutoFilter("8n").start();
+            const bgmDelay = new Tone.FeedbackDelay("8n", 0.25);
+            const bgmSynth = new Tone.PolySynth(Tone.Synth, {
+                polyphony: 4, volume: -6, 
+                oscillator: { type: 'fatsawtooth', count: 3, spread: 20 },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 },
+            }).chain(bgmFilter, bgmDelay, mainVol);
+            const drumSynths = {
+                kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: 'exponential' } }).connect(mainVol),
+                snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).connect(mainVol),
+                hihat: new Tone.MetalSynth({ frequency: 300, envelope: { attack: 0.001, decay: 0.1, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).connect(mainVol)
+            };
+            const masterLoop = new Tone.Loop(time => {
+                const step = bgmNoteIndex % 64;
+                const notes = [ 'C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3', 'C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3', 'Ab3', 'C4', 'Eb4', 'D4', 'C4', 'Bb3', 'Ab3', 'G3', 'Ab3', 'C4', 'Eb4', 'D4', 'C4', 'Bb3', 'Ab3', 'G3', 'C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3', 'C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3', 'G3', 'Bb3', 'D4', 'C4', 'Bb3', 'G3', 'F3', 'Eb3', 'G3', 'Bb3', 'D4', 'C4', 'Bb3', 'G3', 'F3', 'Eb3', ];
+                if (step % 2 === 0) { bgmSynth.triggerAttackRelease(notes[Math.floor(step / 2)], '32n'); }
+                if (step % 8 === 0) { drumSynths.kick.triggerAttackRelease('C2', '32n'); }
+                if (step % 16 === 8) { drumSynths.snare.triggerAttackRelease('8n'); }
+                if (step % 4 === 0) { drumSynths.hihat.triggerAttackRelease('16n', undefined, 0.6); }
+                bgmNoteIndex++;
+            }, '16n');
+            const seSynths = {
+                click: new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).connect(mainVol),
+                success: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 } }).connect(mainVol),
+                failure: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0, release: 0.1 } }).connect(mainVol),
+                critical1: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.4, sustain: 0 } }).connect(mainVol),
+                critical2: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.4, sustain: 0 } }).connect(mainVol),
+                critical3: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.4, sustain: 0 } }).connect(mainVol),
+                recovery: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 0.2 } }).connect(mainVol),
+                win: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.8, sustain: 0 } }).connect(mainVol),
+                gameOver: new Tone.Synth({ oscillator: { type: 'fmsquare' }, envelope: { attack: 0.01, decay: 1.5, sustain: 0 } }).connect(mainVol),
+            };
+            async function startBGM() {
+                if (!isAudioReady) return;
+                try {
+                    if (Tone.Transport.state !== "started") { await Tone.Transport.start(); }
+                    if (masterLoop.state !== "started") { bgmNoteIndex = 0; masterLoop.start(0); }
+                } catch (e) { console.warn("BGM開始エラー:", e); }
+            }
+            function stopBGM() {
+                if (!isAudioReady) return;
+                masterLoop.stop(0); Tone.Transport.stop();
+            }
+            function playSE(type) {
+                if (!isAudioReady) return;
+                try {
+                    const now = Tone.now();
+                    switch(type) {
+                        case 'click': seSynths.click.triggerAttackRelease('C2', '8n', now); break;
+                        case 'success': seSynths.success.triggerAttackRelease('C5', '8n', now); break;
+                        case 'failure': seSynths.failure.triggerAttackRelease('C3', '4n', now); break;
+                        case 'critical': 
+                            seSynths.critical1.triggerAttackRelease('E5', '8n', now);
+                            seSynths.critical2.triggerAttackRelease('G5', '8n', now + 0.1);
+                            seSynths.critical3.triggerAttackRelease('C6', '4n', now + 0.2);
+                            break;
+                        case 'recovery':
+                            seSynths.recovery.triggerAttackRelease('E4', '4n', now);
+                            seSynths.recovery.triggerAttackRelease('G4', '4n', now + 0.1);
+                            seSynths.recovery.triggerAttackRelease('C5', '4n', now + 0.2);
+                            break;
+                        case 'win':
+                            seSynths.win.triggerAttackRelease('C4', '4n', now);
+                            seSynths.win.triggerAttackRelease('E4', '4n', now + 0.2);
+                            seSynths.win.triggerAttackRelease('G4', '4n', now + 0.4);
+                            seSynths.win.triggerAttackRelease('C5', '2n', now + 0.6);
+                            break;
+                        case 'gameOver':
+                            seSynths.gameOver.triggerAttackRelease('C3', '2n', now);
+                            seSynths.gameOver.triggerAttackRelease('B2', '2n', now + 0.5);
+                            seSynths.gameOver.triggerAttackRelease('A2', '1n', now + 1.0);
+                            break;
+                    }
+                } catch (e) { console.error("SE再生エラー:", e); }
+            }
+
+            // === 5. ゲームロジック ===
+
+            function initParticles() {
+                particlesBg.innerHTML = '';
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    const size = Math.random() * 5 + 2;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${Math.random() * 100}vw`;
+                    const duration = Math.random() * 10 + 10;
+                    const delay = Math.random() * -duration;
+                    particle.style.animationDuration = `${duration}s`;
+                    particle.style.animationDelay = `${delay}s`;
+                    particlesBg.appendChild(particle);
+                }
+            }
+            
+            function playVFX(type, targetElement = null) {
+                let element;
+                let vfxClass = type;
+                let duration = 400;
+
+                switch(type) {
+                    case 'flash-red':
+                        element = vfxOverlay;
+                        duration = 300;
+                        break;
+                    case 'flash-white':
+                    case 'flash-green':
+                        element = vfxOverlay;
+                        duration = 400;
+                        break;
+                    case 'shake-light':
+                    case 'shake-heavy':
+                        element = gameContainer;
+                        duration = (type === 'shake-light') ? 200 : 400;
+                        break;
+                    
+                    case 'hit-flash':
+                        element = targetElement;
+                        duration = 200;
+                        break;
+                    case 'enemy-hit':
+                        element = enemyVisual;
+                        vfxClass = 'hit';
+                        duration = 300;
+                        break;
+                    case 'enemy-appear':
+                         element = enemyVisual;
+                         vfxClass = 'appear';
+                         duration = 500;
+                         break;
+                    case 'enemy-defeat':
+                         element = enemyVisual;
+                         vfxClass = 'defeat';
+                         duration = 800;
+                         break;
+                    default:
+                        console.warn('Unknown VFX type:', type);
+                        return;
+                }
+
+                if (element) {
+                    element.classList.add(vfxClass);
+                    setTimeout(() => {
+                        if (vfxClass !== 'defeat') {
+                            element.classList.remove(vfxClass);
+                        }
+                    }, duration);
+                }
+            }
+
+
+            function initGame() {
+                playerHp = PLAYER_MAX_HP;
+                currentStage = 1;
+                successfulAttacksInARow = 0;
+                skillGauge = 0;
+                initParticles();
+                startBGM();
+                startStage();
+                updateSkillBar();
+            }
+
+            function updateHealthBars() {
+                const playerHpPercent = (playerHp / PLAYER_MAX_HP) * 100;
+                playerHpBar.style.width = `${Math.max(0, playerHpPercent)}%`;
+                playerHpText.textContent = `HP: ${playerHp} / ${PLAYER_MAX_HP}`;
+                playerHpBarContainer.classList.toggle('low-hp', playerHpPercent <= 30 && playerHp > 0);
+
+                const enemyHpPercent = (enemyHp / currentEnemyMaxHp) * 100;
+                enemyHpBar.style.width = `${Math.max(0, enemyHpPercent)}%`;
+                enemyHpText.textContent = `HP: ${enemyHp} / ${currentEnemyMaxHp}`;
+                enemyHpBarContainer.classList.toggle('low-hp', enemyHpPercent <= 30 && enemyHp > 0);
+            }
+            
+            function updateStats() {
+                stageDisplay.textContent = `STAGE ${currentStage}`;
+                if (successfulAttacksInARow > 0) {
+                    comboDisplay.textContent = `COMBO x ${successfulAttacksInARow}`;
+                    comboDisplay.style.visibility = 'visible';
+                } else {
+                    comboDisplay.style.visibility = 'hidden';
+                }
+            }
+
+            function updateSkillBar() {
+                const skillPercent = (skillGauge / SKILL_GAUGE_MAX) * 100;
+                skillBar.style.width = `${skillPercent}%`;
+                
+                skillButton.textContent = `スキル: 強攻撃 (${skillGauge}/${SKILL_GAUGE_MAX})`;
+                
+                const skillReady = skillGauge >= SKILL_GAUGE_MAX;
+                skillBarContainer.classList.toggle('skill-ready', skillReady);
+                
+                if (!isPlayerTurn) {
+                    skillButton.classList.add('disabled');
+                    skillButton.disabled = true;
+                } else {
+                     skillButton.classList.toggle('disabled', !skillReady);
+                    skillButton.disabled = !skillReady;
+                }
+            }
+            
+            function updateEnemyElementIcon() {
+                enemyElementIcon.className = '';
+                enemyElementIcon.classList.add(enemyElement);
+            }
+
+            function updateEnemyVisual() {
+                const enemyKey = ENEMY_NAMES[(currentStage - 1) % ENEMY_NAMES.length];
+                enemyVisual.textContent = ENEMY_VISUALS[enemyKey] || DEFAULT_ENEMY_VISUAL;
+                enemyVisual.className = ''; 
+                playVFX('enemy-appear');
+            }
+
+
+            function showMessage(text, buttonText, callback) {
+                messageText.textContent = text;
+                messageButton.textContent = buttonText;
+                
+                const newButton = messageButton.cloneNode(true);
+                messageButton.parentNode.replaceChild(newButton, messageButton);
+                
+                newButton.addEventListener('click', () => {
+                    messageOverlay.classList.remove('visible');
+                    if (callback) {
+                        const cb = callback();
+                        if (cb && typeof cb.then === 'function') {
+                            cb.catch(e => console.error("メッセージコールバックエラー:", e));
+                        }
+                    }
+                });
+                
+                messageButton = newButton;
+                messageOverlay.classList.add('visible');
+            }
+
+            function showInputFeedback(type) {
+                if (feedbackTimeout) { clearTimeout(feedbackTimeout); }
+                
+                inputFeedback.textContent = (type === 'success') ? 'OK!' : 'MISS!';
+                inputFeedback.className = type;
+                
+                inputFeedback.classList.remove('show');
+                void inputFeedback.offsetWidth;
+                inputFeedback.classList.add('show');
+
+                feedbackTimeout = setTimeout(() => {
+                    inputFeedback.classList.remove('show');
+                }, 400);
+            }
+            
+            function showDangerWarning() {
+                if (feedbackTimeout) { clearTimeout(feedbackTimeout); }
+                
+                inputFeedback.textContent = 'DANGER!';
+                inputFeedback.className = 'danger';
+                
+                inputFeedback.classList.remove('show');
+                void inputFeedback.offsetWidth;
+                inputFeedback.classList.add('show');
+
+                feedbackTimeout = setTimeout(() => {
+                    inputFeedback.classList.remove('show');
+                }, 1000);
+            }
+
+
+            function startStage() {
+                currentSequenceLength = 3 + Math.floor((currentStage - 1) / 3);
+                currentEnemyMaxHp = BASE_ENEMY_HP + (currentStage - 1) * 15;
+                enemyHp = currentEnemyMaxHp;
+                
+                enemyName.textContent = ENEMY_NAMES[(currentStage - 1) % ENEMY_NAMES.length];
+                
+                enemyElement = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+                updateEnemyElementIcon();
+                updateEnemyVisual();
+
+                isDangerMode = false;
+
+                updateHealthBars();
+                updateStats();
+                updateSkillBar();
+                
+                setTimeout(enemyTurn, 1000);
+            }
+
+            function enemyTurn() {
+                setControlsEnabled(false); 
+                isPlayerTurn = false;
+                playerInputSequence = [];
+                currentSequence = [];
+                sequenceDisplay.innerHTML = '';
+                
+                isDangerMode = Math.random() < DANGER_MODE_CHANCE;
+                if (isDangerMode) {
+                    enemyName.classList.add('danger-mode');
+                    showDangerWarning();
+                } else {
+                    enemyName.classList.remove('danger-mode');
+                }
+                
+                for (let i = 0; i < currentSequenceLength; i++) {
+                    const randomElement = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+                    currentSequence.push(randomElement);
+                    
+                    const icon = document.createElement('div');
+                    icon.classList.add('sequence-icon', randomElement);
+                    if (isDangerMode) {
+                        icon.classList.add('danger-mode');
+                    }
+                    sequenceDisplay.appendChild(icon);
+                }
+                
+                updateInputIndicator();
+
+                currentSequence.forEach((element, index) => {
+                    setTimeout(() => {
+                        const icon = sequenceDisplay.children[index];
+                        if (icon) icon.classList.add('visible');
+                    }, (index + 1) * 600);
+                });
+                
+                setTimeout(playerTurn, (currentSequenceLength + 1) * 600);
+            }
+            
+            function playerTurn() {
+                isPlayerTurn = true;
+                setControlsEnabled(true); 
+                Array.from(sequenceDisplay.children).forEach(icon => {
+                    icon.classList.remove('visible');
+                });
+                updateInputIndicator();
+            }
+
+            function setControlsEnabled(enabled) {
+                controlButtons.forEach(button => {
+                    button.disabled = !enabled;
+                    button.classList.toggle('disabled', !enabled);
+                });
+                
+                const skillReady = skillGauge >= SKILL_GAUGE_MAX;
+                skillButton.disabled = !(enabled && skillReady);
+                skillButton.classList.toggle('disabled', !(enabled && skillReady));
+            }
+
+            function updateInputIndicator() {
+                inputIndicator.innerHTML = '';
+                for (let i = 0; i < currentSequenceLength; i++) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('indicator-dot');
+                    
+                    if (i < playerInputSequence.length) {
+                        if (playerInputSequence[i] === currentSequence[i]) {
+                            dot.classList.add('success');
+                        } else {
+                            dot.classList.add('fail');
+                        }
+                    } else if (i === playerInputSequence.length && isPlayerTurn) {
+                        dot.classList.add('active');
+                    }
+                    
+                    inputIndicator.appendChild(dot);
+                }
+            }
+
+            async function handlePlayerInput(e) {
+                try {
+                    if (!isAudioReady) { return; }
+                    if (!isPlayerTurn) return;
+
+                    const selectedElement = this.dataset.element; 
+                    if (!selectedElement) { return; }
+
+                    playSE('click');
+                    playerInputSequence.push(selectedElement);
+                    
+                    const currentIndex = playerInputSequence.length - 1;
+                    
+                    if (playerInputSequence[currentIndex] !== currentSequence[currentIndex]) {
+                        showInputFeedback('fail');
+                        updateInputIndicator();
+                        isPlayerTurn = false;
+                        setControlsEnabled(false);
+                        checkSequence();
+                        return;
+                    }
+                    
+                    showInputFeedback('success');
+                    updateInputIndicator();
+
+                    if (playerInputSequence.length === currentSequenceLength) {
+                        isPlayerTurn = false;
+                        setControlsEnabled(false);
+                        checkSequence();
+                    }
+                    
+                } catch (error) { console.error("入力処理エラー:", error, e); }
+            }
+
+            function useSkill() {
+                if (skillGauge < SKILL_GAUGE_MAX || !isPlayerTurn) return;
+
+                playSE('critical'); 
+                skillGauge = 0;
+                
+                isPlayerTurn = false;
+                setControlsEnabled(false); 
+                
+                playVFX('flash-white');
+                playVFX('shake-heavy');
+                
+                const damage = Math.floor((BASE_PLAYER_ATTACK * 3) + (currentStage * 5));
+                
+                setTimeout(() => {
+                    enemyHp = Math.max(0, enemyHp - damage);
+                    playVFX('hit-flash', enemyHpBarContainer);
+                    playVFX('enemy-hit');
+                    updateHealthBars();
+                    updateSkillBar(); 
+                    
+                    setTimeout(() => {
+                        if (enemyHp <= 0) {
+                            winStage();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 1000);
+                }, 400);
+            }
+            
+            function checkSequence() {
+                let isCorrect = playerInputSequence.length === currentSequence.length &&
+                                playerInputSequence.every((el, i) => el === currentSequence[i]);
+
+                let didCritical = false;
+
+                if (isCorrect) {
+                    successfulAttacksInARow++;
+                    skillGauge = Math.min(SKILL_GAUGE_MAX, skillGauge + SKILL_GAIN_SUCCESS);
+                    
+                    let baseDamage = BASE_PLAYER_ATTACK + (currentStage * 2);
+                    let affinityDamage = 0;
+
+                    playerInputSequence.forEach(element => {
+                        const affinity = AFFINITY[element];
+                        if (affinity.strong === enemyElement) affinityDamage += AFFINITY_BONUS;
+                        else if (affinity.weak === enemyElement) affinityDamage += AFFINITY_PENALTY;
+                    });
+
+                    if (successfulAttacksInARow > 0 && successfulAttacksInARow % 3 === 0) {
+                        didCritical = true;
+                        skillGauge = Math.min(SKILL_GAUGE_MAX, skillGauge + SKILL_GAIN_CRITICAL);
+                    }
+                    
+                    let totalDamage = baseDamage + affinityDamage;
+                    if (didCritical) {
+                        totalDamage *= CRITICAL_HIT_MULTIPLIER;
+                    }
+                    totalDamage = Math.max(1, Math.floor(totalDamage));
+
+                    if (didCritical) {
+                        playSE('critical');
+                        playVFX('flash-white');
+                        playVFX('shake-heavy');
+                    } else {
+                        playSE('success');
+                        playVFX('shake-light');
+                    }
+
+                    enemyHp = Math.max(0, enemyHp - totalDamage);
+                    playVFX('hit-flash', enemyHpBarContainer);
+                    playVFX('enemy-hit');
+                    
+                    updateHealthBars();
+                    updateSkillBar();
+                    
+                    setTimeout(() => {
+                        if (enemyHp <= 0) {
+                            winStage();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 1000);
+
+                } else {
+                    playSE('failure');
+                    successfulAttacksInARow = 0;
+                    
+                    playVFX('flash-red');
+                    playVFX('shake-heavy');
+                    
+                    let damage = BASE_ENEMY_ATTACK + Math.floor(currentStage * 1.5);
+                    if (isDangerMode) {
+                        damage *= DANGER_MODE_MULTIPLIER;
+                    }
+                    
+                    playerHp = Math.max(0, playerHp - damage);
+                    playVFX('hit-flash', playerHpBarContainer);
+                    updateHealthBars();
+                    
+                    setTimeout(() => {
+                        if (playerHp <= 0) {
+                            gameOver();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 1000);
+                }
+                
+                updateStats();
+                isDangerMode = false;
+                enemyName.classList.remove('danger-mode');
+            }
+            
+            function winStage() {
+                playSE('win');
+                playVFX('enemy-defeat');
+                currentStage++;
+                successfulAttacksInARow = 0;
+                
+                const recoveryAmount = BASE_PLAYER_RECOVERY + currentStage;
+                playerHp = Math.min(PLAYER_MAX_HP, playerHp + recoveryAmount);
+                
+                setTimeout(() => {
+                    playSE('recovery');
+                    playVFX('flash-green');
+                    updateHealthBars();
+                }, 800);
+
+                setTimeout(() => {
+                     showMessage(
+                        `STAGE ${currentStage - 1} CLEAR!\nHPが ${recoveryAmount} 回復！`,
+                        `STAGE ${currentStage}へ`,
+                        startStage
+                    );
+                }, 1500);
+            }
+            
+            function gameOver() {
+                stopBGM();
+                playSE('gameOver');
+                successfulAttacksInARow = 0;
+                
+                showMessage(
+                    `GAME OVER\n(STAGE ${currentStage}で敗北)`,
+                    'リトライ',
+                    resetGame
+                );
+            }
+            
+            function resetGame() {
+                sequenceDisplay.innerHTML = '';
+                inputIndicator.innerHTML = '';
+                initGame();
+            }
+
+            // === 6. イベントリスナーの設定 ===
+            controlButtons.forEach(button => {
+                button.addEventListener('click', handlePlayerInput);
+            });
+            
+            skillButton.addEventListener('click', useSkill);
+            
+            // === 7. ゲーム開始 ===
+            showMessage(
+                "エレメント・シーケンス・バトル", 
+                "ゲームスタート", 
+                async () => {
+                    if (!isAudioReady) {
+                        try {
+                            await Tone.start();
+                            isAudioReady = true;
+                            console.log("Audio ready.");
+                        } catch (e) {
+                            console.error("Audio contextの開始に失敗:", e);
+                        }
+                    }
+                    initGame();
+                }
+            );
+
+        });
+    </script>
+</body>
+</html>
