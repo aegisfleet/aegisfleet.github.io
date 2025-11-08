@@ -357,57 +357,52 @@
             justify-content: center;
             align-items: center;
             padding: 20px 20px 10px 20px;
-            /* ★変更: ポップアップの基準点にするため */
             position: relative; 
             min-height: 0; 
         }
 
-        /* ★新規: ダメージポップアップ */
+        /* ----- ダメージポップアップ ----- */
         #damage-popup-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* 下の要素をクリックできるように */
-            z-index: 60; /* 敵やシーケンスより手前 */
-            overflow: hidden; /* コンテナからはみ出ないように */
+            pointer-events: none;
+            z-index: 60;
+            overflow: hidden;
         }
         .damage-popup {
             position: absolute;
-            font-size: 2.0rem; /* 基準の大きさ */
+            font-size: 2.0rem;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
             opacity: 0;
-            /* アニメーション (JS側でshowDamagePopup関数で設定) */
             animation: float-up-and-fade 1.2s ease-out forwards;
-            /* 左右の位置はJSで設定 */
         }
-
-        /* 敵へのダメージ (白) */
         .damage-popup-enemy {
             color: white;
-            top: 35%; /* 敵の真上あたり */
+            top: 35%; 
         }
-        /* 敵へのクリティカルダメージ (黄色) */
         .damage-popup-enemy.critical {
             color: var(--color-skill);
-            font-size: 2.8rem; /* クリティカルは大きく */
+            font-size: 2.8rem;
             animation-duration: 1.5s;
         }
-        /* プレイヤーへのダメージ (赤) */
+        
+        /* ★変更: プレイヤーへのダメージ (赤) */
         .damage-popup-player {
             color: var(--color-hp-enemy);
-            top: 70%; /* プレイヤーHPバーの真上あたり */
+            top: 85%; /* 70% -> 85% (より下へ) */
         }
-        /* 回復 (緑) */
+        /* ★変更: 回復 (緑) */
         .damage-popup-recovery {
             color: var(--color-hp-player);
-            top: 70%;
+            top: 85%; /* 70% -> 85% (より下へ) */
             font-size: 1.8rem;
             animation-duration: 1.5s;
         }
-        /* ポップアップアニメーション */
+        
         @keyframes float-up-and-fade {
             0% {
                 transform: translateY(0) scale(0.8);
@@ -417,11 +412,11 @@
                 opacity: 1;
             }
             100% {
-                transform: translateY(-80px) scale(1.2); /* 80px浮き上がる */
+                transform: translateY(-80px) scale(1.2);
                 opacity: 0;
             }
         }
-        /* ★ここまで新規 */
+        /* ----- ポップアップここまで ----- */
 
 
         #enemy-display {
@@ -558,7 +553,7 @@
             font-size: 3rem;
             font-weight: bold;
             opacity: 0;
-            z-index: 50; /* ポップアップより手前 */
+            z-index: 50;
             pointer-events: none;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
             text-shadow: 0 3px 6px rgba(0,0,0,0.5);
@@ -659,7 +654,6 @@
 
         <div class="battle-area">
             <div id="damage-popup-container"></div>
-
             <div id="enemy-display">
                 <div id="enemy-visual">💧</div>
                 <div id="enemy-info">
@@ -719,38 +713,29 @@
             const gameContainer = document.getElementById('game-container');
             const vfxOverlay = document.getElementById('vfx-overlay');
             const particlesBg = document.getElementById('particles-bg');
-            
             const enemyHpBarContainer = document.getElementById('enemy-hp');
             const enemyHpBar = document.querySelector('#enemy-hp .hp-fill');
             const enemyHpText = document.getElementById('enemy-hp-text');
             const enemyName = document.getElementById('enemy-name');
             const enemyElementIcon = document.getElementById('enemy-element-icon');
             const enemyVisual = document.getElementById('enemy-visual');
-            
             const stageDisplay = document.getElementById('stage-display');
             const sequenceDisplay = document.getElementById('sequence-display');
             const inputIndicator = document.getElementById('input-indicator');
             const inputFeedback = document.getElementById('input-feedback');
-            
-            // ★追加: ダメージポップアップコンテナ
             const damagePopupContainer = document.getElementById('damage-popup-container');
-
             const playerHpBarContainer = document.getElementById('player-hp');
             const playerHpBar = document.querySelector('#player-hp .hp-fill');
             const playerHpText = document.getElementById('player-hp-text');
             const comboDisplay = document.getElementById('combo-display');
-            
             const skillBarContainer = document.getElementById('skill-bar'); 
             const skillBar = document.querySelector('#skill-bar .skill-fill');
             const skillButton = document.getElementById('skill-button');
-
             const controlButtons = document.querySelectorAll('.control-button[data-element]');
-
             const messageOverlay = document.getElementById('message-overlay');
             const messageText = document.getElementById('message-text');
             const messageContent = document.getElementById('message-content'); 
             const messageButtonsContainer = document.getElementById('message-buttons'); 
-
             const startButton = document.getElementById('start-button');
             const howToPlayButton = document.getElementById('how-to-play-button');
             const messageOkButton = document.getElementById('message-ok-button');
@@ -764,37 +749,31 @@
                 wind:  { color: 'var(--color-wind)',  icon: '🍃' }
             };
             const ELEMENTS = Object.keys(ATTRIBUTES); 
-
             const PLAYER_MAX_HP = 100;
             const BASE_ENEMY_HP = 50;
             const BASE_PLAYER_ATTACK = 20;
             const BASE_ENEMY_ATTACK = 10;
             const CRITICAL_HIT_MULTIPLIER = 2.5;
             const BASE_PLAYER_RECOVERY = 15;
-            
             const SKILL_GAUGE_MAX_PER_LEVEL = 10;
             const MAX_SKILL_LEVEL = 3;
             const SKILL_GAUGE_MAX_TOTAL = SKILL_GAUGE_MAX_PER_LEVEL * MAX_SKILL_LEVEL;
-
             const SKILL_GAIN_SUCCESS = 1;
             const SKILL_GAIN_CRITICAL = 2;
             const DANGER_MODE_CHANCE = 0.3;
             const DANGER_MODE_MULTIPLIER = 2.0;
             const AFFINITY_BONUS = 8;
             const AFFINITY_PENALTY = -5;
-            
             const AFFINITY = {
                 fire:  { weak: 'water', strong: 'wind' },
                 water: { weak: 'earth', strong: 'fire' },
                 earth: { weak: 'wind',  strong: 'water' },
                 wind:  { weak: 'fire',  strong: 'earth' }
             };
-            
             const ENEMY_NAMES = [
                 'スライム', 'ゴブリン', 'コボルト', 'オーク', 'スケルトン', 
                 'リザードマン', 'ゴーレム', 'キメラ', 'ミノタウロス', 'ドラゴン'
             ];
-            
             const ENEMY_VISUALS = {
                 'スライム': '💧', 'ゴブリン': '👺', 'コボルト': '🐶', 'オーク': '🐷',
                 'スケルトン': '💀', 'リザードマン': '🦎', 'ゴーレム': '🗿',
@@ -802,7 +781,6 @@
             };
             const DEFAULT_ENEMY_VISUAL = '👻';
             const PARTICLE_COUNT = 20;
-
             const HOW_TO_PLAY_TEXT = `
                 <h3>ルール</h3>
                 <p>敵が表示する「エレメント・シーケンス」（アイコンの順番）を記憶し、同じ順番でボタンを押して攻撃します。</p>
@@ -847,7 +825,6 @@
             let bgmStepIndex = 0;
             
             // === 4. オーディオ (Tone.js) ===
-            // (BGM/SEのコードは変更なし ... )
             const BGM_PATTERNS = {
                 stage1: {
                     melody: ['C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3'],
@@ -966,36 +943,23 @@
                     }
                 } catch (e) { console.error("SE再生エラー:", e); }
             }
-            // ( ... BGM/SEコード終わり ... )
-
 
             // === 5. ゲームロジック ===
-
-            /**
-             * ★新規: ダメージポップアップ表示
-             * @param {number} amount - ダメージ/回復量
-             * @param {'enemy' | 'player' | 'recovery'} target - 対象
-             * @param {boolean} [isCritical=false] - クリティカルヒットか
-             */
             function showDamagePopup(amount, target, isCritical = false) {
                 const popup = document.createElement('span');
                 popup.className = 'damage-popup';
                 
-                // ターゲットに応じたクラスとテキストを設定
                 if (target === 'enemy') {
                     popup.classList.add('damage-popup-enemy');
                     popup.textContent = `-${amount}`;
                     if (isCritical) {
                         popup.classList.add('critical');
                     }
-                    // 複数のポップアップが重ならないように、左右に少しずらす (40%〜60% の範囲)
                     popup.style.left = `${Math.random() * 20 + 40}%`; 
-
                 } else if (target === 'player') {
                     popup.classList.add('damage-popup-player');
                     popup.textContent = `-${amount}`;
                     popup.style.left = `${Math.random() * 20 + 40}%`;
-
                 } else if (target === 'recovery') {
                     popup.classList.add('damage-popup-recovery');
                     popup.textContent = `+${amount}`;
@@ -1004,14 +968,12 @@
 
                 damagePopupContainer.appendChild(popup);
 
-                // アニメーション終了後に要素を削除
                 popup.addEventListener('animationend', () => {
                     if (popup.parentNode === damagePopupContainer) {
                         damagePopupContainer.removeChild(popup);
                     }
                 });
             }
-
 
             function calculateSkillDamage(level) {
                 if (level <= 0) return 0;
@@ -1349,9 +1311,6 @@
                 } catch (error) { console.error("入力処理エラー:", error, e); }
             }
 
-            /**
-             * ★変更: スキル使用処理 (ダメージポップアップ追加)
-             */
             function useSkill() {
                 const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
                 if (currentSkillLevel < 1 || !isPlayerTurn) return;
@@ -1361,10 +1320,8 @@
                 setControlsEnabled(false); 
                 playVFX('flash-white');
                 playVFX(currentSkillLevel === MAX_SKILL_LEVEL ? 'shake-heavy' : 'shake-light');
-
                 const damage = calculateSkillDamage(currentSkillLevel);
                 
-                // ★追加: スキルダメージポップアップ (常にクリティカル扱い)
                 showDamagePopup(damage, 'enemy', true);
 
                 setTimeout(() => {
@@ -1380,9 +1337,6 @@
                 }, 400);
             }
             
-            /**
-             * ★変更: シーケンスチェック (ダメージポップアップ追加)
-             */
             function checkSequence() {
                 let isCorrect = playerInputSequence.length === currentSequence.length &&
                                 playerInputSequence.every((el, i) => el === currentSequence[i]);
@@ -1409,7 +1363,6 @@
                     if (didCritical) totalDamage *= CRITICAL_HIT_MULTIPLIER;
                     totalDamage = Math.max(1, Math.floor(totalDamage));
 
-                    // ★追加: 敵へのダメージポップアップ
                     showDamagePopup(totalDamage, 'enemy', didCritical);
 
                     if (didCritical) {
@@ -1441,9 +1394,8 @@
                     
                     let damage = BASE_ENEMY_ATTACK + Math.floor(currentStage * 1.5);
                     if (isDangerMode) damage *= DANGER_MODE_MULTIPLIER;
-                    damage = Math.floor(damage); // 整数化
+                    damage = Math.floor(damage); 
 
-                    // ★追加: プレイヤーへのダメージポップアップ
                     showDamagePopup(damage, 'player');
                     
                     playerHp = Math.max(0, playerHp - damage);
@@ -1460,9 +1412,6 @@
                 enemyName.classList.remove('danger-mode');
             }
             
-            /**
-             * ★変更: ステージ勝利 (回復ポップアップ追加)
-             */
             function winStage() {
                 playSE('win');
                 playVFX('enemy-defeat');
@@ -1476,7 +1425,6 @@
                     playSE('recovery');
                     playVFX('flash-green');
                     
-                    // ★追加: 回復ポップアップ
                     showDamagePopup(recoveryAmount, 'recovery');
                     
                     updateHealthBars();
