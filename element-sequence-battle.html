@@ -19,8 +19,8 @@
             --color-skill: #F1C40F;
             --color-skill-dark: #f39c12;
             
-            --color-bg-start: #3a506b; /* 背景グラデーション開始 */
-            --color-bg-end: #2C3E50; /* 背景グラデーション終了 */
+            --color-bg-start: #3a506b;
+            --color-bg-end: #2C3E50;
             --color-text: #ECF0F1;
             --color-border: #34495E;
             --color-border-light: #4a6572;
@@ -45,8 +45,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* ★変更: vh -> dvh (Dynamic Viewport Height) */
-            /* ブラウザUI(アドレスバー等)に応じて高さを動的に調整 */
             height: 100dvh; 
             overflow: hidden;
             user-select: none;
@@ -82,7 +80,7 @@
         #game-container {
             width: 100%;
             max-width: 400px;
-            height: 100%; /* 親(body)の 100dvh を継承 */
+            height: 100%;
             display: flex;
             flex-direction: column;
             border: 2px solid var(--color-border);
@@ -93,7 +91,7 @@
             z-index: 10;
         }
 
-        /* ----- VFX用オーバーレイ (フラッシュエフェクト用) ----- */
+        /* ----- VFX用オーバーレイ ----- */
         #vfx-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -102,7 +100,6 @@
             opacity: 0;
             background-color: white;
         }
-        /* アニメーションクラス */
         .flash-red { animation: flash-red 0.3s ease-out; }
         .flash-white { animation: flash-white 0.4s ease-out; }
         .flash-green { animation: flash-green 0.4s ease-out; }
@@ -128,13 +125,13 @@
         }
 
 
-        /* ----- ★変更: メッセージエリア ----- */
+        /* ----- メッセージエリア ----- */
         #message-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.85);
             display: flex;
-            flex-direction: column; /* ★変更 (縦並び) */
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
@@ -151,30 +148,27 @@
         #message-text {
             font-size: 1.8rem;
             font-weight: bold;
-            margin-bottom: 20px; /* ★変更 (マージン調整) */
+            margin-bottom: 20px;
             line-height: 1.4;
             white-space: pre-wrap;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            flex-shrink: 0; /* ★追加 */
+            flex-shrink: 0;
         }
-
-        /* ★新規: メッセージコンテンツエリア (説明文用) */
         #message-content {
             width: 100%;
             max-width: 380px; 
-            max-height: 60vh; /* 高さを制限 */
-            overflow-y: auto; /* スクロール可能に */
+            max-height: 60vh;
+            overflow-y: auto;
             background-color: rgba(0,0,0,0.3);
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
             font-size: 0.95rem;
             line-height: 1.6;
-            text-align: left; /* 説明文は左揃え */
-            display: none; /* 通常は非表示 */
+            text-align: left;
+            display: none;
             box-sizing: border-box;
         }
-        /* 説明文内のスタイル */
         #message-content h3 {
             color: var(--color-skill);
             margin-top: 10px;
@@ -185,6 +179,8 @@
         #message-content p { margin: 5px 0 10px 0; }
         #message-content ul { padding-left: 20px; margin: 5px 0 10px 0; }
         #message-content li { margin-bottom: 5px; }
+        
+        /* 遊び方説明文のアイコン (色のみ) */
         #message-content .element-icon {
             display: inline-block;
             width: 1em;
@@ -194,24 +190,21 @@
             vertical-align: -0.15em;
             border: 1px solid rgba(255,255,255,0.5);
         }
+        /* JS側で ATTRIBUTES から色を引くため、ここでは色定義を削除 */
 
-        /* ★新規: ボタンコンテナ */
         #message-buttons {
             display: flex;
-            flex-direction: column; /* 基本は縦並び */
+            flex-direction: column;
             gap: 15px;
             width: 100%;
             max-width: 300px;
             align-items: center; 
             flex-shrink: 0;
         }
-        /* スタート画面の時だけ横並びにするクラス */
         #message-buttons.start-layout {
-            flex-direction: row; /* 横並び */
+            flex-direction: row;
             justify-content: center;
         }
-
-        /* ★変更: #message-button -> .message-btn (汎用クラス化) */
         .message-btn {
             font-size: 1.2rem;
             padding: 12px 25px;
@@ -222,21 +215,17 @@
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.1s, box-shadow 0.1s;
-            width: 100%; /* コンテナ幅に合わせる */
+            width: 100%;
             box-sizing: border-box; 
         }
         .message-btn:active {
             transform: translateY(2px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        
-        /* ★追加: スタート画面の横並びボタンの調整 */
         #message-buttons.start-layout .message-btn {
-            width: auto; /* 横並び時は自動幅 */
+            width: auto;
             min-width: 130px;
         }
-
-        /* ★追加: 「遊び方」「戻る」ボタンの色 */
         #how-to-play-button, #back-to-title-button {
             background-image: linear-gradient(to bottom, var(--color-water), var(--color-water-dark));
         }
@@ -248,10 +237,8 @@
             background-color: var(--color-border);
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             z-index: 20;
-            /* 高さが固定のエリア (flex-shrink: 0) */
             flex-shrink: 0;
         }
-
         .status-bar {
             width: 100%;
             background-color: var(--color-hp-bg);
@@ -274,17 +261,10 @@
             0% { opacity: 0.8; }
             100% { opacity: 0; }
         }
-
         .hp-fill {
             height: 100%;
             transition: width 0.5s ease-out;
             border-radius: 6px 0 0 6px;
-            background-image: linear-gradient(to bottom, 
-                rgba(255,255,255,0.3), 
-                rgba(255,255,255,0.05) 50%, 
-                rgba(0,0,0,0.1) 51%, 
-                rgba(0,0,0,0.2) 100%
-            );
         }
         #player-hp .hp-fill { 
             background-color: var(--color-hp-player);
@@ -302,7 +282,6 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-
         .status-text {
             display: flex;
             justify-content: space-between;
@@ -311,7 +290,6 @@
             font-size: 0.9rem;
             font-weight: bold;
         }
-        
         #player-stats {
             display: flex;
             justify-content: space-between;
@@ -330,26 +308,21 @@
             color: #3498DB;
         }
 
-        /* ----- ★変更: スキルバー ----- */
+        /* ----- スキルバー ----- */
         #skill-bar-wrapper {
             width: 100%;
-            position: relative; /* 区切り線配置のため */
+            position: relative;
             margin-top: 10px;
         }
-
         #skill-bar {
-            /* width: 100%; */ /* wrapperが担当 */
             background-color: var(--color-hp-bg);
             height: 15px;
             border-radius: 4px;
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.2);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-            /* margin-top: 10px; */ /* wrapperが担当 */
-            position: relative; /* フィルと区切り線のため */
+            position: relative;
         }
-        
-        /* ★新規: スキル区切り線 */
         .skill-divider {
             position: absolute;
             top: 0;
@@ -357,16 +330,15 @@
             width: 2px;
             background-color: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 2px rgba(0,0,0,0.5);
-            z-index: 10; /* フィルより手前 */
+            z-index: 10;
         }
-
         #skill-bar .skill-fill {
             height: 100%;
             width: 0%;
             background-image: linear-gradient(to bottom, var(--color-skill), var(--color-skill-dark));
             transition: width 0.3s ease-out;
             border-radius: 4px 0 0 4px;
-            position: relative; /* z-indexのため */
+            position: relative;
             z-index: 5;
         }
         #skill-bar.skill-ready .skill-fill {
@@ -381,38 +353,33 @@
 
         /* ----- バトルエリア ----- */
         .battle-area {
-            flex-grow: 1; /* ★可変領域 */
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px 20px 10px 20px; /* パディングを少し調整 */
+            padding: 20px 20px 10px 20px;
             position: relative;
-            /* ★追加: 縦幅が狭い時に縮小できるように */
             min-height: 0; 
         }
-
         #enemy-display {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
-            min-height: 100px; /* 最小高さを少し詰める */
+            min-height: 100px;
         }
-        
         #enemy-visual {
-            font-size: 4.5rem; /* 少し小さく */
+            font-size: 4.5rem;
             margin-bottom: 10px;
             animation: enemy-idle 2s infinite ease-in-out;
             transform-origin: bottom center;
         }
         @keyframes enemy-idle {
             0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-8px) scale(1.03); } /* 動きを少し小さく */
+            50% { transform: translateY(-8px) scale(1.03); }
         }
-        
-        /* 敵の登場・ヒット・敗北アニメーション */
         #enemy-visual.appear { animation: enemy-appear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes enemy-appear {
             0% { transform: scale(0.2) translateY(50px); opacity: 0; }
@@ -429,19 +396,26 @@
             0% { transform: scale(1) rotate(0deg); opacity: 1; }
             100% { transform: scale(0.1) rotate(360deg); opacity: 0; }
         }
-
         #enemy-info {
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
+        /* ★変更: 敵属性アイコン (JSでアイコン挿入) */
         #enemy-element-icon {
-            width: 20px;
-            height: 20px;
+            width: 24px; /* 少し大きく */
+            height: 24px; /* 少し大きく */
             border-radius: 50%;
             margin-right: 10px;
             border: 2px solid var(--color-text);
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            /* ★追加: アイコンを中央に配置 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px; /* アイコンのサイズ */
+            line-height: 1; /* 中央揃えのため */
         }
         #enemy-name {
             font-size: 1.5rem;
@@ -459,33 +433,38 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-
         #sequence-display {
             display: flex;
-            margin-bottom: 15px; /* 少し詰める */
-            height: 50px; /* 少し詰める */
+            margin-bottom: 15px;
+            height: 50px;
             align-items: center;
         }
 
+        /* ★変更: シーケンスアイコン (JSでアイコン挿入) */
         .sequence-icon {
-            width: 36px; /* 少し小さく */
-            height: 36px; /* 少し小さく */
+            width: 38px; /* 少し大きく */
+            height: 38px; /* 少し大きく */
             border-radius: 50%;
-            margin: 0 6px; /* 少し詰める */
+            margin: 0 6px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.2s, opacity 0.2s, border 0.2s;
             transform: scale(0);
             opacity: 0;
             border: 3px solid transparent;
+            /* ★追加: アイコンを中央に配置 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px; /* アイコンのサイズ */
+            line-height: 1; /* 中央揃えのため */
+            color: rgba(0,0,0,0.6); /* アイコンの影 */
+            text-shadow: 0 1px 1px rgba(255,255,255,0.3);
         }
         .sequence-icon.danger-mode {
             border-color: var(--color-hp-enemy);
         }
 
-        .fire { background-color: var(--color-fire); }
-        .water { background-color: var(--color-water); }
-        .earth { background-color: var(--color-earth); }
-        .wind { background-color: var(--color-wind); }
+        /* 属性色のクラス (火、水など) はJS側で直接色指定するため削除 */
         
         .sequence-icon.visible {
             transform: scale(1);
@@ -497,12 +476,11 @@
             70% { transform: scale(1.1); }
             100% { transform: scale(1); opacity: 1; }
         }
-
         #input-indicator {
             display: flex;
             justify-content: center;
             height: 15px;
-            margin-bottom: 15px; /* 少し詰める */
+            margin-bottom: 15px;
         }
         .indicator-dot {
             width: 12px;
@@ -519,7 +497,6 @@
         .indicator-dot.success { background-color: var(--color-feedback-success); }
         .indicator-dot.fail { background-color: var(--color-feedback-fail); }
 
-        /* ----- 入力フィードバック（テロップ） ----- */
         #input-feedback {
             position: absolute;
             top: 50%;
@@ -552,13 +529,14 @@
             background-color: var(--color-border);
             border-top: 2px solid var(--color-border-light);
             z-index: 20;
-            /* 高さが固定のエリア (flex-shrink: 0) */
             flex-shrink: 0;
         }
 
+        /* ★変更: 操作ボタン (アイコン表示) */
         .control-button {
-            padding: 18px 0; /* 少し詰める */
-            font-size: 1.3rem; /* 少し小さく */
+            padding: 18px 0;
+            /* ★変更: アイコンを大きく表示 */
+            font-size: 2rem; 
             font-weight: bold;
             border: none;
             border-radius: 10px;
@@ -567,7 +545,8 @@
             box-shadow: 0 6px 0 rgba(0,0,0,0.3), 0 8px 10px rgba(0,0,0,0.2);
             transition: transform 0.08s, box-shadow 0.08s, background-image 0.2s, opacity 0.2s, filter 0.2s;
             -webkit-tap-highlight-color: transparent;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            /* ★変更: アイコンの影 */
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
         .control-button:hover:not(:disabled) {
             filter: brightness(1.1);
@@ -576,7 +555,6 @@
             transform: translateY(4px) scale(0.98);
             box-shadow: 0 2px 0 rgba(0,0,0,0.3), 0 4px 5px rgba(0,0,0,0.2);
         }
-        
         .control-button.disabled {
             opacity: 0.5;
             pointer-events: none;
@@ -594,8 +572,9 @@
             grid-column: 1 / -1;
             background-image: linear-gradient(to bottom, var(--color-skill), var(--color-skill-dark));
             font-size: 1.2rem;
-            padding: 14px 0; /* 少し詰める */
-            margin-bottom: 0px; /* 詰める */
+            padding: 14px 0;
+            margin-bottom: 0px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4); /* スキルボタンはテキストなので影を戻す */
         }
         #skill-button.disabled {
             background-image: linear-gradient(to bottom, #95a5a6, #7f8c8d);
@@ -633,7 +612,7 @@
             <div id="enemy-display">
                 <div id="enemy-visual">💧</div>
                 <div id="enemy-info">
-                    <div id="enemy-element-icon"></div>
+                    <div id="enemy-element-icon"></div> 
                     <h2 id="enemy-name">スライム</h2>
                 </div>
             </div>
@@ -663,10 +642,10 @@
 
         <div class="controls-area" id="controls">
             <button class="control-button" id="skill-button" disabled>スキル: 強攻撃 (0)</button>
-            <button class="control-button" id="btn-fire" data-element="fire">火</button>
-            <button class="control-button" id="btn-water" data-element="water">水</button>
-            <button class="control-button" id="btn-earth" data-element="earth">地</button>
-            <button class="control-button" id="btn-wind" data-element="wind">風</button>
+            <button class="control-button" id="btn-fire" data-element="fire">🔥</button>
+            <button class="control-button" id="btn-water" data-element="water">💧</button>
+            <button class="control-button" id="btn-earth" data-element="earth">⛰️</button>
+            <button class="control-button" id="btn-wind" data-element="wind">🍃</button>
         </div>
 
         <div id="message-overlay">
@@ -678,9 +657,7 @@
             <div id="message-buttons">
                 <button id="start-button" class="message-btn">ゲーム<br>スタート</button>
                 <button id="how-to-play-button" class="message-btn">遊び方</button>
-                
                 <button id="message-ok-button" class="message-btn" style="display: none;">OK</button>
-                
                 <button id="back-to-title-button" class="message-btn" style="display: none;">戻る</button>
             </div>
         </div>
@@ -729,7 +706,17 @@
             const backToTitleButton = document.getElementById('back-to-title-button');
             
             // === 2. ゲーム設定 (定数) ===
-            const ELEMENTS = ['fire', 'water', 'earth', 'wind'];
+
+            // ★変更: 属性の定義 (色とアイコン)
+            const ATTRIBUTES = {
+                fire:  { color: 'var(--color-fire)',  icon: '🔥' },
+                water: { color: 'var(--color-water)', icon: '💧' },
+                earth: { color: 'var(--color-earth)', icon: '⛰️' },
+                wind:  { color: 'var(--color-wind)',  icon: '🍃' }
+            };
+            // ★追加: 属性名のリスト (ランダム生成用)
+            const ELEMENTS = Object.keys(ATTRIBUTES); // ['fire', 'water', 'earth', 'wind']
+
             const PLAYER_MAX_HP = 100;
             const BASE_ENEMY_HP = 50;
             const BASE_PLAYER_ATTACK = 20;
@@ -768,9 +755,10 @@
             const DEFAULT_ENEMY_VISUAL = '👻';
             const PARTICLE_COUNT = 20;
 
+            // ★変更: 遊び方のテキスト (アイコン表示)
             const HOW_TO_PLAY_TEXT = `
                 <h3>ルール</h3>
-                <p>敵が表示する「エレメント・シーケンス」（色の順番）を記憶し、同じ順番でボタンを押して攻撃します。</p>
+                <p>敵が表示する「エレメント・シーケンス」（アイコンの順番）を記憶し、同じ順番でボタンを押して攻撃します。</p>
                 
                 <h3>攻撃</h3>
                 <ul>
@@ -780,12 +768,12 @@
                 </ul>
 
                 <h3>属性</h3>
-                <p>敵には属性（<span class="element-icon fire"></span><span class="element-icon water"></span><span class="element-icon earth"></span><span class="element-icon wind"></span>）があります。</p>
+                <p>敵には属性（🔥💧⛰️🍃）があります。</p>
                 <ul>
-                    <li>火は風に強く、水に弱い</li>
-                    <li>水は火に強く、地に弱い</li>
-                    <li>地は水に強く、風に弱い</li>
-                    <li>風は地に強く、火に弱い</li>
+                    <li>🔥火は 🍃風に強く、💧水に弱い</li>
+                    <li>💧水は 🔥火に強く、⛰️地に弱い</li>
+                    <li>⛰️地は 💧水に強く、🍃風に弱い</li>
+                    <li>🍃風は ⛰️地に強く、🔥火に弱い</li>
                 </ul>
                 <p>シーケンス入力時に敵の<b>弱点属性</b>を多く入力すると、ダメージがアップします。</p>
                 
@@ -822,7 +810,6 @@
             let bgmStepIndex = 0;
             
             // === 4. オーディオ (Tone.js) ===
-
             const BGM_PATTERNS = {
                 stage1: {
                     melody: ['C4', 'Eb4', 'G4', 'F4', 'Eb4', 'D4', 'C4', 'G3'],
@@ -840,58 +827,42 @@
                     bpm: 130,
                 }
             };
-
             let currentBgmPattern = BGM_PATTERNS.stage1;
-            
             let mainVol = new Tone.Volume(-12).toDestination();
             const bgmFilter = new Tone.AutoFilter("4n").start();
             const bgmDelay = new Tone.FeedbackDelay("8n", 0.3);
-            
             const bgmSynth = new Tone.PolySynth(Tone.Synth, {
                 polyphony: 4, volume: -10, 
                 oscillator: { type: 'fatsawtooth', count: 3, spread: 20 },
                 envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 },
             }).chain(bgmFilter, bgmDelay, mainVol);
-
             const baseSynth = new Tone.Synth({
                 volume: -6,
                 oscillator: { type: "fmsine", modulationType: "triangle", harmonicity: 0.5 },
                 envelope: { attack: 0.02, decay: 0.1, sustain: 0.2, release: 0.5 }
             }).chain(mainVol);
-
             const drumSynths = {
                 kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: 'exponential' } }).connect(mainVol),
                 snare: new Tone.NoiseSynth({ volume: -5, noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).connect(mainVol),
                 hihat: new Tone.MetalSynth({ volume: -15, frequency: 300, envelope: { attack: 0.001, decay: 0.1, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).connect(mainVol)
             };
-            
             const masterLoop = new Tone.Loop(time => {
                 const melodyPattern = currentBgmPattern.melody;
                 const basePattern = currentBgmPattern.base;
-                
                 const step = bgmStepIndex % 16; 
-                
                 if (step % 2 === 0) {
                     const note = melodyPattern[Math.floor(step / 2) % melodyPattern.length];
-                    if (note) {
-                        bgmSynth.triggerAttackRelease(note, '16n', time);
-                    }
+                    if (note) { bgmSynth.triggerAttackRelease(note, '16n', time); }
                 }
-                
                 if (step % 4 === 0) {
                     const note = basePattern[Math.floor(step / 4) % basePattern.length];
-                    if (note) {
-                        baseSynth.triggerAttackRelease(note, '8n', time);
-                    }
+                    if (note) { baseSynth.triggerAttackRelease(note, '8n', time); }
                 }
-
                 if (step % 4 === 0) { drumSynths.kick.triggerAttackRelease('C2', '8n', time); }
                 if (step % 8 === 4) { drumSynths.snare.triggerAttackRelease('8n', time); }
                 if (step % 2 === 0) { drumSynths.hihat.triggerAttackRelease('16n', time, 0.6); }
-
                 bgmStepIndex++;
             }, '16n');
-
             const seSynths = {
                 click: new Tone.PluckSynth({ volume: -5, attackNoise: 0.5, dampening: 4000, resonance: 0.8 }).connect(mainVol),
                 sequence: new Tone.Synth({ volume: -10, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).connect(mainVol),
@@ -910,21 +881,15 @@
                 if (!isAudioReady) return;
                 try {
                     let newPattern = BGM_PATTERNS.stage1;
-                    if (currentStage >= 10) {
-                        newPattern = BGM_PATTERNS.stage10;
-                    } else if (currentStage >= 5) {
-                        newPattern = BGM_PATTERNS.stage5;
-                    }
+                    if (currentStage >= 10) newPattern = BGM_PATTERNS.stage10;
+                    else if (currentStage >= 5) newPattern = BGM_PATTERNS.stage5;
 
                     if (currentBgmPattern !== newPattern || Tone.Transport.bpm.value !== newPattern.bpm) {
                         currentBgmPattern = newPattern;
                         Tone.Transport.bpm.rampTo(currentBgmPattern.bpm + (currentStage - 1) * 0.5, 1);
                         bgmStepIndex = 0;
                     }
-                    
-                    if (Tone.Transport.state !== "started") {
-                        await Tone.Transport.start();
-                    }
+                    if (Tone.Transport.state !== "started") await Tone.Transport.start();
                     if (masterLoop.state !== "started") {
                         bgmStepIndex = 0;
                         masterLoop.start(0);
@@ -932,22 +897,12 @@
                 } catch (e) { console.warn("BGM開始エラー:", e); }
             }
 
-            /**
-             * BGM停止 (修正箇所)
-             */
             function stopBGM() {
                 if (!isAudioReady) return;
                 masterLoop.stop(0);
                 Tone.Transport.stop();
-                
-                // シンセの音を止める (音が残る場合があるため)
-                bgmSynth.releaseAll(); // これはOK (PolySynth)
-                
-                // ★★★ 修正点 ★★★
-                // baseSynth.releaseAll(); // エラーの原因 (baseSynthはTone.Synth)
-                // この行を削除。Tone.Transport.stop()でスケジュールは停止される。
-                // もしベース音が残る場合は、代わりに以下を使用する
-                // baseSynth.triggerRelease(Tone.now()); 
+                bgmSynth.releaseAll();
+                // baseSynth.releaseAll(); // 修正済み (TypeError防止のため削除)
             }
 
             function playSE(type) {
@@ -955,15 +910,9 @@
                 try {
                     const now = Tone.now();
                     switch(type) {
-                        case 'click': 
-                            seSynths.click.triggerAttack((Math.random() * 200 + 400), now); 
-                            break;
-                        case 'uiClick':
-                            seSynths.uiClick.triggerAttackRelease('C5', '8n', now);
-                            break;
-                        case 'sequence':
-                            seSynths.sequence.triggerAttackRelease('A4', '16n', now);
-                            break;
+                        case 'click': seSynths.click.triggerAttack((Math.random() * 200 + 400), now); break;
+                        case 'uiClick': seSynths.uiClick.triggerAttackRelease('C5', '8n', now); break;
+                        case 'sequence': seSynths.sequence.triggerAttackRelease('A4', '16n', now); break;
                         case 'danger':
                             seSynths.danger.triggerAttackRelease('G#3', '4n', now);
                             seSynths.danger.triggerAttackRelease('G3', '4n', now + 0.15);
@@ -972,25 +921,15 @@
                             seSynths.skillUp.triggerAttackRelease('C5', '8n', now);
                             seSynths.skillUp.triggerAttackRelease('G5', '8n', now + 0.1);
                             break;
-                        case 'success': 
-                            seSynths.success.triggerAttackRelease('C5', '8n', now); 
-                            break;
-                        case 'failure': 
-                            seSynths.failure.triggerAttackRelease('A2', '4n', now); 
-                            break;
-                        case 'critical': 
-                            seSynths.critical.triggerAttackRelease(['E5', 'G5', 'C6'], '4n', now);
-                            break;
-                        case 'recovery':
-                            seSynths.recovery.triggerAttackRelease(['E4', 'G4', 'C5'], '4n', now);
-                            break;
+                        case 'success': seSynths.success.triggerAttackRelease('C5', '8n', now); break;
+                        case 'failure': seSynths.failure.triggerAttackRelease('A2', '4n', now); break;
+                        case 'critical': seSynths.critical.triggerAttackRelease(['E5', 'G5', 'C6'], '4n', now); break;
+                        case 'recovery': seSynths.recovery.triggerAttackRelease(['E4', 'G4', 'C5'], '4n', now); break;
                         case 'win':
                             seSynths.win.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '2n', now);
                             seSynths.win.triggerAttackRelease(['E4', 'G4', 'C5', 'E5'], '2n', now + 0.2);
                             break;
-                        case 'gameOver':
-                            seSynths.gameOver.triggerAttackRelease(['A3', 'C#3', 'E2'], '1n', now);
-                            break;
+                        case 'gameOver': seSynths.gameOver.triggerAttackRelease(['A3', 'C#3', 'E2'], '1n', now); break;
                     }
                 } catch (e) { console.error("SE再生エラー:", e); }
             }
@@ -1001,8 +940,7 @@
                 const skillMultipliers = [0, 3.0, 6.5, 11.0];
                 const multiplier = skillMultipliers[Math.min(level, MAX_SKILL_LEVEL)];
                 const stageBonus = (currentStage * 5) * level;
-                const damage = Math.floor((BASE_PLAYER_ATTACK * multiplier) + stageBonus);
-                return damage;
+                return Math.floor((BASE_PLAYER_ATTACK * multiplier) + stageBonus);
             }
 
             function initParticles() {
@@ -1026,53 +964,20 @@
                 let element;
                 let vfxClass = type;
                 let duration = 400;
-
                 switch(type) {
-                    case 'flash-red':
-                        element = vfxOverlay;
-                        duration = 300;
-                        break;
-                    case 'flash-white':
-                    case 'flash-green':
-                        element = vfxOverlay;
-                        duration = 400;
-                        break;
-                    case 'shake-light':
-                    case 'shake-heavy':
-                        element = gameContainer;
-                        duration = (type === 'shake-light') ? 200 : 400;
-                        break;
-                    
-                    case 'hit-flash':
-                        element = targetElement;
-                        duration = 200;
-                        break;
-                    case 'enemy-hit':
-                        element = enemyVisual;
-                        vfxClass = 'hit';
-                        duration = 300;
-                        break;
-                    case 'enemy-appear':
-                        element = enemyVisual;
-                        vfxClass = 'appear';
-                        duration = 500;
-                        break;
-                    case 'enemy-defeat':
-                        element = enemyVisual;
-                        vfxClass = 'defeat';
-                        duration = 800;
-                        break;
-                    default:
-                        console.warn('Unknown VFX type:', type);
-                        return;
+                    case 'flash-red': element = vfxOverlay; duration = 300; break;
+                    case 'flash-white': case 'flash-green': element = vfxOverlay; duration = 400; break;
+                    case 'shake-light': case 'shake-heavy': element = gameContainer; duration = (type === 'shake-light') ? 200 : 400; break;
+                    case 'hit-flash': element = targetElement; duration = 200; break;
+                    case 'enemy-hit': element = enemyVisual; vfxClass = 'hit'; duration = 300; break;
+                    case 'enemy-appear': element = enemyVisual; vfxClass = 'appear'; duration = 500; break;
+                    case 'enemy-defeat': element = enemyVisual; vfxClass = 'defeat'; duration = 800; break;
+                    default: console.warn('Unknown VFX type:', type); return;
                 }
-
                 if (element) {
                     element.classList.add(vfxClass);
                     setTimeout(() => {
-                        if (vfxClass !== 'defeat') {
-                            element.classList.remove(vfxClass);
-                        }
+                        if (vfxClass !== 'defeat') element.classList.remove(vfxClass);
                     }, duration);
                 }
             }
@@ -1091,7 +996,6 @@
                     divider.style.left = `${(i / MAX_SKILL_LEVEL) * 100}%`;
                     skillBarContainer.appendChild(divider);
                 }
-                
                 startBGM(); 
                 startStage();
                 updateSkillBar();
@@ -1121,7 +1025,6 @@
 
             function updateSkillBar() {
                 const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
-                
                 const skillPercent = (skillGauge / SKILL_GAUGE_MAX_TOTAL) * 100;
                 skillBar.style.width = `${skillPercent}%`;
                 
@@ -1148,9 +1051,23 @@
                 }
             }
             
+            /**
+             * ★変更: 敵の属性アイコンを更新 (アイコン表示に対応)
+             */
             function updateEnemyElementIcon() {
+                // 既存のクラスを削除
                 enemyElementIcon.className = '';
-                enemyElementIcon.classList.add(enemyElement);
+                
+                if (ATTRIBUTES[enemyElement]) {
+                    // 色を直接設定
+                    enemyElementIcon.style.backgroundColor = ATTRIBUTES[enemyElement].color;
+                    // アイコンを挿入
+                    enemyElementIcon.innerHTML = ATTRIBUTES[enemyElement].icon;
+                } else {
+                    // デフォルト
+                    enemyElementIcon.style.backgroundColor = '#888';
+                    enemyElementIcon.innerHTML = '?';
+                }
             }
 
             function updateEnemyVisual() {
@@ -1163,18 +1080,13 @@
             function showMessage(text, buttonText, callback) {
                 messageText.textContent = text;
                 messageText.style.whiteSpace = 'pre-wrap';
-
                 messageContent.style.display = 'none';
-
                 startButton.style.display = 'none';
                 howToPlayButton.style.display = 'none';
                 backToTitleButton.style.display = 'none';
                 messageOkButton.style.display = 'block';
-                
                 messageButtonsContainer.classList.remove('start-layout');
-
                 messageOkButton.textContent = buttonText;
-
                 messageOkButton.onclick = () => {
                     playSE('uiClick');
                     messageOverlay.classList.remove('visible');
@@ -1185,7 +1097,6 @@
                         }
                     }
                 };
-                
                 messageOverlay.classList.add('visible');
             }
 
@@ -1215,14 +1126,11 @@
 
             function showInputFeedback(type) {
                 if (feedbackTimeout) { clearTimeout(feedbackTimeout); }
-                
                 inputFeedback.textContent = (type === 'success') ? 'OK!' : 'MISS!';
                 inputFeedback.className = type;
-                
                 inputFeedback.classList.remove('show');
                 void inputFeedback.offsetWidth;
                 inputFeedback.classList.add('show');
-
                 feedbackTimeout = setTimeout(() => {
                     inputFeedback.classList.remove('show');
                 }, 400);
@@ -1230,14 +1138,11 @@
             
             function showDangerWarning() {
                 if (feedbackTimeout) { clearTimeout(feedbackTimeout); }
-                
                 inputFeedback.textContent = 'DANGER!';
                 inputFeedback.className = 'danger';
-                
                 inputFeedback.classList.remove('show');
                 void inputFeedback.offsetWidth;
                 inputFeedback.classList.add('show');
-
                 feedbackTimeout = setTimeout(() => {
                     inputFeedback.classList.remove('show');
                 }, 1000);
@@ -1250,21 +1155,22 @@
                 
                 enemyName.textContent = ENEMY_NAMES[(currentStage - 1) % ENEMY_NAMES.length];
                 
+                // ★変更: ELEMENTS (['fire', ...]) からランダムに選ぶ
                 enemyElement = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
-                updateEnemyElementIcon();
+                updateEnemyElementIcon(); // アイコン表示
                 updateEnemyVisual();
 
                 isDangerMode = false;
-
                 updateHealthBars();
                 updateStats();
                 updateSkillBar();
-                
                 startBGM();
-                
                 setTimeout(enemyTurn, 1000);
             }
 
+            /**
+             * ★変更: 敵のターン (アイコン表示に対応)
+             */
             function enemyTurn() {
                 setControlsEnabled(false); 
                 isPlayerTurn = false;
@@ -1286,7 +1192,16 @@
                     currentSequence.push(randomElement);
                     
                     const icon = document.createElement('div');
-                    icon.classList.add('sequence-icon', randomElement);
+                    
+                    // ★変更: アイコンと背景色を設定
+                    icon.classList.add('sequence-icon'); // 属性クラスは付けない
+                    
+                    if (ATTRIBUTES[randomElement]) {
+                        icon.style.backgroundColor = ATTRIBUTES[randomElement].color;
+                        icon.innerHTML = ATTRIBUTES[randomElement].icon;
+                    }
+                    // ★ここまで
+                    
                     if (isDangerMode) {
                         icon.classList.add('danger-mode');
                     }
@@ -1322,10 +1237,8 @@
                     button.disabled = !enabled;
                     button.classList.toggle('disabled', !enabled);
                 });
-                
                 const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
                 const skillReady = currentSkillLevel >= 1;
-
                 skillButton.disabled = !(enabled && skillReady);
                 skillButton.classList.toggle('disabled', !(enabled && skillReady));
             }
@@ -1335,7 +1248,6 @@
                 for (let i = 0; i < currentSequenceLength; i++) {
                     const dot = document.createElement('div');
                     dot.classList.add('indicator-dot');
-                    
                     if (i < playerInputSequence.length) {
                         if (playerInputSequence[i] === currentSequence[i]) {
                             dot.classList.add('success');
@@ -1345,18 +1257,15 @@
                     } else if (i === playerInputSequence.length && isPlayerTurn) {
                         dot.classList.add('active');
                     }
-                    
                     inputIndicator.appendChild(dot);
                 }
             }
 
             async function handlePlayerInput(e) {
                 try {
-                    if (!isAudioReady) { return; }
-                    if (!isPlayerTurn) return;
-
+                    if (!isAudioReady || !isPlayerTurn) return;
                     const selectedElement = this.dataset.element; 
-                    if (!selectedElement) { return; }
+                    if (!selectedElement) return;
 
                     playSE('click');
                     playerInputSequence.push(selectedElement);
@@ -1380,24 +1289,18 @@
                         setControlsEnabled(false);
                         checkSequence();
                     }
-                    
                 } catch (error) { console.error("入力処理エラー:", error, e); }
             }
 
             function useSkill() {
                 const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
                 if (currentSkillLevel < 1 || !isPlayerTurn) return;
-
                 playSE('critical'); 
-                
                 skillGauge = 0; 
-                
                 isPlayerTurn = false;
                 setControlsEnabled(false); 
-                
                 playVFX('flash-white');
                 playVFX(currentSkillLevel === MAX_SKILL_LEVEL ? 'shake-heavy' : 'shake-light');
-
                 const damage = calculateSkillDamage(currentSkillLevel);
                 
                 setTimeout(() => {
@@ -1406,13 +1309,9 @@
                     playVFX('enemy-hit');
                     updateHealthBars();
                     updateSkillBar();
-                    
                     setTimeout(() => {
-                        if (enemyHp <= 0) {
-                            winStage();
-                        } else {
-                            enemyTurn();
-                        }
+                        if (enemyHp <= 0) winStage();
+                        else enemyTurn();
                     }, 1000);
                 }, 400);
             }
@@ -1420,15 +1319,12 @@
             function checkSequence() {
                 let isCorrect = playerInputSequence.length === currentSequence.length &&
                                 playerInputSequence.every((el, i) => el === currentSequence[i]);
-
                 let didCritical = false;
-
                 const oldSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
 
                 if (isCorrect) {
                     successfulAttacksInARow++;
                     skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_SUCCESS);
-                    
                     let baseDamage = BASE_PLAYER_ATTACK + (currentStage * 2);
                     let affinityDamage = 0;
 
@@ -1442,11 +1338,8 @@
                         didCritical = true;
                         skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_CRITICAL);
                     }
-                    
                     let totalDamage = baseDamage + affinityDamage;
-                    if (didCritical) {
-                        totalDamage *= CRITICAL_HIT_MULTIPLIER;
-                    }
+                    if (didCritical) totalDamage *= CRITICAL_HIT_MULTIPLIER;
                     totalDamage = Math.max(1, Math.floor(totalDamage));
 
                     if (didCritical) {
@@ -1457,54 +1350,36 @@
                         playSE('success');
                         playVFX('shake-light');
                     }
-
                     enemyHp = Math.max(0, enemyHp - totalDamage);
                     playVFX('hit-flash', enemyHpBarContainer);
                     playVFX('enemy-hit');
-                    
                     updateHealthBars();
                     
                     const newSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
-                    if (newSkillLevel > oldSkillLevel) {
-                        playSE('skillUp');
-                    }
+                    if (newSkillLevel > oldSkillLevel) playSE('skillUp');
                     
                     updateSkillBar();
-                    
                     setTimeout(() => {
-                        if (enemyHp <= 0) {
-                            winStage();
-                        } else {
-                            enemyTurn();
-                        }
+                        if (enemyHp <= 0) winStage();
+                        else enemyTurn();
                     }, 1000);
-
                 } else {
-                    // 失敗時の処理
                     playSE('failure');
                     successfulAttacksInARow = 0;
-                    
                     playVFX('flash-red');
                     playVFX('shake-heavy');
-                    
                     let damage = BASE_ENEMY_ATTACK + Math.floor(currentStage * 1.5);
-                    if (isDangerMode) {
-                        damage *= DANGER_MODE_MULTIPLIER;
-                    }
+                    if (isDangerMode) damage *= DANGER_MODE_MULTIPLIER;
                     
                     playerHp = Math.max(0, playerHp - damage);
                     playVFX('hit-flash', playerHpBarContainer);
                     updateHealthBars();
                     
                     setTimeout(() => {
-                        if (playerHp <= 0) {
-                            gameOver(); // プレイヤーのHPが0になったらgameOverを呼ぶ
-                        } else {
-                            enemyTurn();
-                        }
+                        if (playerHp <= 0) gameOver();
+                        else enemyTurn();
                     }, 1000);
                 }
-                
                 updateStats();
                 isDangerMode = false;
                 enemyName.classList.remove('danger-mode');
@@ -1515,7 +1390,6 @@
                 playVFX('enemy-defeat');
                 currentStage++;
                 successfulAttacksInARow = 0;
-                
                 const recoveryAmount = BASE_PLAYER_RECOVERY + currentStage;
                 playerHp = Math.min(PLAYER_MAX_HP, playerHp + recoveryAmount);
                 
@@ -1527,7 +1401,6 @@
 
                 setTimeout(() => {
                     startBGM(); 
-                    
                     showMessage(
                         `STAGE ${currentStage - 1} CLEAR!\nHPが ${recoveryAmount} 回復！`,
                         `STAGE ${currentStage}へ`,
@@ -1536,37 +1409,27 @@
                 }, 1500);
             }
             
-            /**
-             * ゲームオーバー処理
-             * ここでリトライ画面（showMessage）を呼び出します
-             */
             function gameOver() {
-                stopBGM(); // BGM停止
-                playSE('gameOver'); // ゲームオーバーSE
+                stopBGM();
+                playSE('gameOver');
                 successfulAttacksInARow = 0;
-                
-                // showMessage を呼び出し、リトライボタンを表示
                 showMessage(
-                    `GAME OVER\n(STAGE ${currentStage}で敗北)`, // メッセージ
-                    'リトライ', // ボタンのテキスト
-                    resetGame  // ボタンを押したときに実行する関数 (resetGame)
+                    `GAME OVER\n(STAGE ${currentStage}で敗北)`,
+                    'リトライ',
+                    resetGame
                 );
             }
             
-            /**
-             * ゲームリセット処理
-             */
             function resetGame() {
                 sequenceDisplay.innerHTML = '';
                 inputIndicator.innerHTML = '';
-                initGame(); // initGame を呼んでゲームを最初から
+                initGame();
             }
 
             // === 6. イベントリスナーの設定 ===
             controlButtons.forEach(button => {
                 button.addEventListener('click', handlePlayerInput);
             });
-            
             skillButton.addEventListener('click', useSkill);
             
             startButton.onclick = async () => {
@@ -1575,21 +1438,16 @@
                         await Tone.start();
                         isAudioReady = true;
                         console.log("Audio ready.");
-                    } catch (e) {
-                        console.error("Audio contextの開始に失敗:", e);
-                        // オーディオが開始できなくても、ゲームは続行する
-                    }
+                    } catch (e) { console.error("Audio contextの開始に失敗:", e); }
                 }
                 playSE('uiClick');
                 messageOverlay.classList.remove('visible'); 
                 initGame();
             };
-
             howToPlayButton.onclick = () => {
                 playSE('uiClick');
                 showHowToPlay(); 
             };
-
             backToTitleButton.onclick = () => {
                 playSE('uiClick');
                 showStartScreen();
