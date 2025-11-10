@@ -916,20 +916,6 @@
                 Tone.Transport.stop();
                 bgmSynth.releaseAll();
             }
-
-            function pauseBGM() {
-                if (!isAudioReady || Tone.Transport.state !== "started") return;
-                Tone.Transport.pause();
-            }
-
-            async function resumeBGM() {
-                // ゲームが開始されていて、かつオーディオが準備万端で、BGMが一時停止中の場合のみ再開
-                if (isAudioReady && !messageOverlay.classList.contains('visible') && Tone.Transport.state === "paused") {
-                    try {
-                        await Tone.Transport.start();
-                    } catch (e) { console.warn("BGM再開エラー:", e); }
-                }
-            }
             function playSE(type) {
                 if (!isAudioReady) return;
                 try {
@@ -1499,19 +1485,25 @@
                 showStartScreen();
             };
             
-            // === 7. ゲーム開始 ===
-            showStartScreen();
+            function handleVisibilityChange() {
+                if (!isAudioReady) return;
 
-            document.addEventListener('visibilitychange', () => {
-                if (!isAudioReady) return; // オーディオが初期化される前は何もしない
+                const isGameActive = !messageOverlay.classList.contains('visible');
 
                 if (document.hidden) {
-                    pauseBGM();
+                    if (Tone.Transport.state === "started") {
+                        Tone.Transport.pause(); // BGMを一時停止
+                    }
                 } else {
-                    // 少し遅延させて再開することで、他の処理との競合を避ける
-                    setTimeout(() => resumeBGM(), 100);
+                    if (isGameActive && Tone.Transport.state === "paused") {
+                        Tone.Transport.start(); // BGMを再開
+                    }
                 }
-            });
+            }
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // === 7. ゲーム開始 ===
+            showStartScreen();
 
         });
     </script>
