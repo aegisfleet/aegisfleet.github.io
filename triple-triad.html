@@ -8,35 +8,96 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Interフォントの読み込み */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
             touch-action: manipulation; /* ダブルタップによるズームを無効化 */
+            background-color: #111827; /* bg-gray-900 */
+            background-image: linear-gradient(to bottom, #111827, #1e3a8a); /* bg-gray-900 to bg-blue-900 */
+            color: white; /* ★★★ 改善: デフォルト文字色を白に ★★★ */
         }
-        /* カードの裏返しアニメーション（簡易版） */
+
+        /* カードの裏返し（フリップ）アニメーション */
+        @keyframes flipEffect {
+            0% { transform: scale(1.0) rotateY(0deg); opacity: 1; }
+            50% { transform: scale(0.9) rotateY(90deg); opacity: 0.7; }
+            100% { transform: scale(1.0) rotateY(0deg); opacity: 1; }
+        }
+        .is-flipping {
+            animation: flipEffect 0.5s ease-out;
+            animation-fill-mode: forwards;
+        }
+
+        /* カードの基本スタイル */
         .card-flip {
-            transition: background-color 0.4s ease, border-color 0.4s ease;
+            transition: background-color 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden; /* 角丸のため */
         }
+
+        /* カードの数字スタイル */
+        .card-num {
+            position: absolute;
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900; /* font-black */
+            font-size: 0.875rem; /* text-sm */
+            border-radius: 0.25rem; /* rounded-sm */
+            background-color: rgba(0, 0, 0, 0.4); /* 半透明の黒背景 */
+            color: white;
+            line-height: 1;
+        }
+        .card-num-a { /* 'A' (10) の場合 */
+            color: #FACC15; /* yellow-400 */
+        }
+        .card-num-top { top: 2px; left: 50%; transform: translateX(-50%); }
+        .card-num-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .card-num-left { left: 2px; top: 50%; transform: translateY(-50%); }
+        .card-num-right { right: 2px; top: 50%; transform: translateY(-50%); }
+
+        /* カード名 */
+        .card-name {
+            font-size: 0.6rem; /* text-[10px] */
+            font-weight: 700;
+            opacity: 0.8;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            letter-spacing: -0.05em; /* 詰める */
+            color: white; /* ★★★ 修正: 文字色を白に明示 ★★★ */
+        }
+
+
         /* 選択中のカードのハイライト */
         .selected-card {
             transform: scale(1.1) translateY(-10px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             border-color: #FACC15; /* yellow-400 */
+            z-index: 10;
         }
+        
         /* アクティブプレイヤーのターン表示 */
         .turn-indicator {
             transition: all 0.3s ease;
         }
-        /* 通知用のスタイル */
-        .fade-in-out {
-            animation: fadeInOut 2s ease-in-out forwards;
+
+        /* ボードのマス目 */
+        .cell {
+            background-color: rgba(0, 0, 0, 0.3); /* 半透明の黒 */
+            border-color: rgba(255, 255, 255, 0.2); /* 半透明の白 */
         }
+        .cell-empty-hover:hover {
+            background-color: rgba(0, 0, 0, 0.5); /* ホバー時 */
+        }
+
         .hidden {
             display: none;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white h-full overflow-hidden flex flex-col p-4">
+<body class="h-full overflow-hidden flex flex-col p-4">
 
     <!-- ゲーム全体コンテナ -->
     <div class="w-full max-w-md mx-auto h-full flex flex-col justify-between">
@@ -88,7 +149,7 @@
                     <p id="result-score-p2" class="text-4xl font-bold">0</p>
                 </div>
             </div>
-            <button id="restart-button" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-colors">
+            <button id="restart-button" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform">
                 もう一度遊ぶ
             </button>
         </div>
@@ -104,8 +165,6 @@
 
     <script>
         // --- カードデータ定義 ---
-        // stats: { top, right, bottom, left }
-        // 10は 'A' (エース) を表します
         const allCards = [
             { id: 1, name: 'イフリート', stats: { top: 6, right: 9, bottom: 4, left: 8 } },
             { id: 2, name: 'トンベリ', stats: { top: 4, right: 8, bottom: 9, left: 4 } },
@@ -153,20 +212,13 @@
 
         // --- ヘルパー関数 ---
 
-        /**
-         * カードの数字を画面表示用（A=10）に変換
-         * @param {number} value - カードの数字 (1-10)
-         * @returns {string} - 'A' または 数字の文字列
-         */
         function displayValue(value) {
             return value === 10 ? 'A' : String(value);
         }
+        function getNumClass(value) {
+            return value === 10 ? 'card-num-a' : '';
+        }
 
-        /**
-         * Fisher-Yatesシャッフルアルゴリズム
-         * @param {Array} array - シャッフルする配列
-         * @returns {Array} - シャッフルされた配列
-         */
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
             while (currentIndex !== 0) {
@@ -180,98 +232,87 @@
 
         // --- 描画関数 ---
 
-        /**
-         * カード要素を作成
-         * @param {object} card - カードオブジェクト
-         * @param {boolean} isFaceDown - 裏向き（相手の手札）か
-         * @returns {HTMLElement} - カードのDOM要素
-         */
-        function createCardElement(card, isFaceDown = false) {
+        function createCardElement(card, isP1Hand = false) {
             const cardEl = document.createElement('div');
-            // ★★★ P1の手札用に cursor-pointer をデフォルトで付与 ★★★
-            cardEl.className = 'card-flip w-1/5 aspect-[3/4] rounded-md p-1 relative border-2 flex-shrink-0 cursor-pointer transition-all duration-200';
+            cardEl.className = 'card-flip w-1/5 aspect-[3/4] rounded-lg border-2 flex-shrink-0 shadow-lg';
             
-            if (isFaceDown) {
-                cardEl.classList.add('bg-gray-600', 'border-gray-500');
-                cardEl.classList.remove('cursor-pointer'); // 裏向きカードはクリック不要
-            } else {
-                // プレイヤーの色に基づいてスタイルを設定
-                const bgColor = card.owner === 1 ? 'bg-blue-600' : 'bg-red-600';
-                const borderColor = card.owner === 1 ? 'border-blue-400' : 'border-red-400';
-                cardEl.classList.add(bgColor, borderColor);
+            const isP1 = card.owner === 1;
+            const gradient = isP1
+                ? 'bg-gradient-to-br from-blue-600 to-blue-800' // P1
+                : 'bg-gradient-to-br from-red-600 to-red-800'; // P2
+            const borderColor = isP1
+                ? 'border-blue-400'
+                : 'border-red-400';
+            
+            // エラー回避のため、クラスを個別に追加
+            gradient.split(' ').forEach(cls => cardEl.classList.add(cls));
+            cardEl.classList.add(borderColor);
 
-                // カードの数字
-                cardEl.innerHTML = `
-                    <span class="absolute top-0 left-1/2 -translate-x-1/2 text-xs font-bold">${displayValue(card.stats.top)}</span>
-                    <span class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-bold">${displayValue(card.stats.bottom)}</span>
-                    <span class="absolute left-1 top-1/2 -translate-y-1/2 text-xs font-bold">${displayValue(card.stats.left)}</span>
-                    <span class="absolute right-1 top-1/2 -translate-y-1/2 text-xs font-bold">${displayValue(card.stats.right)}</span>
-                    <span class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 text-[8px] opacity-70">${card.name.substring(0, 5)}</span>
-                `;
+            if (isP1Hand) {
+                cardEl.classList.add('cursor-pointer');
             }
+
+            // カードの数字と名前
+            const stats = card.stats;
+            cardEl.innerHTML = `
+                <!-- 数字 -->
+                <span class="card-num card-num-top ${getNumClass(stats.top)}">${displayValue(stats.top)}</span>
+                <span class="card-num card-num-bottom ${getNumClass(stats.bottom)}">${displayValue(stats.bottom)}</span>
+                <span class="card-num card-num-left ${getNumClass(stats.left)}">${displayValue(stats.left)}</span>
+                <span class="card-num card-num-right ${getNumClass(stats.right)}">${displayValue(stats.right)}</span>
+                
+                <!-- 名前 -->
+                <span class="card-name absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
+                    ${card.name}
+                </span>
+            `;
             return cardEl;
         }
 
-        /**
-         * ゲームボード全体を描画
-         */
         function renderBoard() {
             boardElement.innerHTML = '';
             board.forEach((card, index) => {
                 const cell = document.createElement('div');
-                cell.className = 'cell bg-gray-800 bg-opacity-50 border-2 border-gray-600 rounded-lg flex items-center justify-center p-0.5 transition-all';
+                cell.className = 'cell border-2 rounded-lg flex items-center justify-center p-0.5 transition-all';
                 
                 if (card) {
                     const cardEl = createCardElement(card, false);
-                    cardEl.classList.remove('w-1/5', 'aspect-[3/4]', 'cursor-pointer'); // ボード用のスタイル調整
+                    cardEl.classList.remove('w-1/5', 'aspect-[3/4]'); // ボード用のスタイル調整
                     cardEl.classList.add('w-full', 'h-full');
                     cell.appendChild(cardEl);
                 } else {
                     cell.dataset.index = index;
-                    // 空のマスをクリック可能にする（プレイヤーのターンの場合）
                     if (isPlayerTurn) {
-                        cell.classList.add('cursor-pointer', 'hover:bg-gray-700');
+                        cell.classList.add('cursor-pointer', 'cell-empty-hover');
                     }
                 }
                 boardElement.appendChild(cell);
             });
         }
 
-        /**
-         * 両プレイヤーの手札を描画
-         */
         function renderHands() {
             // P1の手札
             handP1Element.innerHTML = '';
             player1Hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, false);
+                const cardEl = createCardElement(card, true); // P1の手札
                 cardEl.dataset.index = index;
                 cardEl.dataset.player = 1;
-                // 選択中のカードをハイライト
                 if (selectedCard && selectedCard.player === 1 && selectedCard.handIndex === index) {
                     cardEl.classList.add('selected-card');
                 }
                 handP1Element.appendChild(cardEl);
             });
 
-            // ★★★ ご要望による修正: P2の手札 (表向き) ★★★
+            // P2の手札 (表向き)
             handP2Element.innerHTML = '';
             player2Hand.forEach((card, index) => {
-                // isFaceDownを false にしてカードを表向きで作成
-                const cardEl = createCardElement(card, false); 
+                const cardEl = createCardElement(card, false); // P2の手札 (クリック不可)
                 cardEl.dataset.index = index;
                 cardEl.dataset.player = 2;
-                
-                // CPUの手札はクリックできないようにする
-                cardEl.classList.remove('cursor-pointer'); 
-                
                 handP2Element.appendChild(cardEl);
             });
         }
 
-        /**
-         * スコアとターン表示を更新
-         */
         function renderStatus() {
             // スコア更新
             scoreP1Element.textContent = scores.player1;
@@ -290,9 +331,6 @@
             }
         }
 
-        /**
-         * すべての描画を更新
-         */
         function renderAll() {
             renderBoard();
             renderHands();
@@ -301,76 +339,54 @@
 
         // --- ゲームロジック ---
 
-        /**
-         * ゲームを初期化して開始
-         */
         function startGame() {
             isGameOver = false;
-            // デッキを作成しシャッフル
             const deck = shuffle([...allCards]);
-            
-            // 手札を5枚ずつ配る
             player1Hand = deck.slice(0, 5).map(c => ({ ...c, owner: 1 }));
             player2Hand = deck.slice(5, 10).map(c => ({ ...c, owner: 2 }));
-            
             board = Array(9).fill(null);
             
-            let isPlayerFirst = true; // 先行フラグ
-
-            // コイントスで先行後攻を決定
+            let isPlayerFirst = true;
             if (Math.random() < 0.5) {
-                currentPlayer = 1; // プレイヤー1が先行
+                currentPlayer = 1;
                 isPlayerTurn = true;
                 isPlayerFirst = true;
             } else {
-                currentPlayer = 2; // プレイヤー2が先行
-                isPlayerTurn = false; // プレイヤーは操作不可
+                currentPlayer = 2;
+                isPlayerTurn = false;
                 isPlayerFirst = false;
             }
-
             selectedCard = null;
             scores = { player1: 0, player2: 0 };
-            
             modalElement.classList.add('hidden');
-            
-            // 先に描画してターン表示を反映
             renderAll(); 
 
-            // 先行/後攻 通知処理
-            // メッセージ設定
             if (isPlayerFirst) {
                 turnNoticeMessageElement.textContent = "あなたが先行です";
             } else {
                 turnNoticeMessageElement.textContent = "CPUが先行です";
             }
-            // 通知を表示
             turnNoticeElement.classList.remove('hidden');
 
-            // 2秒後に通知を非表示にし、必要ならCPUターンを開始
             setTimeout(() => {
                 turnNoticeElement.classList.add('hidden');
-
-                // もしCPUが先行なら、CPUのターンを開始
-                if (!isPlayerTurn) { // currentPlayer === 2 と同義
-                    // 通知が消えてから少し待ってCPUターン開始
+                if (!isPlayerTurn) {
                     setTimeout(cpuTurn, 500); 
                 }
-            }, 2000); // 2秒間通知を表示
+            }, 2000);
         }
 
         /**
-         * カードを配置し、隣接カードをチェック
-         * @param {number} boardIndex - 配置するボードのインデックス
-         * @param {object} cardToPlace - 配置するカードオブジェクト
+         * ★★★ 修正: アニメーション順序変更 ★★★
+         * 裏返しロジックのみを実行（配置は呼び出し元で行う）
+         * @param {number} boardIndex - 配置されたボードのインデックス
+         * @param {object} cardToPlace - 配置されたカードオブジェクト
          * @returns {Array} - 裏返ったカードのインデックスリスト
          */
-        function placeCardAndFlip(boardIndex, cardToPlace) {
-            // 1. ボードに配置
-            board[boardIndex] = cardToPlace;
+        function checkAndFlip(boardIndex, cardToPlace) {
             const placedPlayer = cardToPlace.owner;
             const flippedIndices = [];
 
-            // 2. 隣接チェック
             const adjacentIndices = [
                 { idx: boardIndex - 3, side: 'top', opposite: 'bottom' }, // 上
                 { idx: boardIndex + 3, side: 'bottom', opposite: 'top' }, // 下
@@ -380,24 +396,18 @@
 
             for (const adj of adjacentIndices) {
                 const adjIndex = adj.idx;
-
-                // ボードの範囲内か？
                 if (adjIndex < 0 || adjIndex > 8) continue;
-                // 左右の境界チェック
                 if (adj.side === 'left' && boardIndex % 3 === 0) continue;
                 if (adj.side === 'right' && boardIndex % 3 === 2) continue;
 
                 const adjacentCard = board[adjIndex];
 
-                // 隣に相手のカードがあるか？
                 if (adjacentCard && adjacentCard.owner !== placedPlayer) {
                     const placedValue = cardToPlace.stats[adj.side];
                     const adjacentValue = adjacentCard.stats[adj.opposite];
 
-                    // 置いたカードの数字が、隣のカードの数字より「大きい」場合のみ裏返す
                     if (placedValue > adjacentValue) {
-                        // 裏返す
-                        board[adjIndex].owner = placedPlayer;
+                        board[adjIndex].owner = placedPlayer; // ★配列の状態を更新
                         flippedIndices.push(adjIndex);
                     }
                 }
@@ -405,26 +415,18 @@
             return flippedIndices;
         }
 
-        /**
-         * ボード上のスコアを計算・更新
-         */
         function updateScores() {
             scores.player1 = board.filter(c => c && c.owner === 1).length;
             scores.player2 = board.filter(c => c && c.owner === 2).length;
             renderStatus();
         }
 
-        /**
-         * ゲーム終了をチェック
-         */
         function checkGameOver() {
-            // ボードがすべて埋まったら
             if (board.every(cell => cell !== null)) {
                 isGameOver = true;
                 isPlayerTurn = false;
-                renderStatus(); // 最後のターンインジケーターを消す
+                renderStatus(); 
 
-                // 勝利メッセージ
                 let message = "";
                 if (scores.player1 > scores.player2) {
                     message = "あなたの勝利！";
@@ -434,19 +436,15 @@
                     message = "引き分け！";
                 }
                 
-                // モーダル表示
                 setTimeout(() => {
                     resultMessageElement.textContent = message;
                     resultScoreP1Element.textContent = scores.player1;
                     resultScoreP2Element.textContent = scores.player2;
                     modalElement.classList.remove('hidden');
-                }, 1000); // 最後の描画を反映させるため少し待つ
+                }, 1000); 
             }
         }
 
-        /**
-         * ターンを切り替え
-         */
         function switchPlayer() {
             currentPlayer = currentPlayer === 1 ? 2 : 1;
             isPlayerTurn = (currentPlayer === 1);
@@ -459,46 +457,102 @@
         }
 
         /**
-         * CPU (プレイヤー2) の思考ロジック (簡易版)
+         * ★★★ 修正: アニメーション順序変更 (async化) ★★★
+         * CPU (プレイヤー2) の思考ロジック (最善手を選ぶ)
          */
-        function cpuTurn() {
+        async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
 
-            // 1. ランダムにカードを選ぶ
-            const handIndex = Math.floor(Math.random() * player2Hand.length);
-            const cardToPlay = player2Hand.splice(handIndex, 1)[0];
-            cardToPlay.owner = 2;
-
-            // 2. 配置可能なマスを探す (ランダム)
             const availableCells = [];
             board.forEach((cell, index) => {
                 if (cell === null) {
                     availableCells.push(index);
                 }
             });
+            if (availableCells.length === 0) return;
 
-            if (availableCells.length === 0) return; // 万が一置く場所がない場合
+            let bestMove = {
+                cardIndex: -1,
+                boardIndex: -1,
+                flips: -1
+            };
 
-            // (簡易ロジック: ランダムに選ぶ)
-            // TODO: 本来はここで最も多く裏返せる場所を選ぶ
-            const boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
+            // 1. シミュレーション
+            for (let i = 0; i < player2Hand.length; i++) {
+                const card = player2Hand[i];
+                for (const boardIndex of availableCells) {
+                    const cardToPlace = { ...card, owner: 2 };
+                    let currentFlips = 0;
+                    const adjacentIndices = [
+                        { idx: boardIndex - 3, side: 'top', opposite: 'bottom' }, 
+                        { idx: boardIndex + 3, side: 'bottom', opposite: 'top' },
+                        { idx: boardIndex - 1, side: 'left', opposite: 'right' },
+                        { idx: boardIndex + 1, side: 'right', opposite: 'left' }
+                    ];
 
-            // 3. カードを配置
-            placeCardAndFlip(boardIndex, cardToPlay);
-            
-            // 4. 描画とスコア更新 (遅延させてアニメーションを見せる)
-            setTimeout(() => {
-                updateScores();
-                renderAll(); // ボードと手札を再描画
+                    for (const adj of adjacentIndices) {
+                        const adjIndex = adj.idx;
+                        if (adjIndex < 0 || adjIndex > 8) continue;
+                        if (adj.side === 'left' && boardIndex % 3 === 0) continue;
+                        if (adj.side === 'right' && boardIndex % 3 === 2) continue;
+                        
+                        const adjacentCard = board[adjIndex];
+                        if (adjacentCard && adjacentCard.owner === 1) { 
+                            if (cardToPlace.stats[adj.side] > adjacentCard.stats[adj.opposite]) {
+                                currentFlips++;
+                            }
+                        }
+                    }
 
-                // 5. ゲーム終了チェック
-                checkGameOver();
-
-                // 6. ターンをプレイヤーに戻す
-                if (!isGameOver) {
-                    switchPlayer();
+                    if (currentFlips > bestMove.flips) {
+                        bestMove = { cardIndex: i, boardIndex: boardIndex, flips: currentFlips };
+                    }
                 }
-            }, 500); // カードが裏返るアニメーション用
+            }
+            
+            // 2. 最善手が見つからなければランダム
+            if (bestMove.flips <= 0) {
+                bestMove.cardIndex = Math.floor(Math.random() * player2Hand.length);
+                bestMove.boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
+            }
+            
+            // 3. 手札からカードを取得し、ボード配列に「配置」
+            const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
+            cardToPlay.owner = 2;
+            board[bestMove.boardIndex] = cardToPlay;
+            
+            // 4. 「配置した状態」を描画
+            renderAll();
+
+            // 5. 0.5秒待つ (カードが置かれたのを見せるため)
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // 6. 「裏返すロジック」を実行
+            const flippedIndices = checkAndFlip(bestMove.boardIndex, cardToPlay);
+
+            // 7. アニメーションクラスを追加
+            flippedIndices.forEach(index => {
+                const cell = boardElement.children[index];
+                const cardEl = cell.querySelector('.card-flip');
+                if (cardEl) {
+                    cardEl.classList.add('is-flipping');
+                }
+            });
+            
+            // 8. アニメーション時間(0.5s)待つ
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // 9. 最終的な状態（色が変わった後）を描画
+            updateScores();
+            renderAll(); 
+
+            // 10. ゲーム終了チェック
+            checkGameOver();
+
+            // 11. ターンをプレイヤーに戻す
+            if (!isGameOver) {
+                switchPlayer(); // isPlayerTurn = true にする
+            }
         }
 
 
@@ -506,7 +560,6 @@
 
         /**
          * プレイヤー1の手札クリック処理
-         * @param {Event} e - クリックイベント
          */
         function onHandClick(e) {
             if (!isPlayerTurn || isGameOver) return;
@@ -516,7 +569,6 @@
 
             const handIndex = parseInt(cardEl.dataset.index, 10);
             
-            // すでに選択中なら解除、そうでなければ選択
             if (selectedCard && selectedCard.handIndex === handIndex) {
                 selectedCard = null;
             } else {
@@ -530,47 +582,63 @@
         }
 
         /**
+         * ★★★ 修正: アニメーション順序変更 (async化) ★★★
          * ボードのマス目クリック処理
-         * @param {Event} e - クリックイベント
          */
-        function onBoardClick(e) {
+        async function onBoardClick(e) {
             if (!isPlayerTurn || isGameOver || !selectedCard) return;
 
             const cell = e.target.closest('[data-index]');
             if (!cell) return; // カードの上をクリックした場合は無視
 
             const boardIndex = parseInt(cell.dataset.index, 10);
+            if (board[boardIndex]) return; // 既にカードがある
 
-            // ボードが空でなければ（すでにカードがあれば）何もしない
-            if (board[boardIndex]) return;
+            // 0. ターンロック
+            isPlayerTurn = false; 
 
-            // 1. 手札からカードを取得
+            // 1. 手札からカードを取得し、ボード配列に「配置」
             const cardToPlace = player1Hand.splice(selectedCard.handIndex, 1)[0];
             cardToPlace.owner = 1;
+            board[boardIndex] = cardToPlace; // 配列に配置
+            
             selectedCard = null;
-            isPlayerTurn = false; // CPUターンに備えてロック
 
-            // 2. カードを配置して裏返す
-            placeCardAndFlip(boardIndex, cardToPlace);
+            // 2. 「配置した状態」を描画
+            renderAll(); 
 
-            // 3. 描画とスコア更新 (遅延させてアニメーションを見せる)
-            setTimeout(() => {
-                updateScores();
-                renderAll(); // ボードと手札を再描画
+            // 3. 0.5秒待つ (カードが置かれたのを見せるため)
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-                // 4. ゲーム終了チェック
-                checkGameOver();
-
-                // 5. ターン切り替え
-                if (!isGameOver) {
-                    switchPlayer();
+            // 4. 「裏返すロジック」を実行
+            const flippedIndices = checkAndFlip(boardIndex, cardToPlace); // 修正した関数
+            
+            // 5. アニメーションクラスを追加
+            flippedIndices.forEach(index => {
+                const cell = boardElement.children[index];
+                const cardEl = cell.querySelector('.card-flip');
+                if (cardEl) {
+                    cardEl.classList.add('is-flipping');
                 }
-            }, 500); // カードが裏返るアニメーション用
+            });
+
+            // 6. アニメーション時間(0.5s)待つ
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 7. 最終的な状態（色が変わった後）を描画
+            updateScores();
+            renderAll();
+
+            // 8. ゲーム終了チェックとターン切り替え
+            checkGameOver();
+            if (!isGameOver) {
+                switchPlayer(); // CPUターンへ
+            }
         }
 
         // イベントリスナーを登録
         handP1Element.addEventListener('click', onHandClick);
-        boardElement.addEventListener('click', onBoardClick);
+        boardElement.addEventListener('click', onBoardClick); // async関数を直接登録
         restartButton.addEventListener('click', startGame);
 
         // --- ゲーム開始 ---
