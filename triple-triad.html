@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Triple Triad</title>
     <link rel="icon" href="favicon.png">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tone.js (音声ライブラリ) CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 
     <style>
-        /* Interフォントの読み込み */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
         body {
@@ -19,10 +16,12 @@
             touch-action: manipulation;
             background-color: #111827;
             background-image: linear-gradient(to bottom, #111827, #1e3a8a);
-            color: white; 
+            color: white;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; 
         }
 
-        /* カードの裏返し（フリップ）アニメーション */
         @keyframes flipEffect {
             0% { transform: scale(1.0) rotateY(0deg); opacity: 1; }
             50% { transform: scale(0.9) rotateY(90deg); opacity: 0.7; }
@@ -33,14 +32,12 @@
             animation-fill-mode: forwards;
         }
 
-        /* カードの基本スタイル */
         .card-flip {
             transition: background-color 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
-        /* カードの数字スタイル */
         .card-num {
             position: absolute;
             width: 1.25rem;
@@ -61,59 +58,52 @@
         .card-num-left { left: 2px; top: 50%; transform: translateY(-50%); }
         .card-num-right { right: 2px; top: 50%; transform: translateY(-50%); }
 
-        /* カード名 */
         .card-name {
             font-size: 0.6rem;
             font-weight: 700;
             opacity: 0.8;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             letter-spacing: -0.05em;
-            color: white; 
+            color: white;  
         }
 
-        /* 選択中のカードのハイライト (P1) */
         .selected-card {
             transform: scale(1.1) translateY(-10px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            border-color: #FACC15; /* yellow-400 */
+            border-color: #FACC15;
             z-index: 10;
         }
         
-        /* ★★★ 追加: CPU思考中ハイライト ★★★ */
         .cpu-thinking-card {
-            transform: scale(1.1) translateY(10px); /* 上向きに */
+            transform: scale(1.1) translateY(10px);
             box-shadow: 0 -10px 20px rgba(0,0,0,0.3);
-            border-color: #F87171; /* red-400 */
+            border-color: #F87171;
             z-index: 10;
         }
 
-        /* アクティブプレイヤーのターン表示 */
         .turn-indicator {
             transition: all 0.3s ease;
         }
 
-        /* ★★★ 追加: スコア更新エフェクト ★★★ */
         @keyframes scoreUpdate {
             0% { transform: scale(1); }
-            50% { transform: scale(1.05); background-color: #374151; /* bg-gray-700 */ }
+            50% { transform: scale(1.05); background-color: #374151; }
             100% { transform: scale(1); }
         }
         .score-updating {
             animation: scoreUpdate 0.4s ease-out;
         }
 
-        /* ★★★ 追加: 勝利カードエフェクト ★★★ */
         @keyframes winnerCard {
             0% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
             50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(255, 255, 150, 0.7); }
             100% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         }
         .winner-card {
-            animation: winnerCard 0.5s ease-in-out 0.2s; /* 0.2s遅延 */
+            animation: winnerCard 0.5s ease-in-out 0.2s;
             z-index: 5;
         }
 
-        /* ボードのマス目 */
         .cell {
             background-color: rgba(0, 0, 0, 0.3);
             border-color: rgba(255, 255, 255, 0.2);
@@ -125,33 +115,32 @@
         .hidden {
             display: none;
         }
+
+        #game-wrapper {
+            width: 448px; 
+            transform-origin: top left;
+        }
     </style>
 </head>
-<body class="h-full overflow-hidden flex flex-col p-4">
 
-    <!-- ゲーム全体コンテナ -->
-    <div class="w-full max-w-md mx-auto h-full flex flex-col justify-between">
+<body class="">
 
-        <!-- プレイヤー2 (上部) 手札 & スコア -->
+    <div id="game-wrapper" class="flex flex-col justify-between p-4">
+
         <div id="player-2-area" class="w-full">
             <div id="turn-p2" class="turn-indicator text-center p-2 mb-2 rounded-lg bg-gray-800 border-2 border-transparent">
                 <h2 class="font-bold text-red-400">CPU</h2>
                 <p>スコア: <span id="score-p2" class="font-bold text-xl">0</span></p>
             </div>
             <div id="hand-p2" class="flex justify-center h-24 space-x-1">
-                <!-- JSによってカードがここに挿入されます -->
             </div>
         </div>
 
-        <!-- ゲームボード -->
         <div id="game-board" class="w-full max-w-xs mx-auto grid grid-cols-3 gap-1 aspect-square my-4">
-            <!-- JSによってマスがここに挿入されます -->
         </div>
 
-        <!-- プレイヤー1 (下部) 手札 & スコア -->
         <div id="player-1-area" class="w-full">
             <div id="hand-p1" class="flex justify-center h-24 space-x-1 mb-2">
-                <!-- JSによってカードがここに挿入されます -->
             </div>
             <div id="turn-p1" class="turn-indicator text-center p-2 mt-2 rounded-lg bg-gray-800 border-2 border-transparent">
                 <h2 class="font-bold text-blue-400">あなた</h2>
@@ -160,7 +149,6 @@
         </div>
     </div>
 
-    <!-- ゲーム結果モーダル -->
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
             <h2 id="result-message" class="text-3xl font-bold mb-6"></h2>
@@ -181,7 +169,6 @@
         </div>
     </div>
 
-    <!-- 先行/後攻 通知モーダル -->
     <div id="turn-notice" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-40 p-4">
         <div class="bg-gray-700 p-6 rounded-lg shadow-xl text-center">
             <p id="turn-notice-message" class="text-2xl font-bold"></p>
@@ -190,7 +177,6 @@
 
 
     <script>
-        // --- カードデータ定義 ---
         const allCards = [
             { id: 1, name: 'イフリート', stats: { top: 6, right: 9, bottom: 4, left: 8 } },
             { id: 2, name: 'トンベリ', stats: { top: 4, right: 8, bottom: 9, left: 4 } },
@@ -210,7 +196,6 @@
             { id: 16, name: 'コチョコボ', stats: { top: 2, right: 1, bottom: 4, left: 2 } },
         ];
 
-        // --- ゲーム状態変数 ---
         let player1Hand = [];
         let player2Hand = [];
         let board = Array(9).fill(null); 
@@ -220,7 +205,6 @@
         let isPlayerTurn = true; 
         let isGameOver = false;
 
-        // --- DOM要素 ---
         const boardElement = document.getElementById('game-board');
         const handP1Element = document.getElementById('hand-p1');
         const handP2Element = document.getElementById('hand-p2');
@@ -236,7 +220,6 @@
         const turnNoticeElement = document.getElementById('turn-notice');
         const turnNoticeMessageElement = document.getElementById('turn-notice-message');
         
-        // --- Audio (Tone.js) ---
         let isAudioReady = false;
         let sfxPlace, sfxFlip, sfxWin, sfxLose;
 
@@ -252,7 +235,6 @@
         }
 
         function setupAudio() {
-            // 効果音シンセ
             sfxPlace = new Tone.MembraneSynth({
                 pitchDecay: 0.01,
                 octaves: 2,
@@ -268,7 +250,6 @@
             sfxLose = new Tone.Synth().toDestination();
         }
 
-        // --- SFX再生関数 ---
         function playPlaceSfx() {
             if (!isAudioReady) return;
             sfxPlace.triggerAttackRelease("C2", "8n", Tone.now());
@@ -299,7 +280,6 @@
             sfxLose.triggerAttackRelease("C4", "4n", now + 0.3);
         }
 
-        // --- ヘルパー関数 ---
         function displayValue(value) {
             return value === 10 ? 'A' : String(value);
         }
@@ -318,7 +298,6 @@
             return array;
         }
 
-        // --- 描画関数 ---
         function createCardElement(card, isP1Hand = false) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card-flip w-1/5 aspect-[3/4] rounded-lg border-2 flex-shrink-0 shadow-lg';
@@ -390,12 +369,8 @@
                 handP2Element.appendChild(cardEl);
             });
         }
-
-        /**
-         * ★★★ 変更: スコア更新エフェクトをここに追加 ★★★
-         */
+        
         function renderStatus() {
-            // スコア更新 (エフェクト付き)
             const oldScore1 = parseInt(scoreP1Element.textContent, 10);
             const newScore1 = scores.player1;
             if (newScore1 !== oldScore1) {
@@ -403,7 +378,7 @@
                 turnP1Element.classList.add('score-updating');
                 setTimeout(() => turnP1Element.classList.remove('score-updating'), 400);
             } else {
-                 scoreP1Element.textContent = newScore1; // 初回描画用
+                 scoreP1Element.textContent = newScore1;
             }
 
             const oldScore2 = parseInt(scoreP2Element.textContent, 10);
@@ -413,10 +388,9 @@
                 turnP2Element.classList.add('score-updating');
                 setTimeout(() => turnP2Element.classList.remove('score-updating'), 400);
             } else {
-                scoreP2Element.textContent = newScore2; // 初回描画用
+                scoreP2Element.textContent = newScore2;
             }
 
-            // ターンインジケーター更新
             if (isGameOver) {
                 turnP1Element.classList.remove('border-yellow-400', 'bg-gray-700');
                 turnP2Element.classList.remove('border-yellow-400', 'bg-gray-700');
@@ -434,8 +408,7 @@
             renderHands();
             renderStatus();
         }
-
-        // --- ゲームロジック ---
+        
         function startGame() {
             isGameOver = false;
             const deck = shuffle([...allCards]);
@@ -456,7 +429,6 @@
             selectedCard = null;
             scores = { player1: 0, player2: 0 };
             
-            // ★★★ 変更: スコア表示をDOMでリセット ★★★
             scoreP1Element.textContent = '0';
             scoreP2Element.textContent = '0';
 
@@ -512,18 +484,11 @@
             return flippedIndices;
         }
 
-        /**
-         * ★★★ 変更: スコアオブジェクトの更新のみを行う ★★★
-         */
         function updateScores() {
             scores.player1 = board.filter(c => c && c.owner === 1).length;
             scores.player2 = board.filter(c => c && c.owner === 2).length;
-            // 描画は renderAll -> renderStatus で行われる
         }
 
-        /**
-         * ★★★ 変更: 勝利演出エフェクトを追加 ★★★
-         */
         function checkGameOver() {
             if (board.every(cell => cell !== null)) {
                 isGameOver = true;
@@ -531,7 +496,7 @@
                 renderStatus(); 
 
                 let message = "";
-                let winner = 0; // 0: Draw, 1: P1, 2: P2
+                let winner = 0;
                 if (scores.player1 > scores.player2) {
                     message = "あなたの勝利！";
                     playWinSfx();
@@ -546,7 +511,6 @@
                     winner = 0;
                 }
                 
-                // ★ 勝利カードエフェクト
                 if (winner !== 0) {
                     board.forEach((card, index) => {
                         if (card && card.owner === winner) {
@@ -577,15 +541,11 @@
                 setTimeout(cpuTurn, 1000);
             }
         }
-
-        /**
-         * ★★★ 変更: CPU思考中エフェクトを追加 ★★★
-         */
+        
         async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
 
-            // ★ CPU思考中エフェクト
-            await new Promise(resolve => setTimeout(resolve, 300)); // 少し待つ
+            await new Promise(resolve => setTimeout(resolve, 300)); 
             let randomHighlight = 0;
             const maxHighlights = player2Hand.length > 1 ? 2 : 1;
             
@@ -599,8 +559,6 @@
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
             }
-            // --- 思考エフェクトここまで ---
-
 
             const availableCells = [];
             board.forEach((cell, index) => {
@@ -612,7 +570,6 @@
 
             let bestMove = { cardIndex: -1, boardIndex: -1, flips: -1 };
 
-            // --- シミュレーション ---
             for (let i = 0; i < player2Hand.length; i++) {
                 const card = player2Hand[i];
                 for (const boardIndex of availableCells) {
@@ -650,7 +607,6 @@
                 bestMove.boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
             }
             
-            // --- カード配置実行 ---
             const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
             cardToPlay.owner = 2;
             board[bestMove.boardIndex] = cardToPlay;
@@ -675,8 +631,8 @@
             
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            updateScores(); // スコアオブジェクトを更新
-            renderAll();    // スコアエフェクト付きで描画
+            updateScores();
+            renderAll();
 
             checkGameOver();
 
@@ -685,7 +641,6 @@
             }
         }
 
-        // --- イベントリスナー ---
         async function onHandClick(e) {
             await checkAndInitAudio();
             if (!isPlayerTurn || isGameOver) return;
@@ -745,8 +700,8 @@
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            updateScores(); // スコアオブジェクトを更新
-            renderAll();    // スコアエフェクト付きで描画
+            updateScores();
+            renderAll();
 
             checkGameOver();
             if (!isGameOver) {
@@ -759,12 +714,40 @@
             startGame();
         }
 
-        // イベントリスナーを登録
+        function resizeGame() {
+            const wrapper = document.getElementById('game-wrapper');
+            if (!wrapper) return;
+
+            const baseWidth = 448; 
+            const baseHeight = wrapper.offsetHeight; 
+
+            if (baseHeight === 0) return;
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            const scale = Math.min(
+                viewportWidth / baseWidth,
+                viewportHeight / baseHeight
+            );
+
+            const scaledWidth = baseWidth * scale;
+            const scaledHeight = baseHeight * scale;
+
+            const marginLeft = (viewportWidth - scaledWidth) / 2;
+            const marginTop = (viewportHeight - scaledHeight) / 2;
+
+            wrapper.style.transform = `translate(${marginLeft}px, ${marginTop}px) scale(${scale})`;
+        }
+
         handP1Element.addEventListener('click', onHandClick);
         boardElement.addEventListener('click', onBoardClick);
         restartButton.addEventListener('click', onRestartClick);
 
-        // --- ゲーム開始 ---
+        window.addEventListener('resize', resizeGame);
+        
+        resizeGame();
+
         startGame();
     </script>
 </body>
