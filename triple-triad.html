@@ -118,13 +118,47 @@
 
         #game-wrapper {
             width: 448px; 
+            position: relative;
         }
+
+        .rule-notice {
+            position: fixed;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #FACC15;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            border: 2px solid #FACC15;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease, top 0.3s ease;
+            pointer-events: none;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+        }
+        .rule-notice.show {
+            opacity: 1;
+            top: 10%;
+        }
+
+        .cell-hint {
+            background-color: rgba(250, 204, 21, 0.4) !important;
+            box-shadow: 0 0 10px #FACC15;
+        }
+
     </style>
 </head>
 
 <body class="flex items-center justify-center">
 
     <div id="game-wrapper" class="flex flex-col justify-between p-4">
+
+        <div id="start-overlay" class="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 cursor-pointer">
+            <h2 class="text-3xl font-bold text-yellow-400 animate-pulse">クリックして開始</h2>
+        </div>
 
         <div id="player-2-area" class="w-full">
             <div id="turn-p2" class="turn-indicator text-center p-2 mb-2 rounded-lg bg-gray-800 border-2 border-transparent">
@@ -174,6 +208,7 @@
         </div>
     </div>
 
+    <div id="rule-notice" class="rule-notice"></div>
 
     <script>
         const allCards = [
@@ -218,6 +253,19 @@
         const restartButton = document.getElementById('restart-button');
         const turnNoticeElement = document.getElementById('turn-notice');
         const turnNoticeMessageElement = document.getElementById('turn-notice-message');
+        const ruleNoticeElement = document.getElementById('rule-notice');
+        const gameWrapper = document.getElementById('game-wrapper');
+        const startOverlay = document.getElementById('start-overlay');
+
+        function showRuleNotice(message) {
+            if (!ruleNoticeElement) return;
+            ruleNoticeElement.textContent = message;
+            ruleNoticeElement.classList.add('show');
+            
+            setTimeout(() => {
+                ruleNoticeElement.classList.remove('show');
+            }, 1500);
+        }
         
         let isAudioReady = false;
         let sfxPlace, sfxFlip, sfxWin, sfxLose;
@@ -409,21 +457,19 @@
         }
         
         function startGame() {
+            gameWrapper.classList.remove('hidden');
             isGameOver = false;
             const deck = shuffle([...allCards]);
             player1Hand = deck.slice(0, 5).map(c => ({ ...c, owner: 1 }));
             player2Hand = deck.slice(5, 10).map(c => ({ ...c, owner: 2 }));
             board = Array(9).fill(null);
             
-            let isPlayerFirst = true;
             if (Math.random() < 0.5) {
                 currentPlayer = 1;
                 isPlayerTurn = true;
-                isPlayerFirst = true;
             } else {
                 currentPlayer = 2;
                 isPlayerTurn = false;
-                isPlayerFirst = false;
             }
             selectedCard = null;
             scores = { player1: 0, player2: 0 };
@@ -436,7 +482,7 @@
             setupAudio();
             renderAll(); 
 
-            if (isPlayerFirst) {
+            if (isPlayerTurn) {
                 turnNoticeMessageElement.textContent = "あなたが先行です";
             } else {
                 turnNoticeMessageElement.textContent = "CPUが先行です";
@@ -453,7 +499,7 @@
 
         function checkAndFlip(boardIndex, cardToPlace) {
             const placedPlayer = cardToPlace.owner;
-            const flippedIndices = [];
+            const adjacentCards = [];
 
             const adjacentIndices = [
                 { idx: boardIndex - 3, side: 'top', opposite: 'bottom' },
@@ -469,18 +515,59 @@
                 if (adj.side === 'right' && boardIndex % 3 === 2) continue;
 
                 const adjacentCard = board[adjIndex];
-
                 if (adjacentCard && adjacentCard.owner !== placedPlayer) {
-                    const placedValue = cardToPlace.stats[adj.side];
-                    const adjacentValue = adjacentCard.stats[adj.opposite];
-
-                    if (placedValue > adjacentValue) {
-                        board[adjIndex].owner = placedPlayer;
-                        flippedIndices.push(adjIndex);
-                    }
+                    adjacentCards.push({
+                        index: adj.idx,
+                        card: adjacentCard,
+                        side: adj.side,
+                        opposite: adj.opposite
+                    });
                 }
             }
-            return flippedIndices;
+
+            if (adjacentCards.length === 0) {
+                return { type: 'none', indices: [] };
+            }
+
+            const comparisons = adjacentCards.map(adj => {
+                const placedValue = cardToPlace.stats[adj.side];
+                const adjacentValue = adj.card.stats[adj.opposite];
+                return {
+                    index: adj.index,
+                    sameValue: placedValue === adjacentValue ? placedValue : null,
+                    plusValue: placedValue + adjacentValue
+                };
+            });
+
+            // ★修正: セイム判定
+            const sameMatches = comparisons.filter(c => c.sameValue !== null);
+            if (sameMatches.length >= 2) {
+                const flippedIndices = sameMatches.map(c => c.index);
+                return { type: 'same', indices: [...new Set(flippedIndices)] };
+            }
+
+            // プラス判定
+            const plusCounts = {};
+            comparisons.forEach(c => {
+                plusCounts[c.plusValue] = (plusCounts[c.plusValue] || 0) + 1;
+            });
+            const plusTriggeredValue = Object.keys(plusCounts).find(value => plusCounts[value] >= 2);
+
+            if (plusTriggeredValue) {
+                const flippedIndices = comparisons
+                    .filter(c => c.plusValue == plusTriggeredValue)
+                    .map(c => c.index);
+                return { type: 'plus', indices: [...new Set(flippedIndices)] };
+            }
+
+            // 基本ルール
+            const basicFlips = adjacentCards.filter(adj => {
+                const placedValue = cardToPlace.stats[adj.side];
+                const adjacentValue = adj.card.stats[adj.opposite];
+                return placedValue > adjacentValue;
+            }).map(adj => adj.index);
+
+            return { type: 'basic', indices: basicFlips };
         }
 
         function updateScores() {
@@ -527,6 +614,7 @@
                     resultScoreP1Element.textContent = scores.player1;
                     resultScoreP2Element.textContent = scores.player2;
                     modalElement.classList.remove('hidden');
+                    gameWrapper.classList.add('hidden');
                 }, 1000); 
             }
         }
@@ -541,6 +629,94 @@
             }
         }
         
+        async function playTurn(boardIndex, cardToPlace) {
+            const placedPlayer = cardToPlace.owner;
+            
+            board[boardIndex] = cardToPlace;
+            
+            renderAll();
+            playPlaceSfx();
+            await new Promise(resolve => setTimeout(resolve, 50)); 
+            
+            const initialFlipResult = checkAndFlip(boardIndex, cardToPlace);
+            
+            if (initialFlipResult.type === 'same') {
+                showRuleNotice("セイム！");
+            } else if (initialFlipResult.type === 'plus') {
+                showRuleNotice("プラス！");
+            }
+
+            const allFlippedIndices = new Set();
+            const flipQueue = [];
+
+            if (initialFlipResult.indices.length > 0) {
+                playFlipSfx();
+                
+                for (const index of initialFlipResult.indices) {
+                    if (!allFlippedIndices.has(index)) {
+                        const card = board[index];
+                        card.owner = placedPlayer;
+                        allFlippedIndices.add(index);
+                        
+                        if (initialFlipResult.type === 'same' || initialFlipResult.type === 'plus') {
+                            flipQueue.push(index);
+                        }
+                        
+                        const cell = boardElement.children[index];
+                        const cardEl = cell.querySelector('.card-flip');
+                        if (cardEl) cardEl.classList.add('is-flipping');
+                    }
+                }
+            }
+            
+            while (flipQueue.length > 0) {
+                const currentIndex = flipQueue.shift();
+                const currentCard = board[currentIndex];
+                
+                const adjacentIndices = [
+                    { idx: currentIndex - 3, side: 'top', opposite: 'bottom' },
+                    { idx: currentIndex + 3, side: 'bottom', opposite: 'top' },
+                    { idx: currentIndex - 1, side: 'left', opposite: 'right' },
+                    { idx: currentIndex + 1, side: 'right', opposite: 'left' }
+                ];
+
+                for (const adj of adjacentIndices) {
+                    const adjIndex = adj.idx;
+                    
+                    if (adjIndex < 0 || adjIndex > 8) continue;
+                    if (adj.side === 'left' && currentIndex % 3 === 0) continue;
+                    if (adj.side === 'right' && currentIndex % 3 === 2) continue;
+                    
+                    const adjacentCard = board[adjIndex];
+                    
+                    if (adjacentCard && adjacentCard.owner !== placedPlayer && !allFlippedIndices.has(adjIndex)) {
+                        
+                        const placedValue = currentCard.stats[adj.side];
+                        const adjacentValue = adjacentCard.stats[adj.opposite];
+
+                        if (placedValue > adjacentValue) {
+                            adjacentCard.owner = placedPlayer;
+                            allFlippedIndices.add(adjIndex);
+                            flipQueue.push(adjIndex);
+                            
+                            const cell = boardElement.children[adjIndex];
+                            const cardEl = cell.querySelector('.card-flip');
+                            if (cardEl) cardEl.classList.add('is-flipping');
+                        }
+                    }
+                }
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateScores();
+            renderAll();
+            
+            checkGameOver();
+            if (!isGameOver) {
+                switchPlayer();
+            }
+        }
+
         async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
 
@@ -608,41 +784,52 @@
             
             const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
             cardToPlay.owner = 2;
-            board[bestMove.boardIndex] = cardToPlay;
             
-            renderAll();
-            playPlaceSfx();
+            await new Promise(resolve => setTimeout(resolve, 500)); 
 
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await playTurn(bestMove.boardIndex, cardToPlay);
+        }
+
+        function clearHints() {
+            boardElement.querySelectorAll('.cell.cell-hint').forEach(cell => {
+                cell.classList.remove('cell-hint');
+            });
+        }
+
+        function renderHints(indices) {
+            clearHints();
+            indices.forEach(index => {
+                const cell = boardElement.children[index];
+                if (cell && !board[index]) {
+                    cell.classList.add('cell-hint');
+                }
+            });
+        }
+
+        function calculateHints(card) {
+            if (!card) return [];
             
-            const flippedIndices = checkAndFlip(bestMove.boardIndex, cardToPlay);
+            const hintIndices = [];
+            const availableCells = [];
+            board.forEach((cell, index) => {
+                if (cell === null) availableCells.push(index);
+            });
 
-            if (flippedIndices.length > 0) {
-                playFlipSfx();
-                flippedIndices.forEach(index => {
-                    const cell = boardElement.children[index];
-                    const cardEl = cell.querySelector('.card-flip');
-                    if (cardEl) {
-                        cardEl.classList.add('is-flipping');
-                    }
-                });
+            for (const boardIndex of availableCells) {
+                const cardToPlace = { ...card, owner: 1 };
+                const result = checkAndFlip(boardIndex, cardToPlace);
+                
+                if (result.type === 'same' || result.type === 'plus') {
+                    hintIndices.push(boardIndex);
+                }
             }
-            
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            updateScores();
-            renderAll();
-
-            checkGameOver();
-
-            if (!isGameOver) {
-                switchPlayer();
-            }
+            return hintIndices;
         }
 
         async function onHandClick(e) {
-            await checkAndInitAudio();
-            if (!isPlayerTurn || isGameOver) return;
+            if (!isPlayerTurn || isGameOver || !isAudioReady) return;
+
+            clearHints();
 
             const cardEl = e.target.closest('[data-player="1"]');
             if (!cardEl) return;
@@ -657,13 +844,15 @@
                     handIndex: handIndex,
                     player: 1
                 };
+                
+                const hints = calculateHints(selectedCard.card);
+                renderHints(hints);
             }
             renderHands();
         }
 
         async function onBoardClick(e) {
-            await checkAndInitAudio();
-            if (!isPlayerTurn || isGameOver || !selectedCard) return;
+            if (!isPlayerTurn || isGameOver || !selectedCard || !isAudioReady) return;
 
             const cell = e.target.closest('[data-index]');
             if (!cell) return;
@@ -672,44 +861,18 @@
             if (board[boardIndex]) return;
 
             isPlayerTurn = false; 
+            clearHints();
 
             const cardToPlace = player1Hand.splice(selectedCard.handIndex, 1)[0];
             cardToPlace.owner = 1;
-            board[boardIndex] = cardToPlace;
-            
             selectedCard = null;
 
-            renderAll(); 
-            playPlaceSfx();
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const flippedIndices = checkAndFlip(boardIndex, cardToPlace);
-            
-            if (flippedIndices.length > 0) {
-                playFlipSfx();
-                flippedIndices.forEach(index => {
-                    const cell = boardElement.children[index];
-                    const cardEl = cell.querySelector('.card-flip');
-                    if (cardEl) {
-                        cardEl.classList.add('is-flipping');
-                    }
-                });
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            updateScores();
-            renderAll();
-
-            checkGameOver();
-            if (!isGameOver) {
-                switchPlayer();
-            }
+            await playTurn(boardIndex, cardToPlace);
         }
 
         async function onRestartClick() {
-            await checkAndInitAudio();
+            modalElement.classList.add('hidden');
+            gameWrapper.classList.remove('hidden');
             startGame();
         }
 
@@ -717,7 +880,12 @@
         boardElement.addEventListener('click', onBoardClick);
         restartButton.addEventListener('click', onRestartClick);
 
-        startGame();
+        startOverlay.addEventListener('click', async () => {
+            await checkAndInitAudio();
+            startOverlay.classList.add('hidden');
+            startGame();
+        }, { once: true });
+
     </script>
 </body>
 </html>
