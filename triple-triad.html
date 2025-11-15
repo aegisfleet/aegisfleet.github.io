@@ -2,7 +2,7 @@
 <html lang="ja" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=448, user-scalable=no">
     <title>Triple Triad</title>
     <link rel="icon" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -118,12 +118,11 @@
 
         #game-wrapper {
             width: 448px; 
-            transform-origin: top left;
         }
     </style>
 </head>
 
-<body class="">
+<body class="flex items-center justify-center">
 
     <div id="game-wrapper" class="flex flex-col justify-between p-4">
 
@@ -714,39 +713,9 @@
             startGame();
         }
 
-        function resizeGame() {
-            const wrapper = document.getElementById('game-wrapper');
-            if (!wrapper) return;
-
-            const baseWidth = 448; 
-            const baseHeight = wrapper.offsetHeight; 
-
-            if (baseHeight === 0) return;
-
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            const scale = Math.min(
-                viewportWidth / baseWidth,
-                viewportHeight / baseHeight
-            );
-
-            const scaledWidth = baseWidth * scale;
-            const scaledHeight = baseHeight * scale;
-
-            const marginLeft = (viewportWidth - scaledWidth) / 2;
-            const marginTop = (viewportHeight - scaledHeight) / 2;
-
-            wrapper.style.transform = `translate(${marginLeft}px, ${marginTop}px) scale(${scale})`;
-        }
-
         handP1Element.addEventListener('click', onHandClick);
         boardElement.addEventListener('click', onBoardClick);
         restartButton.addEventListener('click', onRestartClick);
-
-        window.addEventListener('resize', resizeGame);
-        
-        resizeGame();
 
         startGame();
     </script>
