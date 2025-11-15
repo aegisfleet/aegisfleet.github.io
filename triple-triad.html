@@ -6,6 +6,9 @@
     <title>Triple Triad</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ★★★ 修正: Tone.js (音声ライブラリ) CDN ★★★ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
     <style>
         /* Interフォントの読み込み */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -15,7 +18,7 @@
             touch-action: manipulation; /* ダブルタップによるズームを無効化 */
             background-color: #111827; /* bg-gray-900 */
             background-image: linear-gradient(to bottom, #111827, #1e3a8a); /* bg-gray-900 to bg-blue-900 */
-            color: white; /* ★★★ 改善: デフォルト文字色を白に ★★★ */
+            color: white; 
         }
 
         /* カードの裏返し（フリップ）アニメーション */
@@ -66,9 +69,8 @@
             opacity: 0.8;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             letter-spacing: -0.05em; /* 詰める */
-            color: white; /* ★★★ 修正: 文字色を白に明示 ★★★ */
+            color: white; 
         }
-
 
         /* 選択中のカードのハイライト */
         .selected-card {
@@ -98,6 +100,8 @@
     </style>
 </head>
 <body class="h-full overflow-hidden flex flex-col p-4">
+
+    <!-- ★★★ 削除: BGM Toggle Button は削除されました ★★★ -->
 
     <!-- ゲーム全体コンテナ -->
     <div class="w-full max-w-md mx-auto h-full flex flex-col justify-between">
@@ -187,11 +191,11 @@
         // --- ゲーム状態変数 ---
         let player1Hand = [];
         let player2Hand = [];
-        let board = Array(9).fill(null); // 9マスのボード状態
+        let board = Array(9).fill(null); 
         let currentPlayer = 1;
-        let selectedCard = null; // { card: object, handIndex: int, player: int }
+        let selectedCard = null; 
         let scores = { player1: 0, player2: 0 };
-        let isPlayerTurn = true; // プレイヤーの操作をロックするため
+        let isPlayerTurn = true; 
         let isGameOver = false;
 
         // --- DOM要素 ---
@@ -209,9 +213,86 @@
         const restartButton = document.getElementById('restart-button');
         const turnNoticeElement = document.getElementById('turn-notice');
         const turnNoticeMessageElement = document.getElementById('turn-notice-message');
+        
+        // ★★★ 削除: BGMボタンDOMは削除されました ★★★
+
+        // --- ★★★ 変更: Audio (Tone.js) ★★★ ---
+        let isAudioReady = false;
+        let sfxPlace, sfxFlip, sfxWin, sfxLose;
+
+        /**
+         * ★★★ 新設: オーディオ初期化チェック ★★★
+         * ユーザー操作時に呼び出し、Tone.jsを開始する
+         */
+        async function checkAndInitAudio() {
+            if (isAudioReady) return; // 既に初期化済み
+            try {
+                await Tone.start();
+                console.log('Audio Context started');
+                isAudioReady = true;
+            } catch (e) {
+                console.error("Tone.start failed", e);
+                // 失敗してもゲームは続行する
+            }
+        }
+
+
+        /**
+         * ★★★ 変更: オーディオのセットアップ (効果音のみ) ★★★
+         */
+        function setupAudio() {
+            // 効果音シンセ
+            sfxPlace = new Tone.MembraneSynth({
+                pitchDecay: 0.01,
+                octaves: 2,
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+            }).toDestination();
+            
+            sfxFlip = new Tone.Synth({
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.01, decay: 0.1, release: 0.1 }
+            }).toDestination();
+            
+            sfxWin = new Tone.Synth().toDestination();
+            sfxLose = new Tone.Synth().toDestination();
+            
+            // ★★★ 削除: BGM関連はすべて削除されました ★★★
+        }
+
+        // --- SFX再生関数 ---
+        function playPlaceSfx() {
+            if (!isAudioReady) return;
+            sfxPlace.triggerAttackRelease("C2", "8n", Tone.now());
+        }
+
+        function playFlipSfx() {
+            if (!isAudioReady) return;
+            sfxFlip.triggerAttackRelease("G4", "16n", Tone.now());
+            sfxFlip.frequency.setValueAtTime("G4", Tone.now());
+            sfxFlip.frequency.linearRampToValueAtTime("C5", Tone.now() + 0.1);
+        }
+
+        function playWinSfx() {
+            if (!isAudioReady) return;
+            const now = Tone.now();
+            sfxWin.triggerAttackRelease("C4", "8n", now);
+            sfxWin.triggerAttackRelease("E4", "8n", now + 0.1);
+            sfxWin.triggerAttackRelease("G4", "8n", now + 0.2);
+            sfxWin.triggerAttackRelease("C5", "4n", now + 0.3);
+        }
+
+        function playLoseSfx() {
+            if (!isAudioReady) return;
+            const now = Tone.now();
+            sfxLose.triggerAttackRelease("C5", "8n", now);
+            sfxLose.triggerAttackRelease("G4", "8n", now + 0.1);
+            sfxLose.triggerAttackRelease("E4", "8n", now + 0.2);
+            sfxLose.triggerAttackRelease("C4", "4n", now + 0.3);
+        }
+
+        // ★★★ 削除: toggleBGM 関数は削除されました ★★★
 
         // --- ヘルパー関数 ---
-
         function displayValue(value) {
             return value === 10 ? 'A' : String(value);
         }
@@ -231,7 +312,6 @@
         }
 
         // --- 描画関数 ---
-
         function createCardElement(card, isP1Hand = false) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card-flip w-1/5 aspect-[3/4] rounded-lg border-2 flex-shrink-0 shadow-lg';
@@ -244,7 +324,6 @@
                 ? 'border-blue-400'
                 : 'border-red-400';
             
-            // エラー回避のため、クラスを個別に追加
             gradient.split(' ').forEach(cls => cardEl.classList.add(cls));
             cardEl.classList.add(borderColor);
 
@@ -252,19 +331,13 @@
                 cardEl.classList.add('cursor-pointer');
             }
 
-            // カードの数字と名前
             const stats = card.stats;
             cardEl.innerHTML = `
-                <!-- 数字 -->
                 <span class="card-num card-num-top ${getNumClass(stats.top)}">${displayValue(stats.top)}</span>
                 <span class="card-num card-num-bottom ${getNumClass(stats.bottom)}">${displayValue(stats.bottom)}</span>
                 <span class="card-num card-num-left ${getNumClass(stats.left)}">${displayValue(stats.left)}</span>
                 <span class="card-num card-num-right ${getNumClass(stats.right)}">${displayValue(stats.right)}</span>
-                
-                <!-- 名前 -->
-                <span class="card-name absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">
-                    ${card.name}
-                </span>
+                <span class="card-name absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">${card.name}</span>
             `;
             return cardEl;
         }
@@ -277,7 +350,7 @@
                 
                 if (card) {
                     const cardEl = createCardElement(card, false);
-                    cardEl.classList.remove('w-1/5', 'aspect-[3/4]'); // ボード用のスタイル調整
+                    cardEl.classList.remove('w-1/5', 'aspect-[3/4]');
                     cardEl.classList.add('w-full', 'h-full');
                     cell.appendChild(cardEl);
                 } else {
@@ -291,10 +364,9 @@
         }
 
         function renderHands() {
-            // P1の手札
             handP1Element.innerHTML = '';
             player1Hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, true); // P1の手札
+                const cardEl = createCardElement(card, true);
                 cardEl.dataset.index = index;
                 cardEl.dataset.player = 1;
                 if (selectedCard && selectedCard.player === 1 && selectedCard.handIndex === index) {
@@ -303,10 +375,9 @@
                 handP1Element.appendChild(cardEl);
             });
 
-            // P2の手札 (表向き)
             handP2Element.innerHTML = '';
             player2Hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, false); // P2の手札 (クリック不可)
+                const cardEl = createCardElement(card, false);
                 cardEl.dataset.index = index;
                 cardEl.dataset.player = 2;
                 handP2Element.appendChild(cardEl);
@@ -314,11 +385,9 @@
         }
 
         function renderStatus() {
-            // スコア更新
             scoreP1Element.textContent = scores.player1;
             scoreP2Element.textContent = scores.player2;
 
-            // ターンインジケーター更新
             if (isGameOver) {
                 turnP1Element.classList.remove('border-yellow-400', 'bg-gray-700');
                 turnP2Element.classList.remove('border-yellow-400', 'bg-gray-700');
@@ -338,7 +407,6 @@
         }
 
         // --- ゲームロジック ---
-
         function startGame() {
             isGameOver = false;
             const deck = shuffle([...allCards]);
@@ -359,6 +427,10 @@
             selectedCard = null;
             scores = { player1: 0, player2: 0 };
             modalElement.classList.add('hidden');
+            
+            // ★★★ 追加: ゲーム開始時にシンセを定義 ★★★
+            setupAudio();
+            
             renderAll(); 
 
             if (isPlayerFirst) {
@@ -376,22 +448,15 @@
             }, 2000);
         }
 
-        /**
-         * ★★★ 修正: アニメーション順序変更 ★★★
-         * 裏返しロジックのみを実行（配置は呼び出し元で行う）
-         * @param {number} boardIndex - 配置されたボードのインデックス
-         * @param {object} cardToPlace - 配置されたカードオブジェクト
-         * @returns {Array} - 裏返ったカードのインデックスリスト
-         */
         function checkAndFlip(boardIndex, cardToPlace) {
             const placedPlayer = cardToPlace.owner;
             const flippedIndices = [];
 
             const adjacentIndices = [
-                { idx: boardIndex - 3, side: 'top', opposite: 'bottom' }, // 上
-                { idx: boardIndex + 3, side: 'bottom', opposite: 'top' }, // 下
-                { idx: boardIndex - 1, side: 'left', opposite: 'right' },  // 左
-                { idx: boardIndex + 1, side: 'right', opposite: 'left' }   // 右
+                { idx: boardIndex - 3, side: 'top', opposite: 'bottom' },
+                { idx: boardIndex + 3, side: 'bottom', opposite: 'top' },
+                { idx: boardIndex - 1, side: 'left', opposite: 'right' },
+                { idx: boardIndex + 1, side: 'right', opposite: 'left' }
             ];
 
             for (const adj of adjacentIndices) {
@@ -407,7 +472,7 @@
                     const adjacentValue = adjacentCard.stats[adj.opposite];
 
                     if (placedValue > adjacentValue) {
-                        board[adjIndex].owner = placedPlayer; // ★配列の状態を更新
+                        board[adjIndex].owner = placedPlayer;
                         flippedIndices.push(adjIndex);
                     }
                 }
@@ -430,10 +495,13 @@
                 let message = "";
                 if (scores.player1 > scores.player2) {
                     message = "あなたの勝利！";
+                    playWinSfx(); // ★ SFX
                 } else if (scores.player2 > scores.player1) {
                     message = "CPUの勝利！";
+                    playLoseSfx(); // ★ SFX
                 } else {
                     message = "引き分け！";
+                    playLoseSfx(); // ★ SFX
                 }
                 
                 setTimeout(() => {
@@ -451,15 +519,10 @@
             renderStatus();
 
             if (!isPlayerTurn) {
-                // CPU (プレイヤー2) のターン
-                setTimeout(cpuTurn, 1000); // 1秒後にCPUが行動
+                setTimeout(cpuTurn, 1000);
             }
         }
 
-        /**
-         * ★★★ 修正: アニメーション順序変更 (async化) ★★★
-         * CPU (プレイヤー2) の思考ロジック (最善手を選ぶ)
-         */
         async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
 
@@ -471,13 +534,8 @@
             });
             if (availableCells.length === 0) return;
 
-            let bestMove = {
-                cardIndex: -1,
-                boardIndex: -1,
-                flips: -1
-            };
+            let bestMove = { cardIndex: -1, boardIndex: -1, flips: -1 };
 
-            // 1. シミュレーション
             for (let i = 0; i < player2Hand.length; i++) {
                 const card = player2Hand[i];
                 for (const boardIndex of availableCells) {
@@ -510,58 +568,52 @@
                 }
             }
             
-            // 2. 最善手が見つからなければランダム
             if (bestMove.flips <= 0) {
                 bestMove.cardIndex = Math.floor(Math.random() * player2Hand.length);
                 bestMove.boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
             }
             
-            // 3. 手札からカードを取得し、ボード配列に「配置」
             const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
             cardToPlay.owner = 2;
             board[bestMove.boardIndex] = cardToPlay;
             
-            // 4. 「配置した状態」を描画
             renderAll();
+            playPlaceSfx(); // ★ SFX
 
-            // 5. 0.5秒待つ (カードが置かれたのを見せるため)
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // 6. 「裏返すロジック」を実行
             const flippedIndices = checkAndFlip(bestMove.boardIndex, cardToPlay);
 
-            // 7. アニメーションクラスを追加
-            flippedIndices.forEach(index => {
-                const cell = boardElement.children[index];
-                const cardEl = cell.querySelector('.card-flip');
-                if (cardEl) {
-                    cardEl.classList.add('is-flipping');
-                }
-            });
+            if (flippedIndices.length > 0) {
+                playFlipSfx(); // ★ SFX
+                flippedIndices.forEach(index => {
+                    const cell = boardElement.children[index];
+                    const cardEl = cell.querySelector('.card-flip');
+                    if (cardEl) {
+                        cardEl.classList.add('is-flipping');
+                    }
+                });
+            }
             
-            // 8. アニメーション時間(0.5s)待つ
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // 9. 最終的な状態（色が変わった後）を描画
             updateScores();
             renderAll(); 
 
-            // 10. ゲーム終了チェック
             checkGameOver();
 
-            // 11. ターンをプレイヤーに戻す
             if (!isGameOver) {
-                switchPlayer(); // isPlayerTurn = true にする
+                switchPlayer();
             }
         }
-
 
         // --- イベントリスナー ---
 
         /**
-         * プレイヤー1の手札クリック処理
+         * ★★★ 変更: プレイヤー1の手札クリック処理 (async化) ★★★
          */
-        function onHandClick(e) {
+        async function onHandClick(e) {
+            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
             if (!isPlayerTurn || isGameOver) return;
 
             const cardEl = e.target.closest('[data-player="1"]');
@@ -578,68 +630,71 @@
                     player: 1
                 };
             }
-            renderHands(); // 選択ハイライトを更新
+            renderHands();
         }
 
         /**
-         * ★★★ 修正: アニメーション順序変更 (async化) ★★★
-         * ボードのマス目クリック処理
+         * ★★★ 変更: ボードのマス目クリック処理 (async化) ★★★
          */
         async function onBoardClick(e) {
+            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
             if (!isPlayerTurn || isGameOver || !selectedCard) return;
 
             const cell = e.target.closest('[data-index]');
-            if (!cell) return; // カードの上をクリックした場合は無視
+            if (!cell) return;
 
             const boardIndex = parseInt(cell.dataset.index, 10);
-            if (board[boardIndex]) return; // 既にカードがある
+            if (board[boardIndex]) return;
 
-            // 0. ターンロック
             isPlayerTurn = false; 
 
-            // 1. 手札からカードを取得し、ボード配列に「配置」
             const cardToPlace = player1Hand.splice(selectedCard.handIndex, 1)[0];
             cardToPlace.owner = 1;
-            board[boardIndex] = cardToPlace; // 配列に配置
+            board[boardIndex] = cardToPlace;
             
             selectedCard = null;
 
-            // 2. 「配置した状態」を描画
             renderAll(); 
+            playPlaceSfx(); // ★ SFX
 
-            // 3. 0.5秒待つ (カードが置かれたのを見せるため)
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // 4. 「裏返すロジック」を実行
-            const flippedIndices = checkAndFlip(boardIndex, cardToPlace); // 修正した関数
+            const flippedIndices = checkAndFlip(boardIndex, cardToPlace);
             
-            // 5. アニメーションクラスを追加
-            flippedIndices.forEach(index => {
-                const cell = boardElement.children[index];
-                const cardEl = cell.querySelector('.card-flip');
-                if (cardEl) {
-                    cardEl.classList.add('is-flipping');
-                }
-            });
+            if (flippedIndices.length > 0) {
+                playFlipSfx(); // ★ SFX
+                flippedIndices.forEach(index => {
+                    const cell = boardElement.children[index];
+                    const cardEl = cell.querySelector('.card-flip');
+                    if (cardEl) {
+                        cardEl.classList.add('is-flipping');
+                    }
+                });
+            }
 
-            // 6. アニメーション時間(0.5s)待つ
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // 7. 最終的な状態（色が変わった後）を描画
             updateScores();
             renderAll();
 
-            // 8. ゲーム終了チェックとターン切り替え
             checkGameOver();
             if (!isGameOver) {
-                switchPlayer(); // CPUターンへ
+                switchPlayer();
             }
+        }
+
+        /**
+         * ★★★ 新設: リスタートボタンクリック処理 ★★★
+         */
+        async function onRestartClick() {
+            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
+            startGame();
         }
 
         // イベントリスナーを登録
         handP1Element.addEventListener('click', onHandClick);
-        boardElement.addEventListener('click', onBoardClick); // async関数を直接登録
-        restartButton.addEventListener('click', startGame);
+        boardElement.addEventListener('click', onBoardClick);
+        restartButton.addEventListener('click', onRestartClick); // ★★★ 変更
 
         // --- ゲーム開始 ---
         startGame();
