@@ -6,7 +6,7 @@
     <title>Triple Triad</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ★★★ 修正: Tone.js (音声ライブラリ) CDN ★★★ -->
+    <!-- Tone.js (音声ライブラリ) CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 
     <style>
@@ -15,9 +15,9 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            touch-action: manipulation; /* ダブルタップによるズームを無効化 */
-            background-color: #111827; /* bg-gray-900 */
-            background-image: linear-gradient(to bottom, #111827, #1e3a8a); /* bg-gray-900 to bg-blue-900 */
+            touch-action: manipulation;
+            background-color: #111827;
+            background-image: linear-gradient(to bottom, #111827, #1e3a8a);
             color: white; 
         }
 
@@ -36,27 +36,25 @@
         .card-flip {
             transition: background-color 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
-            overflow: hidden; /* 角丸のため */
+            overflow: hidden;
         }
 
         /* カードの数字スタイル */
         .card-num {
             position: absolute;
-            width: 1.25rem; /* w-5 */
-            height: 1.25rem; /* h-5 */
+            width: 1.25rem;
+            height: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900; /* font-black */
-            font-size: 0.875rem; /* text-sm */
-            border-radius: 0.25rem; /* rounded-sm */
-            background-color: rgba(0, 0, 0, 0.4); /* 半透明の黒背景 */
+            font-weight: 900;
+            font-size: 0.875rem;
+            border-radius: 0.25rem;
+            background-color: rgba(0, 0, 0, 0.4);
             color: white;
             line-height: 1;
         }
-        .card-num-a { /* 'A' (10) の場合 */
-            color: #FACC15; /* yellow-400 */
-        }
+        .card-num-a { color: #FACC15; }
         .card-num-top { top: 2px; left: 50%; transform: translateX(-50%); }
         .card-num-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
         .card-num-left { left: 2px; top: 50%; transform: translateY(-50%); }
@@ -64,15 +62,15 @@
 
         /* カード名 */
         .card-name {
-            font-size: 0.6rem; /* text-[10px] */
+            font-size: 0.6rem;
             font-weight: 700;
             opacity: 0.8;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            letter-spacing: -0.05em; /* 詰める */
+            letter-spacing: -0.05em;
             color: white; 
         }
 
-        /* 選択中のカードのハイライト */
+        /* 選択中のカードのハイライト (P1) */
         .selected-card {
             transform: scale(1.1) translateY(-10px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
@@ -80,18 +78,47 @@
             z-index: 10;
         }
         
+        /* ★★★ 追加: CPU思考中ハイライト ★★★ */
+        .cpu-thinking-card {
+            transform: scale(1.1) translateY(10px); /* 上向きに */
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.3);
+            border-color: #F87171; /* red-400 */
+            z-index: 10;
+        }
+
         /* アクティブプレイヤーのターン表示 */
         .turn-indicator {
             transition: all 0.3s ease;
         }
 
+        /* ★★★ 追加: スコア更新エフェクト ★★★ */
+        @keyframes scoreUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background-color: #374151; /* bg-gray-700 */ }
+            100% { transform: scale(1); }
+        }
+        .score-updating {
+            animation: scoreUpdate 0.4s ease-out;
+        }
+
+        /* ★★★ 追加: 勝利カードエフェクト ★★★ */
+        @keyframes winnerCard {
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(255, 255, 150, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        }
+        .winner-card {
+            animation: winnerCard 0.5s ease-in-out 0.2s; /* 0.2s遅延 */
+            z-index: 5;
+        }
+
         /* ボードのマス目 */
         .cell {
-            background-color: rgba(0, 0, 0, 0.3); /* 半透明の黒 */
-            border-color: rgba(255, 255, 255, 0.2); /* 半透明の白 */
+            background-color: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .cell-empty-hover:hover {
-            background-color: rgba(0, 0, 0, 0.5); /* ホバー時 */
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
         .hidden {
@@ -101,19 +128,15 @@
 </head>
 <body class="h-full overflow-hidden flex flex-col p-4">
 
-    <!-- ★★★ 削除: BGM Toggle Button は削除されました ★★★ -->
-
     <!-- ゲーム全体コンテナ -->
     <div class="w-full max-w-md mx-auto h-full flex flex-col justify-between">
 
         <!-- プレイヤー2 (上部) 手札 & スコア -->
         <div id="player-2-area" class="w-full">
-            <!-- ターンインジケーター -->
             <div id="turn-p2" class="turn-indicator text-center p-2 mb-2 rounded-lg bg-gray-800 border-2 border-transparent">
                 <h2 class="font-bold text-red-400">CPU</h2>
                 <p>スコア: <span id="score-p2" class="font-bold text-xl">0</span></p>
             </div>
-            <!-- 手札 -->
             <div id="hand-p2" class="flex justify-center h-24 space-x-1">
                 <!-- JSによってカードがここに挿入されます -->
             </div>
@@ -126,11 +149,9 @@
 
         <!-- プレイヤー1 (下部) 手札 & スコア -->
         <div id="player-1-area" class="w-full">
-            <!-- 手札 -->
             <div id="hand-p1" class="flex justify-center h-24 space-x-1 mb-2">
                 <!-- JSによってカードがここに挿入されます -->
             </div>
-            <!-- ターンインジケーター -->
             <div id="turn-p1" class="turn-indicator text-center p-2 mt-2 rounded-lg bg-gray-800 border-2 border-transparent">
                 <h2 class="font-bold text-blue-400">あなた</h2>
                 <p>スコア: <span id="score-p1" class="font-bold text-xl">0</span></p>
@@ -214,32 +235,21 @@
         const turnNoticeElement = document.getElementById('turn-notice');
         const turnNoticeMessageElement = document.getElementById('turn-notice-message');
         
-        // ★★★ 削除: BGMボタンDOMは削除されました ★★★
-
-        // --- ★★★ 変更: Audio (Tone.js) ★★★ ---
+        // --- Audio (Tone.js) ---
         let isAudioReady = false;
         let sfxPlace, sfxFlip, sfxWin, sfxLose;
 
-        /**
-         * ★★★ 新設: オーディオ初期化チェック ★★★
-         * ユーザー操作時に呼び出し、Tone.jsを開始する
-         */
         async function checkAndInitAudio() {
-            if (isAudioReady) return; // 既に初期化済み
+            if (isAudioReady) return;
             try {
                 await Tone.start();
                 console.log('Audio Context started');
                 isAudioReady = true;
             } catch (e) {
                 console.error("Tone.start failed", e);
-                // 失敗してもゲームは続行する
             }
         }
 
-
-        /**
-         * ★★★ 変更: オーディオのセットアップ (効果音のみ) ★★★
-         */
         function setupAudio() {
             // 効果音シンセ
             sfxPlace = new Tone.MembraneSynth({
@@ -255,8 +265,6 @@
             
             sfxWin = new Tone.Synth().toDestination();
             sfxLose = new Tone.Synth().toDestination();
-            
-            // ★★★ 削除: BGM関連はすべて削除されました ★★★
         }
 
         // --- SFX再生関数 ---
@@ -290,8 +298,6 @@
             sfxLose.triggerAttackRelease("C4", "4n", now + 0.3);
         }
 
-        // ★★★ 削除: toggleBGM 関数は削除されました ★★★
-
         // --- ヘルパー関数 ---
         function displayValue(value) {
             return value === 10 ? 'A' : String(value);
@@ -318,8 +324,8 @@
             
             const isP1 = card.owner === 1;
             const gradient = isP1
-                ? 'bg-gradient-to-br from-blue-600 to-blue-800' // P1
-                : 'bg-gradient-to-br from-red-600 to-red-800'; // P2
+                ? 'bg-gradient-to-br from-blue-600 to-blue-800'
+                : 'bg-gradient-to-br from-red-600 to-red-800';
             const borderColor = isP1
                 ? 'border-blue-400'
                 : 'border-red-400';
@@ -384,10 +390,32 @@
             });
         }
 
+        /**
+         * ★★★ 変更: スコア更新エフェクトをここに追加 ★★★
+         */
         function renderStatus() {
-            scoreP1Element.textContent = scores.player1;
-            scoreP2Element.textContent = scores.player2;
+            // スコア更新 (エフェクト付き)
+            const oldScore1 = parseInt(scoreP1Element.textContent, 10);
+            const newScore1 = scores.player1;
+            if (newScore1 !== oldScore1) {
+                scoreP1Element.textContent = newScore1;
+                turnP1Element.classList.add('score-updating');
+                setTimeout(() => turnP1Element.classList.remove('score-updating'), 400);
+            } else {
+                 scoreP1Element.textContent = newScore1; // 初回描画用
+            }
 
+            const oldScore2 = parseInt(scoreP2Element.textContent, 10);
+            const newScore2 = scores.player2;
+            if (newScore2 !== oldScore2) {
+                scoreP2Element.textContent = newScore2;
+                turnP2Element.classList.add('score-updating');
+                setTimeout(() => turnP2Element.classList.remove('score-updating'), 400);
+            } else {
+                scoreP2Element.textContent = newScore2; // 初回描画用
+            }
+
+            // ターンインジケーター更新
             if (isGameOver) {
                 turnP1Element.classList.remove('border-yellow-400', 'bg-gray-700');
                 turnP2Element.classList.remove('border-yellow-400', 'bg-gray-700');
@@ -426,11 +454,14 @@
             }
             selectedCard = null;
             scores = { player1: 0, player2: 0 };
+            
+            // ★★★ 変更: スコア表示をDOMでリセット ★★★
+            scoreP1Element.textContent = '0';
+            scoreP2Element.textContent = '0';
+
             modalElement.classList.add('hidden');
             
-            // ★★★ 追加: ゲーム開始時にシンセを定義 ★★★
             setupAudio();
-            
             renderAll(); 
 
             if (isPlayerFirst) {
@@ -480,12 +511,18 @@
             return flippedIndices;
         }
 
+        /**
+         * ★★★ 変更: スコアオブジェクトの更新のみを行う ★★★
+         */
         function updateScores() {
             scores.player1 = board.filter(c => c && c.owner === 1).length;
             scores.player2 = board.filter(c => c && c.owner === 2).length;
-            renderStatus();
+            // 描画は renderAll -> renderStatus で行われる
         }
 
+        /**
+         * ★★★ 変更: 勝利演出エフェクトを追加 ★★★
+         */
         function checkGameOver() {
             if (board.every(cell => cell !== null)) {
                 isGameOver = true;
@@ -493,15 +530,32 @@
                 renderStatus(); 
 
                 let message = "";
+                let winner = 0; // 0: Draw, 1: P1, 2: P2
                 if (scores.player1 > scores.player2) {
                     message = "あなたの勝利！";
-                    playWinSfx(); // ★ SFX
+                    playWinSfx();
+                    winner = 1;
                 } else if (scores.player2 > scores.player1) {
                     message = "CPUの勝利！";
-                    playLoseSfx(); // ★ SFX
+                    playLoseSfx();
+                    winner = 2;
                 } else {
                     message = "引き分け！";
-                    playLoseSfx(); // ★ SFX
+                    playLoseSfx();
+                    winner = 0;
+                }
+                
+                // ★ 勝利カードエフェクト
+                if (winner !== 0) {
+                    board.forEach((card, index) => {
+                        if (card && card.owner === winner) {
+                            const cell = boardElement.children[index];
+                            const cardEl = cell.querySelector('.card-flip');
+                            if (cardEl) {
+                                cardEl.classList.add('winner-card');
+                            }
+                        }
+                    });
                 }
                 
                 setTimeout(() => {
@@ -523,8 +577,29 @@
             }
         }
 
+        /**
+         * ★★★ 変更: CPU思考中エフェクトを追加 ★★★
+         */
         async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
+
+            // ★ CPU思考中エフェクト
+            await new Promise(resolve => setTimeout(resolve, 300)); // 少し待つ
+            let randomHighlight = 0;
+            const maxHighlights = player2Hand.length > 1 ? 2 : 1;
+            
+            for (let i = 0; i < maxHighlights; i++) {
+                randomHighlight = Math.floor(Math.random() * player2Hand.length);
+                const cardEl = handP2Element.children[randomHighlight];
+                if(cardEl) {
+                    cardEl.classList.add('cpu-thinking-card');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    cardEl.classList.remove('cpu-thinking-card');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            // --- 思考エフェクトここまで ---
+
 
             const availableCells = [];
             board.forEach((cell, index) => {
@@ -536,6 +611,7 @@
 
             let bestMove = { cardIndex: -1, boardIndex: -1, flips: -1 };
 
+            // --- シミュレーション ---
             for (let i = 0; i < player2Hand.length; i++) {
                 const card = player2Hand[i];
                 for (const boardIndex of availableCells) {
@@ -573,19 +649,20 @@
                 bestMove.boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
             }
             
+            // --- カード配置実行 ---
             const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
             cardToPlay.owner = 2;
             board[bestMove.boardIndex] = cardToPlay;
             
             renderAll();
-            playPlaceSfx(); // ★ SFX
+            playPlaceSfx();
 
             await new Promise(resolve => setTimeout(resolve, 500));
             
             const flippedIndices = checkAndFlip(bestMove.boardIndex, cardToPlay);
 
             if (flippedIndices.length > 0) {
-                playFlipSfx(); // ★ SFX
+                playFlipSfx();
                 flippedIndices.forEach(index => {
                     const cell = boardElement.children[index];
                     const cardEl = cell.querySelector('.card-flip');
@@ -597,8 +674,8 @@
             
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            updateScores();
-            renderAll(); 
+            updateScores(); // スコアオブジェクトを更新
+            renderAll();    // スコアエフェクト付きで描画
 
             checkGameOver();
 
@@ -608,12 +685,8 @@
         }
 
         // --- イベントリスナー ---
-
-        /**
-         * ★★★ 変更: プレイヤー1の手札クリック処理 (async化) ★★★
-         */
         async function onHandClick(e) {
-            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
+            await checkAndInitAudio();
             if (!isPlayerTurn || isGameOver) return;
 
             const cardEl = e.target.closest('[data-player="1"]');
@@ -633,11 +706,8 @@
             renderHands();
         }
 
-        /**
-         * ★★★ 変更: ボードのマス目クリック処理 (async化) ★★★
-         */
         async function onBoardClick(e) {
-            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
+            await checkAndInitAudio();
             if (!isPlayerTurn || isGameOver || !selectedCard) return;
 
             const cell = e.target.closest('[data-index]');
@@ -655,14 +725,14 @@
             selectedCard = null;
 
             renderAll(); 
-            playPlaceSfx(); // ★ SFX
+            playPlaceSfx();
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const flippedIndices = checkAndFlip(boardIndex, cardToPlace);
             
             if (flippedIndices.length > 0) {
-                playFlipSfx(); // ★ SFX
+                playFlipSfx();
                 flippedIndices.forEach(index => {
                     const cell = boardElement.children[index];
                     const cardEl = cell.querySelector('.card-flip');
@@ -674,8 +744,8 @@
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            updateScores();
-            renderAll();
+            updateScores(); // スコアオブジェクトを更新
+            renderAll();    // スコアエフェクト付きで描画
 
             checkGameOver();
             if (!isGameOver) {
@@ -683,18 +753,15 @@
             }
         }
 
-        /**
-         * ★★★ 新設: リスタートボタンクリック処理 ★★★
-         */
         async function onRestartClick() {
-            await checkAndInitAudio(); // ★★★ 追加: オーディオ初期化
+            await checkAndInitAudio();
             startGame();
         }
 
         // イベントリスナーを登録
         handP1Element.addEventListener('click', onHandClick);
         boardElement.addEventListener('click', onBoardClick);
-        restartButton.addEventListener('click', onRestartClick); // ★★★ 変更
+        restartButton.addEventListener('click', onRestartClick);
 
         // --- ゲーム開始 ---
         startGame();
