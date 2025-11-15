@@ -156,8 +156,41 @@
 
     <div id="game-wrapper" class="flex flex-col justify-between p-4">
 
-        <div id="start-overlay" class="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 cursor-pointer">
-            <h2 class="text-3xl font-bold text-yellow-400 animate-pulse">クリックして開始</h2>
+        <div id="start-overlay" class="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50 p-8">
+    
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-lg max-w-md w-full text-left mb-8 overflow-y-auto" style="max-height: 60vh;">
+                <h2 class="text-2xl font-bold text-yellow-400 mb-4 text-center">ゲームルール</h2>
+                
+                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">基本ルール</h3>
+                <p class="text-sm mb-4">
+                    ボードにカードを置き、隣接する相手のカードより数字が大きければ、そのカードをひっくり返して自分のものにできます。最終的にボード上のカードが多い方の勝利です。
+                </p>
+                
+                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">特殊ルール</h3>
+                <ul class="list-disc list-inside text-sm space-y-2">
+                    <li>
+                        <strong>セイム (Same):</strong>
+                        カードを置いた時、2辺以上で「相手カードの数字」と「自分のカードの数字」が<strong>一致</strong>した場合、それらの相手カードを全てひっくり返します。（数字の大小は問いません）
+                    </li>
+                    <li>
+                        <strong>プラス (Plus):</strong>
+                        カードを置いた時、2辺以上で「相手カードの数字」と「自分のカードの数字」の<strong>合計値</strong>が同じになった場合、それらの相手カードを全てひっくり返します。
+                    </li>
+                    <li>
+                        <strong>コンボ (Combo):</strong>
+                        「セイム」または「プラス」でカードをひっくり返した時、そのカードがさらに隣接する別の相手カードに（基本ルールで）勝てる場合、そのカードも連鎖してひっくり返します。
+                    </li>
+                </ul>
+        
+                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">ヒント</h3>
+                <p class="text-sm">
+                    自分の手札からカードを選ぶと、「セイム」または「プラス」が発動できるマスが黄色く光ります。
+                </p>
+            </div>
+        
+            <button id="start-game-button" class="w-full max-w-sm bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform animate-pulse">
+                ゲーム開始
+            </button>
         </div>
 
         <div id="player-2-area" class="w-full">
@@ -256,6 +289,7 @@
         const ruleNoticeElement = document.getElementById('rule-notice');
         const gameWrapper = document.getElementById('game-wrapper');
         const startOverlay = document.getElementById('start-overlay');
+        const startGameButton = document.getElementById('start-game-button');
 
         function showRuleNotice(message) {
             if (!ruleNoticeElement) return;
@@ -539,14 +573,12 @@
                 };
             });
 
-            // ★修正: セイム判定
             const sameMatches = comparisons.filter(c => c.sameValue !== null);
             if (sameMatches.length >= 2) {
                 const flippedIndices = sameMatches.map(c => c.index);
                 return { type: 'same', indices: [...new Set(flippedIndices)] };
             }
 
-            // プラス判定
             const plusCounts = {};
             comparisons.forEach(c => {
                 plusCounts[c.plusValue] = (plusCounts[c.plusValue] || 0) + 1;
@@ -560,7 +592,6 @@
                 return { type: 'plus', indices: [...new Set(flippedIndices)] };
             }
 
-            // 基本ルール
             const basicFlips = adjacentCards.filter(adj => {
                 const placedValue = cardToPlace.stats[adj.side];
                 const adjacentValue = adj.card.stats[adj.opposite];
@@ -880,7 +911,7 @@
         boardElement.addEventListener('click', onBoardClick);
         restartButton.addEventListener('click', onRestartClick);
 
-        startOverlay.addEventListener('click', async () => {
+        startGameButton.addEventListener('click', async () => {
             await checkAndInitAudio();
             startOverlay.classList.add('hidden');
             startGame();
