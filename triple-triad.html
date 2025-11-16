@@ -464,6 +464,7 @@
         function stopBGM() {
             if (!isBgmPlaying) return;
             Tone.Transport.stop();
+            Tone.Transport.cancel(0);
             bgmBassPart.stop(0);
             bgmMelodyPart.stop(0);
             bgmKickPart.stop(0);
@@ -624,7 +625,6 @@
 
             modalElement.classList.add('hidden');
             
-            setupAudio();
             renderAll();  
 
             if (isPlayerTurn) {
@@ -1057,6 +1057,9 @@
 
         startGameButton.addEventListener('click', async () => {
             await checkAndInitAudio();
+            if (isAudioReady) {
+                setupAudio();
+            }
             startOverlay.classList.add('hidden');
             startGame();
         }, { once: true });
