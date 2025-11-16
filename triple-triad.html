@@ -313,6 +313,9 @@
         
         let isAudioReady = false;
         let sfxPlace, sfxFlip, sfxWin, sfxLose;
+        let bgmBassSynth, bgmMelodySynth, bgmKick, bgmHiHat, bgmSnareSynth;
+        let bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart;
+        let isBgmPlaying = false;
 
         async function checkAndInitAudio() {
             if (isAudioReady) return;
@@ -339,6 +342,76 @@
             
             sfxWin = new Tone.Synth().toDestination();
             sfxLose = new Tone.Synth().toDestination();
+            
+            bgmBassSynth = new Tone.FMSynth({
+                harmonicity: 3,
+                modulationIndex: 10,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
+                modulation: { type: "square" },
+                modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.5 },
+            }).toDestination();
+
+            bgmMelodySynth = new Tone.AMSynth({
+                harmonicity: 2,
+                oscillator: { type: "sawtooth" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 1 },
+                modulation: { type: "square" },
+                modulationEnvelope: { attack: 0.1, decay: 0, sustain: 1, release: 0.5 },
+            }).toDestination();
+            
+            bgmKick = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 10,
+                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
+            }).toDestination();
+            
+            bgmHiHat = new Tone.NoiseSynth({
+                noise: { type: "white" },
+                envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 },
+            }).toDestination();
+            
+            bgmSnareSynth = new Tone.NoiseSynth({
+                noise: { type: "pink" },
+                envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 },
+            }).toDestination();
+
+            const bassPattern = [
+                "C2", null, "C3", "C3", "C2", null, "C3", "C3",
+                "C2", null, "C3", "C3", "C2", null, "C3", "C3"
+            ];
+            bgmBassPart = new Tone.Sequence((time, note) => {
+                bgmBassSynth.triggerAttackRelease(note, "16n", time);
+            }, bassPattern, "16n");
+            bgmBassPart.loop = true;
+
+            const melodyPattern = [
+                "G3", "E3", "G3", "A3", "G3", "E3", "G3", null,
+                "C4", "B3", "A3", "G3", "E3", "D3", "E3", "C3"
+            ];
+            bgmMelodyPart = new Tone.Sequence((time, note) => {
+                bgmMelodySynth.triggerAttackRelease(note, "8n", time);
+            }, melodyPattern, "8n");
+            bgmMelodyPart.loop = true;
+
+            bgmKickPart = new Tone.Sequence((time, note) => {
+                bgmKick.triggerAttackRelease(note, "8n", time);
+            }, ["C1", null, "C1", null, "C1", null, "C1", null], "4n");
+            bgmKickPart.loop = true;
+            
+            bgmHiHatPart = new Tone.Sequence((time, note) => {
+                bgmHiHat.triggerAttackRelease("16n", time);
+            }, [null, null, "C5", "C5", null, null, "C5", "C5"], "4n");
+            bgmHiHatPart.loop = true;
+
+            const snarePattern = [
+                "C4", null, null, null, "C4", "C4", null, "C4",
+                "C4", null, null, null, "C4", "C4", null, "C4"
+            ];
+            bgmSnarePart = new Tone.Sequence((time, note) => {
+                bgmSnareSynth.triggerAttackRelease("16n", time);
+            }, snarePattern, "16n");
+            bgmSnarePart.loop = true;
         }
 
         function playPlaceSfx() {
@@ -369,6 +442,29 @@
             sfxLose.triggerAttackRelease("G4", "8n", now + 0.1);
             sfxLose.triggerAttackRelease("E4", "8n", now + 0.2);
             sfxLose.triggerAttackRelease("C4", "4n", now + 0.3);
+        }
+
+        function startBGM() {
+            if (!isAudioReady || isBgmPlaying) return;
+            Tone.Transport.bpm.value = 130;
+            bgmBassPart.start(0);
+            bgmMelodyPart.start(0);
+            bgmKickPart.start(0);
+            bgmHiHatPart.start(0);
+            bgmSnarePart.start(0);
+            Tone.Transport.start();
+            isBgmPlaying = true;
+        }
+
+        function stopBGM() {
+            if (!isBgmPlaying) return;
+            Tone.Transport.stop();
+            bgmBassPart.stop(0);
+            bgmMelodyPart.stop(0);
+            bgmKickPart.stop(0);
+            bgmHiHatPart.stop(0);
+            bgmSnarePart.stop(0);
+            isBgmPlaying = false;
         }
 
         function displayValue(value) {
@@ -539,6 +635,8 @@
                     setTimeout(cpuTurn, 500);  
                 }
             }, 2000);
+            
+            startBGM();
         }
 
         function checkAndFlip(boardIndex, cardToPlace) {
@@ -621,6 +719,7 @@
                 isGameOver = true;
                 isPlayerTurn = false;
                 renderStatus();  
+                stopBGM();
 
                 let message = "";
                 let winner = 0;
@@ -940,6 +1039,7 @@
         }
 
         async function onRestartClick() {
+            stopBGM();
             modalElement.classList.add('hidden');
             winStreakElement.innerHTML = '';
             gameWrapper.classList.remove('hidden');
@@ -955,6 +1055,17 @@
             startOverlay.classList.add('hidden');
             startGame();
         }, { once: true });
+
+        document.addEventListener("visibilitychange", () => {
+            if (!isAudioReady) return;
+            if (document.hidden) {
+                Tone.Transport.pause();
+            } else {
+                if (isBgmPlaying) {
+                    Tone.Transport.start();
+                }
+            }
+        });
 
     </script>
 </body>
