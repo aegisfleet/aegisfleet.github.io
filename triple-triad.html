@@ -19,7 +19,7 @@
             color: white;
             width: 100vw;
             height: 100vh;
-            overflow: hidden; 
+            overflow: hidden;  
         }
 
         @keyframes flipEffect {
@@ -64,7 +64,7 @@
             opacity: 0.8;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             letter-spacing: -0.05em;
-            color: white;  
+            color: white;    
         }
 
         .selected-card {
@@ -117,7 +117,7 @@
         }
 
         #game-wrapper {
-            width: 448px; 
+            width: 448px;  
             position: relative;
         }
 
@@ -181,13 +181,13 @@
                         「セイム」または「プラス」でカードをひっくり返した時、そのカードがさらに隣接する別の相手カードに（基本ルールで）勝てる場合、そのカードも連鎖してひっくり返します。
                     </li>
                 </ul>
-        
+    
                 <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">ヒント</h3>
                 <p class="text-sm">
                     自分の手札からカードを選ぶと、「セイム」または「プラス」が発動できるマスが黄色く光ります。
                 </p>
             </div>
-        
+    
             <button id="start-game-button" class="w-full max-w-sm bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform animate-pulse">
                 ゲーム開始
             </button>
@@ -216,7 +216,7 @@
     </div>
 
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
             <h2 id="result-message" class="text-3xl font-bold mb-6"></h2>
             <p class="text-lg mb-6">最終スコア</p>
             <div class="flex justify-around mb-8">
@@ -229,6 +229,9 @@
                     <p id="result-score-p2" class="text-4xl font-bold">0</p>
                 </div>
             </div>
+            
+            <div id="win-streak-area" class="my-6 text-yellow-400"></div>
+            
             <button id="restart-button" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform">
                 もう一度遊ぶ
             </button>
@@ -261,16 +264,22 @@
             { id: 14, name: 'ギルガメッシュ', stats: { top: 3, right: 7, bottom: 10, left: 6 } },
             { id: 15, name: 'キスティス', stats: { top: 9, right: 6, bottom: 2, left: 7 } },
             { id: 16, name: 'コチョコボ', stats: { top: 2, right: 1, bottom: 4, left: 2 } },
+            { id: 17, name: 'リヴァイアサン', stats: { top: 7, right: 7, bottom: 9, left: 3 } },
+            { id: 18, name: 'ラムウ', stats: { top: 6, right: 4, bottom: 8, left: 7 } },
+            { id: 19, name: 'タイタン', stats: { top: 4, right: 9, bottom: 6, left: 5 } },
+            { id: 20, name: 'フェンリル', stats: { top: 8, right: 8, bottom: 5, left: 5 } }
         ];
 
         let player1Hand = [];
         let player2Hand = [];
-        let board = Array(9).fill(null); 
+        let board = Array(9).fill(null);  
         let currentPlayer = 1;
-        let selectedCard = null; 
+        let selectedCard = null;  
         let scores = { player1: 0, player2: 0 };
-        let isPlayerTurn = true; 
+        let isPlayerTurn = true;  
         let isGameOver = false;
+        let winStreak = parseInt(localStorage.getItem('tripleTriadWinStreak') || '0');
+        let maxWinStreak = parseInt(localStorage.getItem('tripleTriadMaxWinStreak') || '0');
 
         const boardElement = document.getElementById('game-board');
         const handP1Element = document.getElementById('hand-p1');
@@ -284,6 +293,7 @@
         const resultScoreP1Element = document.getElementById('result-score-p1');
         const resultScoreP2Element = document.getElementById('result-score-p2');
         const restartButton = document.getElementById('restart-button');
+        const winStreakElement = document.getElementById('win-streak-area');
         const turnNoticeElement = document.getElementById('turn-notice');
         const turnNoticeMessageElement = document.getElementById('turn-notice-message');
         const ruleNoticeElement = document.getElementById('rule-notice');
@@ -514,7 +524,7 @@
             modalElement.classList.add('hidden');
             
             setupAudio();
-            renderAll(); 
+            renderAll();  
 
             if (isPlayerTurn) {
                 turnNoticeMessageElement.textContent = "あなたが先行です";
@@ -526,7 +536,7 @@
             setTimeout(() => {
                 turnNoticeElement.classList.add('hidden');
                 if (!isPlayerTurn) {
-                    setTimeout(cpuTurn, 500); 
+                    setTimeout(cpuTurn, 500);  
                 }
             }, 2000);
         }
@@ -610,7 +620,7 @@
             if (board.every(cell => cell !== null)) {
                 isGameOver = true;
                 isPlayerTurn = false;
-                renderStatus(); 
+                renderStatus();  
 
                 let message = "";
                 let winner = 0;
@@ -618,15 +628,24 @@
                     message = "あなたの勝利！";
                     playWinSfx();
                     winner = 1;
+                    winStreak++;
+                    if (winStreak > maxWinStreak) {
+                        maxWinStreak = winStreak;
+                        localStorage.setItem('tripleTriadMaxWinStreak', maxWinStreak.toString());
+                    }
                 } else if (scores.player2 > scores.player1) {
                     message = "CPUの勝利！";
                     playLoseSfx();
                     winner = 2;
+                    winStreak = 0;
                 } else {
                     message = "引き分け！";
                     playLoseSfx();
                     winner = 0;
+                    winStreak = 0;
                 }
+                
+                localStorage.setItem('tripleTriadWinStreak', winStreak.toString());
                 
                 if (winner !== 0) {
                     board.forEach((card, index) => {
@@ -644,9 +663,28 @@
                     resultMessageElement.textContent = message;
                     resultScoreP1Element.textContent = scores.player1;
                     resultScoreP2Element.textContent = scores.player2;
+
+                    winStreakElement.innerHTML = '';
+                    if (winStreak > 0) {
+                        winStreakElement.innerHTML = `
+                            <p class="text-xl font-bold">${winStreak} 連勝中！</p>
+                        `;
+                        if (winStreak === maxWinStreak && winStreak > 1) {
+                             winStreakElement.innerHTML += `
+                                <p class="text-sm text-yellow-300 mt-2">最高記録更新！</p>
+                            `;
+                        }
+                    } else {
+                        if (maxWinStreak > 0) {
+                            winStreakElement.innerHTML = `
+                                <p class="text-lg">最高連勝記録: <span class="text-2xl font-bold">${maxWinStreak}</span> 回</p>
+                            `;
+                        }
+                    }
+
                     modalElement.classList.remove('hidden');
                     gameWrapper.classList.add('hidden');
-                }, 1000); 
+                }, 1000);  
             }
         }
 
@@ -667,7 +705,7 @@
             
             renderAll();
             playPlaceSfx();
-            await new Promise(resolve => setTimeout(resolve, 50)); 
+            await new Promise(resolve => setTimeout(resolve, 50));  
             
             const initialFlipResult = checkAndFlip(boardIndex, cardToPlace);
             
@@ -751,7 +789,7 @@
         async function cpuTurn() {
             if (isGameOver || player2Hand.length === 0) return;
 
-            await new Promise(resolve => setTimeout(resolve, 300)); 
+            await new Promise(resolve => setTimeout(resolve, 300));  
             let randomHighlight = 0;
             const maxHighlights = player2Hand.length > 1 ? 2 : 1;
             
@@ -782,7 +820,7 @@
                     const cardToPlace = { ...card, owner: 2 };
                     let currentFlips = 0;
                     const adjacentIndices = [
-                        { idx: boardIndex - 3, side: 'top', opposite: 'bottom' }, 
+                        { idx: boardIndex - 3, side: 'top', opposite: 'bottom' },  
                         { idx: boardIndex + 3, side: 'bottom', opposite: 'top' },
                         { idx: boardIndex - 1, side: 'left', opposite: 'right' },
                         { idx: boardIndex + 1, side: 'right', opposite: 'left' }
@@ -795,7 +833,7 @@
                         if (adj.side === 'right' && boardIndex % 3 === 2) continue;
                         
                         const adjacentCard = board[adjIndex];
-                        if (adjacentCard && adjacentCard.owner === 1) { 
+                        if (adjacentCard && adjacentCard.owner === 1) {  
                             if (cardToPlace.stats[adj.side] > adjacentCard.stats[adj.opposite]) {
                                 currentFlips++;
                             }
@@ -816,7 +854,7 @@
             const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
             cardToPlay.owner = 2;
             
-            await new Promise(resolve => setTimeout(resolve, 500)); 
+            await new Promise(resolve => setTimeout(resolve, 500));  
 
             await playTurn(bestMove.boardIndex, cardToPlay);
         }
@@ -891,7 +929,7 @@
             const boardIndex = parseInt(cell.dataset.index, 10);
             if (board[boardIndex]) return;
 
-            isPlayerTurn = false; 
+            isPlayerTurn = false;  
             clearHints();
 
             const cardToPlace = player1Hand.splice(selectedCard.handIndex, 1)[0];
@@ -903,6 +941,7 @@
 
         async function onRestartClick() {
             modalElement.classList.add('hidden');
+            winStreakElement.innerHTML = '';
             gameWrapper.classList.remove('hidden');
             startGame();
         }
