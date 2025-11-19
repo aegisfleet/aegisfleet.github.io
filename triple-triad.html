@@ -23,6 +23,38 @@
                 --stat-font-size: 1.2rem;
             }
         }
+        
+        @media (max-height: 500px) {
+            :root {
+                --card-radius: 4px;
+                --stat-box-size: 0.9rem;
+                --stat-font-size: 0.65rem;
+            }
+        }
+        
+        @media (max-height: 480px) {
+            :root {
+                --card-radius: 4px;
+                --stat-box-size: 0.85rem;
+                --stat-font-size: 0.6rem;
+            }
+        }
+        
+        @media (max-height: 450px) {
+            :root {
+                --card-radius: 3px;
+                --stat-box-size: 0.7rem;
+                --stat-font-size: 0.52rem;
+            }
+        }
+        
+        @media (max-height: 420px) {
+            :root {
+                --card-radius: 2px;
+                --stat-box-size: 0.6rem;
+                --stat-font-size: 0.48rem;
+            }
+        }
 
         body {
             font-family: 'Rajdhani', 'Noto Sans JP', sans-serif;
@@ -63,10 +95,10 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             padding: 0.5rem;
             box-sizing: border-box;
-            overflow-y: auto; /* スクロール可能にする */
-            gap: 0.5rem; /* 要素間のギャップを統一 */
+            gap: 0.25rem; /* ギャップを削減 */
         }
 
         /* 上下のエリア（CPU、プレイヤー）は縮小可能にする */
@@ -96,7 +128,7 @@
             
             /* サイズ調整ロジック: */
             width: 100%;
-            max-width: min(100%, 400px); /* 最大幅を制限 */
+            max-width: min(100%, 350px); /* デフォルトを小さく */
             aspect-ratio: 3.2/4; /* カード3枚(横) x カード3枚(縦) の比率 + ギャップ考慮 */
             margin: 0 auto;
         }
@@ -104,13 +136,59 @@
         /* 縦幅が非常に短い場合はボードをさらに縮小 */
         @media (max-height: 700px) {
             #game-board {
-                max-width: min(100%, 300px);
+                max-width: min(100%, 280px);
             }
         }
         
         @media (max-height: 600px) {
             #game-board {
-                max-width: min(100%, 250px);
+                max-width: min(100%, 230px);
+            }
+        }
+        
+        @media (max-height: 550px) {
+            #game-board {
+                max-width: min(100%, 200px);
+            }
+        }
+        
+        @media (max-height: 500px) {
+            #game-board {
+                max-width: min(100%, 180px);
+                padding: 1.5%;
+                gap: 1.5%;
+            }
+        }
+        
+        @media (max-height: 480px) {
+            #game-board {
+                max-width: min(100%, 165px);
+                padding: 1.5%;
+                gap: 1.5%;
+            }
+        }
+        
+        @media (max-height: 450px) {
+            #game-board {
+                max-width: min(100%, 150px);
+                padding: 1%;
+                gap: 1%;
+            }
+        }
+        
+        @media (max-height: 420px) {
+            #game-board {
+                max-width: min(100%, 135px);
+                padding: 1%;
+                gap: 1%;
+            }
+        }
+        
+        @media (max-height: 400px) {
+            #game-board {
+                max-width: min(100%, 120px);
+                padding: 0.5%;
+                gap: 0.5%;
             }
         }
 
@@ -225,41 +303,41 @@
         .hand-container {
             display: flex; 
             justify-content: center; 
-            gap: 0.5rem;
+            gap: 0.4rem;
             width: 100%; 
-            min-height: 5.33rem; /* カードのアスペクト比3/4を考慮した最小高さ (4rem * 4/3) */
+            min-height: 4.67rem; /* カードのアスペクト比3/4を考慮した最小高さ (3.5rem * 4/3) */
         }
         .hand-card {
             width: 18%; 
-            max-width: 4rem; 
+            max-width: 3.5rem; /* デフォルトを小さく */
             aspect-ratio: 3/4;
             transition: transform 0.3s;
         }
         
         /* メディアクエリ: 画面が大きいときは手札を大きくする */
         @media (min-height: 800px) {
-            .hand-card { max-width: 5rem; }
-            .hand-container { min-height: 6.67rem; } /* 5rem * 4/3 */
+            .hand-card { max-width: 4.5rem; }
+            .hand-container { min-height: 6rem; gap: 0.5rem; }
         }
         
         /* 縦幅が短い場合の対応 */
         @media (max-height: 700px) {
-            .hand-card { max-width: 3.5rem; }
-            .hand-container { min-height: 4.67rem; } /* 3.5rem * 4/3 */
+            .hand-card { max-width: 3.2rem; }
+            .hand-container { min-height: 4.27rem; gap: 0.35rem; }
             
             .glass-panel {
                 padding: 0.5rem !important;
             }
             
             #game-wrapper {
-                padding: 0.25rem;
-                gap: 0.25rem;
+                padding: 0.4rem;
+                gap: 0.2rem;
             }
         }
         
         @media (max-height: 600px) {
             .hand-card { max-width: 2.8rem; }
-            .hand-container { min-height: 3.73rem; } /* 2.8rem * 4/3 */
+            .hand-container { min-height: 3.73rem; gap: 0.3rem; }
             
             .glass-panel {
                 padding: 0.4rem !important;
@@ -267,18 +345,93 @@
             }
             
             #game-wrapper {
-                padding: 0.2rem;
-                gap: 0.2rem;
+                padding: 0.3rem;
+                gap: 0.15rem;
+            }
+        }
+        
+        @media (max-height: 550px) {
+            .hand-card { max-width: 2.4rem; }
+            .hand-container { min-height: 3.2rem; gap: 0.25rem; }
+            
+            .glass-panel {
+                padding: 0.35rem !important;
+                font-size: 0.8rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.25rem;
+                gap: 0.12rem;
             }
         }
         
         @media (max-height: 500px) {
-            .hand-card { max-width: 2.2rem; }
-            .hand-container { min-height: 2.93rem; } /* 2.2rem * 4/3 */
+            .hand-card { max-width: 2.1rem; }
+            .hand-container { min-height: 2.8rem; gap: 0.2rem; }
             
             .glass-panel {
                 padding: 0.3rem !important;
                 font-size: 0.75rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.2rem;
+                gap: 0.1rem;
+            }
+        }
+        
+        @media (max-height: 480px) {
+            .hand-card { max-width: 1.9rem; }
+            .hand-container { min-height: 2.53rem; gap: 0.18rem; }
+            
+            .glass-panel {
+                padding: 0.28rem !important;
+                font-size: 0.72rem;
+            }
+        }
+        
+        @media (max-height: 450px) {
+            .hand-card { max-width: 1.7rem; }
+            .hand-container { min-height: 2.27rem; gap: 0.15rem; }
+            
+            .glass-panel {
+                padding: 0.25rem !important;
+                font-size: 0.68rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.15rem;
+                gap: 0.08rem;
+            }
+        }
+        
+        @media (max-height: 420px) {
+            .hand-card { max-width: 1.5rem; }
+            .hand-container { min-height: 2rem; gap: 0.12rem; }
+            
+            .glass-panel {
+                padding: 0.22rem !important;
+                font-size: 0.65rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.12rem;
+                gap: 0.06rem;
+            }
+        }
+        
+        @media (max-height: 400px) {
+            .hand-card { max-width: 1.3rem; }
+            .hand-container { min-height: 1.73rem; gap: 0.1rem; }
+            
+            .glass-panel {
+                padding: 0.2rem !important;
+                font-size: 0.6rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.1rem;
+                gap: 0.05rem;
             }
         }
     </style>
