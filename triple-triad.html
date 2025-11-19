@@ -501,7 +501,7 @@
     </div>
 
     <!-- Result Modal -->
-    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" style="position: fixed; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;">
         <div class="glass-panel w-full max-w-xs p-8 rounded-2xl text-center border-t border-white/20">
             <h2 id="result-title" class="text-4xl font-black mb-8 text-white tracking-wider drop-shadow-md">VICTORY</h2>
             <div class="flex justify-center items-end gap-8 mb-8">
@@ -1030,6 +1030,10 @@
             setTimeout(() => {
                 el.resS1.innerText = p1; el.resS2.innerText = p2;
                 el.modal.classList.remove('hidden');
+                // Prevent body scroll on mobile
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
                 let streakHTML = '';
                 if(gameState.streak > 0) {
                      streakHTML = `<div class="text-xl font-bold text-yellow-300">WIN STREAK: <span class="text-4xl">${gameState.streak}</span></div>`;
@@ -1153,7 +1157,14 @@
         }
 
         el.startBtn.addEventListener('click', async () => { await initAudioEngine(); el.overlay.classList.add('hidden'); startGame(); });
-        el.restartBtn.addEventListener('click', async () => { el.modal.classList.add('hidden'); startGame(); });
+        el.restartBtn.addEventListener('click', async () => { 
+            el.modal.classList.add('hidden'); 
+            // Restore body scroll
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            startGame(); 
+        });
 
         el.h1.addEventListener('click', e => {
             if(!gameState.isPlayerTurn || gameState.isGameOver) return;
