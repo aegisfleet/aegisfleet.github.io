@@ -785,10 +785,10 @@
             effects.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination();
             effects.delay = new Tone.PingPongDelay({ delayTime: "8n.", feedback: 0.2, wet: 0.15 }).connect(effects.reverb);
             
-            // Reduced SFX volumes to prevent clipping and loudness
-            sfx.place = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }, volume: -12 }).toDestination();
+            // SFX with gentle low-tone place sound
+            sfx.place = new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 3, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }, volume: -8 }).connect(effects.reverb);
             sfx.flip = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.2 }, volume: -15 }).connect(effects.reverb);
-            sfx.alert = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 3, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -16 }).connect(effects.delay); // Much lower
+            sfx.alert = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 3, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -16 }).connect(effects.delay);
             sfx.win = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 2 }, volume: -15 }).connect(effects.reverb);
             sfx.lose = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: "fatsawtooth", count: 3, spread: 30 }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 2 }, volume: -12 }).connect(effects.reverb);
             
@@ -834,7 +834,10 @@
             if (!isAudioStarted) return;
             const now = Tone.now();
             switch(type) {
-                case 'place': sfx.place.triggerAttackRelease("C2", "16n", now); break;
+                case 'place': 
+                    // 優しい低音でカード配置音
+                    sfx.place.triggerAttackRelease("C2", "8n", now); 
+                    break;
                 case 'flip': sfx.flip.triggerAttackRelease(["C5", "E5"], "16n", now); sfx.flip.triggerAttackRelease(["G5", "B5"], "16n", now + 0.05); break;
                 case 'alert': sfx.alert.triggerAttackRelease(["A5", "C6", "E6"], "16n", now); break;
                 case 'win': ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"].forEach((n, i) => sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1)); break;
@@ -1016,7 +1019,6 @@
             gameState.board[boardIdx] = card;
             
             updateView();
-            playSound('place');
 
             const targets = getAdjacents(boardIdx).map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
             let flips = new Set(), specialFlips = new Set(), involvedIndices = new Set();
@@ -1057,6 +1059,12 @@
 
             const queue = [...flips];
             let comboQueue = [...specialFlips];
+            
+            // 裏返りがない場合のみ配置音を鳴らす
+            if (queue.length === 0) {
+                playSound('place');
+            }
+            
             for (const idx of queue) await flipCard(idx, card.owner);
 
             if (comboQueue.length > 0) {
