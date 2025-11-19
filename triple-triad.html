@@ -1093,31 +1093,96 @@
         async function cpuMove() {
             if (gameState.isGameOver) return;
             const avail = gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
-            if(gameState.p2Hand.length > 0) {
-                const thinkIdx = Math.floor(Math.random() * gameState.p2Hand.length);
-                const handEl = el.h2.children[thinkIdx];
-                if(handEl) {
-                    handEl.classList.add('cpu-thinking');
-                    await new Promise(r => setTimeout(r, 600));
-                    handEl.classList.remove('cpu-thinking');
+            
+            // Phase 1: 複数のカードを検討する演出（2枚程度）
+            if(gameState.p2Hand.length > 1) {
+                const thinkCount = Math.min(2, gameState.p2Hand.length);
+                const thinkIndices = [];
+                
+                // ランダムに2枚のカードを選ぶ
+                while(thinkIndices.length < thinkCount) {
+                    const idx = Math.floor(Math.random() * gameState.p2Hand.length);
+                    if(!thinkIndices.includes(idx)) thinkIndices.push(idx);
+                }
+                
+                // 各カードを順番にハイライト（短縮）
+                for(const idx of thinkIndices) {
+                    const handEl = el.h2.children[idx];
+                    if(handEl) {
+                        handEl.classList.add('cpu-thinking');
+                        await new Promise(r => setTimeout(r, 250));
+                        handEl.classList.remove('cpu-thinking');
+                        await new Promise(r => setTimeout(r, 100));
+                    }
                 }
             }
-            let best = { handIdx: 0, cellIdx: avail[0], score: -1 };
+            
+            // Phase 2: 最適な手を計算（SAME/PLUS判定も含む）
+            let best = { handIdx: 0, cellIdx: avail[0], score: -1, hasSpecial: false };
             gameState.p2Hand.forEach((card, hIdx) => {
                 avail.forEach(cIdx => {
                     let score = 0;
+                    let hasSpecial = false;
                     const adjs = getAdjacents(cIdx);
+                    const targets = adjs.map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
+                    
+                    // SAME判定
+                    const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
+                    if (sameMatches.length >= 2) {
+                        hasSpecial = true;
+                        score += 10;
+                    }
+                    
+                    // PLUS判定
+                    const sums = {};
+                    targets.forEach(t => {
+                        const s = card.stats[t.side] + t.card.stats[t.opp];
+                        if (!sums[s]) sums[s] = [];
+                        sums[s].push(t);
+                    });
+                    for (const s in sums) {
+                        if (sums[s].length >= 2) {
+                            hasSpecial = true;
+                            score += 10;
+                            break;
+                        }
+                    }
+                    
+                    // 通常の取れる枚数
                     adjs.forEach(a => {
                         const t = gameState.board[a.idx];
                         if(t && t.owner === 1 && card.stats[a.side] > t.stats[a.opp]) score++;
                     });
-                    if(score > best.score) best = { handIdx: hIdx, cellIdx: cIdx, score: score };
+                    
+                    if(score > best.score) best = { handIdx: hIdx, cellIdx: cIdx, score: score, hasSpecial: hasSpecial };
                 });
             });
             if (best.score <= 0) { 
                  best.handIdx = Math.floor(Math.random() * gameState.p2Hand.length);
                  best.cellIdx = avail[Math.floor(Math.random() * avail.length)];
             }
+            
+            // Phase 3: 選んだカードをハイライト
+            const finalHandEl = el.h2.children[best.handIdx];
+            if(finalHandEl) {
+                finalHandEl.classList.add('cpu-thinking');
+                await new Promise(r => setTimeout(r, 300));
+            }
+            
+            // Phase 4: SAME/PLUSが狙える場合のみセルをハイライト
+            if(best.hasSpecial) {
+                const cell = el.board.children[best.cellIdx];
+                if(cell) {
+                    cell.classList.add('cell-hint');
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            } else {
+                await new Promise(r => setTimeout(r, 200));
+            }
+            
+            // カードのハイライトを解除
+            if(finalHandEl) finalHandEl.classList.remove('cpu-thinking');
+            
             playTurn(best.cellIdx, best.handIdx, false);
         }
 
