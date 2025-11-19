@@ -2,7 +2,7 @@
 <html lang="ja" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=448, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Triple Triad: Strategic Balance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
@@ -12,6 +12,15 @@
         
         :root {
             --card-radius: 6px;
+            --stat-box-size: 1.2rem;
+            --stat-font-size: 0.85rem;
+        }
+
+        @media (min-width: 768px) and (min-height: 600px) {
+            :root {
+                --stat-box-size: 1.6rem;
+                --stat-font-size: 1.2rem;
+            }
         }
 
         body {
@@ -21,13 +30,13 @@
             color: white;
             width: 100vw;
             height: 100vh;
+            height: 100dvh; /* モバイルのアドレスバー対策 */
             overflow: hidden;
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-
-        /* Scrollbar hidden */
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Grid BG */
         .bg-grid {
@@ -44,14 +53,68 @@
             100% { transform: perspective(800px) rotateX(60deg) translateY(40px); }
         }
 
-        /* Card */
-        .card-wrapper { position: relative; width: 100%; height: 100%; perspective: 1000px; }
+        /* --- レイアウト修正の要 --- */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            /* 縦長比率を維持しつつ、画面からはみ出さない最大幅を設定 */
+            max-width: 500px; /* スマホ・タブレット的な幅に制限 */
+            /* max-heightは設定せず、中身の高さで調整するが、flexコンテナとして振る舞う */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* 上下に振り分け */
+            padding: 1vh 1rem; /* 画面端との余白 */
+            box-sizing: border-box;
+        }
+
+        /* 上下のエリア（CPU、プレイヤー）は縮ませない */
+        .player-area {
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        /* 中央エリア（盤面）は可変サイズにする */
+        .board-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0; /* Flexアイテムがコンテンツサイズ以上に縮めるようにする重要設定 */
+            padding: 1rem 0; /* 上下の手札と盤面の間の最小マージン */
+        }
+
+        /* Board */
+        #game-board {
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 2%;
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px);
+            padding: 2%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            
+            /* サイズ調整ロジックの変更: */
+            width: 100%;
+            /* 高さが幅を超えて伸びすぎないように、アスペクト比（正方形に近い）を維持しつつ
+               親コンテナ(.board-area)の高さ・幅の小さい方に合わせる */
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 3.2/4; /* カード3枚(横) x カード3枚(縦) の比率 + ギャップ考慮 */
+            
+            /* コンテンツが中央に来るように */
+            margin: auto; 
+        }
+
+        /* Card Styling */
+        .card-wrapper { 
+            position: relative; width: 100%; height: 100%; perspective: 1000px;
+        }
         .card-inner {
             position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: var(--card-radius); box-shadow: 0 2px 4px rgba(0,0,0,0.5); background: #334155;
-            backface-visibility: hidden;
-            transform: translateZ(0); 
+            backface-visibility: hidden; transform: translateZ(0); 
         }
         .is-flipping .card-inner { animation: flipAnim 0.4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
         @keyframes flipAnim {
@@ -70,7 +133,6 @@
         .owner-p1 .card-face::after { border-color: #3b82f6; box-shadow: inset 0 0 8px #3b82f6; }
         .owner-p2 .card-face::after { border-color: #ef4444; box-shadow: inset 0 0 8px #ef4444; }
 
-        /* Rarity Glows */
         .rank-low .card-face { border: 1px solid rgba(255,255,255,0.1); }
         .rank-mid .card-face { border: 1px solid rgba(59, 130, 246, 0.4); box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1); }
         .rank-high .card-face { border: 1px solid rgba(234, 179, 8, 0.6); box-shadow: inset 0 0 15px rgba(234, 179, 8, 0.2); }
@@ -81,8 +143,6 @@
         }
         @keyframes shine { 0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); } 100% { transform: translateX(100%) translateY(100%) rotate(45deg); } }
 
-
-        /* Element Gradients */
         .bg-fire { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
         .bg-ice { background: linear-gradient(135deg, #0c4a6e, #0284c7); }
         .bg-thunder { background: linear-gradient(135deg, #713f12, #ca8a04); }
@@ -99,11 +159,16 @@
 
         .stats-grid { position: absolute; inset: 2px; z-index: 30; pointer-events: none; }
         .stat-box {
-            position: absolute; width: 1.2rem; height: 1.2rem;
+            position: absolute; 
+            width: var(--stat-box-size); 
+            height: var(--stat-box-size);
             background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255,255,255,0.2); border-radius: 3px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.85rem; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            font-weight: 700; 
+            font-size: var(--stat-font-size); 
+            color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
+        
         .stat-a { color: #fbbf24; text-shadow: 0 0 3px #fbbf24; }
         .pos-top { top: 2px; left: 50%; transform: translateX(-50%); }
         .pos-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
@@ -113,14 +178,11 @@
         .selected-card .card-inner { transform: translateY(-8px) scale(1.05); box-shadow: 0 0 15px rgba(250, 204, 21, 0.6); border-color: #facc15; }
         .cpu-thinking .card-inner { transform: translateY(8px) scale(1.05); box-shadow: 0 0 15px rgba(248, 113, 113, 0.6); }
 
-        /* Board */
-        #game-board {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px);
-            padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        .cell { 
+            width: 100%;
+            aspect-ratio: 3/4; /* セル自体を縦長に固定 */
+            position: relative; border-radius: var(--card-radius); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; 
         }
-        .cell { aspect-ratio: 3/4; position: relative; border-radius: var(--card-radius); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
         .cell-hint { background: rgba(250, 204, 21, 0.15); box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
         .cell-empty-hover:hover { background: rgba(255,255,255,0.1); cursor: pointer; }
 
@@ -135,80 +197,64 @@
         .turn-active { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.3), transparent); }
         .turn-active-p2 { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.3), transparent); }
 
-        /* Fixed Rule Notice CSS */
         #rule-notice {
             position: fixed;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0) skewX(-12deg);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            z-index: 100;
-            pointer-events: none;
+            top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0) skewX(-12deg);
+            opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            z-index: 100; pointer-events: none;
         }
-
-        #rule-notice.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.2) skewX(-12deg);
-        }
-
+        #rule-notice.show { opacity: 1; transform: translate(-50%, -50%) scale(1.2) skewX(-12deg); }
         .hidden { display: none !important; }
         
         .rank-badge {
-            position: absolute; bottom: 1px; right: 2px;
-            font-size: 0.5rem; opacity: 0.8; color: gold;
-            z-index: 35; font-weight: bold;
-            text-shadow: 0 0 2px black;
+            position: absolute; bottom: 1px; right: 2px; font-size: 0.5rem; opacity: 0.8; color: gold; z-index: 35; font-weight: bold; text-shadow: 0 0 2px black;
+        }
+        .rank-star {
+            position: absolute; top: 2px; left: 2px; width: 8px; height: 8px; fill: gold; z-index: 35; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
         }
         
-        .rank-star {
-            position: absolute; top: 2px; left: 2px;
-            width: 8px; height: 8px; fill: gold; z-index: 35;
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
+        /* 手札のサイズ調整 */
+        .hand-container {
+            display: flex; justify-content: center; gap: 0.5rem;
+            width: 100%; height: 5rem; /* 固定高さ確保 */
+        }
+        .hand-card {
+            width: 18%; max-width: 4rem; aspect-ratio: 3/4;
+            transition: transform 0.3s;
+        }
+        
+        /* メディアクエリ: 画面が大きいときは手札を大きくする */
+        @media (min-height: 800px) {
+            .hand-container { height: 7rem; }
+            .hand-card { max-width: 5.5rem; }
         }
     </style>
 </head>
 
-<body class="flex items-center justify-center overflow-hidden">
+<body>
     <div class="bg-grid"></div>
 
-    <div id="game-wrapper" class="flex flex-col justify-between p-2 h-full max-w-sm w-full relative z-10">
+    <!-- ラッパーは画面いっぱいに広がり、縦方向に要素を配置する -->
+    <div id="game-wrapper">
         
         <!-- Start Overlay -->
-        <div id="start-overlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center z-50 px-6">
+        <div id="start-overlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center z-50 px-6 rounded-lg m-2">
             <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-4 tracking-tight drop-shadow-lg shrink-0">TRIPLE TRIAD</h1>
-            
-            <div class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-6 mb-8 shadow-2xl text-left overflow-y-auto max-h-[60vh]">
+            <div class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-6 mb-8 shadow-2xl text-left overflow-y-auto max-h-[50vh]">
                 <h2 class="text-lg font-bold text-yellow-400 mb-4 text-center border-b border-slate-700 pb-2">TACTICAL MATCH</h2>
                 <ul class="space-y-4 text-sm text-slate-300">
-                    <li class="flex items-start"><span class="font-bold text-blue-400 w-16 shrink-0">WIN:</span><span>3x3の盤面を取り合い、最終的にカードが多い方の勝利。（全9枚）</span></li>
-                    <li class="flex items-start">
-                        <span class="font-bold text-red-400 w-16 shrink-0">SAME:</span>
-                        <div>
-                            <p>隣接する数字が<strong class="text-white">2辺以上一致</strong>で発動。</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="font-bold text-green-400 w-16 shrink-0">PLUS:</span>
-                        <div>
-                            <p>隣接する数字の<strong class="text-white">合計値が2辺以上一致</strong>で発動。</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start"><span class="font-bold text-purple-400 w-16 shrink-0">COMBO:</span><span>Same/Plusでひっくり返したカードから連鎖が発生します。</span></li>
-                    <li class="flex items-start">
-                        <span class="font-bold text-yellow-400 w-16 shrink-0">UNIQUE:</span>
-                        <div>
-                            <p>この対戦では<strong class="text-yellow-200">全てのカードがユニーク（1枚のみ）</strong>です。</p>
-                            <p>お互いの手札が被ることはありません。</p>
-                        </div>
-                    </li>
+                    <li class="flex items-start"><span class="font-bold text-blue-400 w-16 shrink-0">WIN:</span><span>3x3の盤面を取り合い、最終的にカードが多い方の勝利。</span></li>
+                    <li class="flex items-start"><span class="font-bold text-red-400 w-16 shrink-0">SAME:</span><span>隣接する数字が<strong class="text-white">2辺以上一致</strong>で発動。</span></li>
+                    <li class="flex items-start"><span class="font-bold text-green-400 w-16 shrink-0">PLUS:</span><span>隣接する数字の<strong class="text-white">合計値が2辺以上一致</strong>で発動。</span></li>
+                    <li class="flex items-start"><span class="font-bold text-purple-400 w-16 shrink-0">COMBO:</span><span>Same/Plusでひっくり返したカードから連鎖が発生。</span></li>
+                    <li class="flex items-start"><span class="font-bold text-yellow-400 w-16 shrink-0">UNIQUE:</span><span>全てのカードがユニーク（1枚のみ）です。</span></li>
                 </ul>
             </div>
             <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 rounded-lg text-white font-bold text-xl shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all transform hover:scale-105 active:scale-95">GAME START</button>
         </div>
 
-        <!-- Player 2 (CPU) Area -->
-        <div class="w-full">
+        <!-- Area 1: Player 2 (Top) - 固定サイズ -->
+        <div class="player-area w-full flex flex-col justify-end">
             <div id="turn-p2" class="glass-panel flex justify-between items-center p-3 rounded-lg mb-2 transition-all duration-300">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-red-900 flex items-center justify-center border border-red-500 shadow-lg">
@@ -221,15 +267,17 @@
                 </div>
                 <span id="score-p2" class="text-3xl font-bold font-mono text-white">5</span>
             </div>
-            <div id="hand-p2" class="flex justify-center h-20 gap-2 px-2"></div>
+            <div id="hand-p2" class="hand-container items-end"></div>
         </div>
 
-        <!-- Game Board -->
-        <div id="game-board" class="mx-auto w-full max-w-[320px]"></div>
+        <!-- Area 2: Board (Middle) - 可変サイズ（自動縮小） -->
+        <div class="board-area w-full">
+            <div id="game-board"></div>
+        </div>
 
-        <!-- Player 1 (You) Area -->
-        <div class="w-full">
-            <div id="hand-p1" class="flex justify-center h-20 gap-2 mb-2 px-2"></div>
+        <!-- Area 3: Player 1 (Bottom) - 固定サイズ -->
+        <div class="player-area w-full flex flex-col justify-start">
+            <div id="hand-p1" class="hand-container items-start mb-2"></div>
             <div id="turn-p1" class="glass-panel flex justify-between items-center p-3 rounded-lg transition-all duration-300">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center border border-blue-500 shadow-lg">
@@ -515,7 +563,7 @@
                             <div class="stat-box pos-right ${numCls(card.stats.right)}">${fmtNum(card.stats.right)}</div>
                         </div>
                         <div class="rank-badge">Lv${card.rank}</div>
-                        <div class="absolute bottom-1 w-full text-center text-[7px] font-bold text-white/80 tracking-widest uppercase drop-shadow-md truncate px-1">${card.name}</div>
+                        <div class="absolute bottom-1 w-full text-center text-[7px] lg:text-[9px] font-bold text-white/80 tracking-widest uppercase drop-shadow-md truncate px-1">${card.name}</div>
                     </div>
                 </div>
             </div>`;
@@ -575,7 +623,8 @@
             if (existingWrappers.length !== handData.length) {
                 container.innerHTML = handData.map((c, i) => {
                     const isActive = owner === 1 && gameState.selectedCard?.index === i;
-                    return `<div class="w-[18%] max-w-[60px] aspect-[3/4] ${isActive ? 'selected-card' : ''} transition-transform duration-300" data-idx="${i}">${createCardHTML(c, true)}</div>`;
+                    // Changed: Removed hard pixel max-width, used % and generous max-width
+                    return `<div class="hand-card ${isActive ? 'selected-card' : ''}" data-idx="${i}">${createCardHTML(c, true)}</div>`;
                 }).join('');
             } else {
                 existingWrappers.forEach((wrap, i) => {
