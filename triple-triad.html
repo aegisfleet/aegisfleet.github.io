@@ -311,7 +311,7 @@
             transition: opacity 0.3s ease, visibility 0.3s ease;
             z-index: 9998; 
             pointer-events: none;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             padding: 1rem;
@@ -319,6 +319,7 @@
         #rule-notice.show { 
             opacity: 1; 
             visibility: visible;
+            display: flex;
         }
         
         #rule-notice > div {
@@ -968,17 +969,24 @@
         function showNotice(text) {
             el.ruleText.innerText = text;
             el.ruleNotice.classList.remove('show');
-            el.ruleNotice.style.display = 'flex';
-            // Force reflow
-            void el.ruleNotice.offsetWidth; 
+            el.ruleNotice.style.display = 'none';
+            
+            // Force display first, then animate
             requestAnimationFrame(() => {
-                el.ruleNotice.classList.add('show');
+                el.ruleNotice.style.display = 'flex';
+                // Force reflow
+                void el.ruleNotice.offsetWidth;
+                requestAnimationFrame(() => {
+                    el.ruleNotice.classList.add('show');
+                });
             });
+            
             playSound('alert');
+            
             setTimeout(() => {
                 el.ruleNotice.classList.remove('show');
                 setTimeout(() => {
-                    el.ruleNotice.style.display = '';
+                    el.ruleNotice.style.display = 'none';
                 }, 300);
             }, 1500);
         }
