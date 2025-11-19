@@ -737,6 +737,9 @@
         }
 
         async function playTurn(boardIdx, handIdx, isPlayer) {
+            // Clear all hints when a card is placed
+            document.querySelectorAll('.cell-hint').forEach(c => c.classList.remove('cell-hint'));
+            
             let card;
             if (isPlayer) {
                 card = gameState.p1Hand.splice(handIdx, 1)[0];
