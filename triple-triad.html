@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" class="h-full">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,6 +10,19 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+        }
         
         :root {
             --card-radius: 6px;
@@ -61,10 +74,12 @@
             touch-action: manipulation;
             background-color: #0f172a;
             color: white;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh; /* モバイルのアドレスバー対策 */
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
             display: flex;
             align-items: center;
@@ -92,13 +107,15 @@
             width: 100%;
             height: 100%;
             max-width: 500px;
+            max-height: 100%;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 0.5rem;
             box-sizing: border-box;
-            gap: 0.25rem; /* ギャップを削減 */
+            gap: 0.25rem;
+            overflow: hidden;
         }
 
         /* 上下のエリア（CPU、プレイヤー）は縮小可能にする */
@@ -285,11 +302,10 @@
 
         #rule-notice {
             position: fixed;
-            top: 50%; 
-            left: 50%; 
-            margin-left: -45vw;
-            margin-top: -3rem;
-            width: 90vw;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             opacity: 0; 
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -298,6 +314,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
         #rule-notice.show { 
             opacity: 1; 
@@ -309,6 +326,7 @@
             padding: clamp(0.5rem, 3vw, 0.75rem) clamp(1.5rem, 8vw, 3rem);
             white-space: nowrap;
             display: inline-block;
+            max-width: 90%;
         }
         
         /* スマートフォン向けの調整 */
