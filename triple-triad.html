@@ -22,7 +22,8 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+            /* 背景を少し明るめのミッドナイトブルーに変更 */
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
         }
 
         /* Scrollbar hidden */
@@ -50,6 +51,9 @@
             position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: var(--card-radius); box-shadow: 0 2px 4px rgba(0,0,0,0.5); background: #334155;
+            /* チラつき防止のためのGPUアクセラレーション */
+            backface-visibility: hidden;
+            transform: translateZ(0); 
         }
         .is-flipping .card-inner { animation: flipAnim 0.4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
         @keyframes flipAnim {
@@ -69,15 +73,15 @@
         .owner-p2 .card-face::after { border-color: #ef4444; box-shadow: inset 0 0 8px #ef4444; }
 
         /* Element Gradients */
-        .bg-fire { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
-        .bg-ice { background: linear-gradient(135deg, #0c4a6e, #0369a1); }
-        .bg-thunder { background: linear-gradient(135deg, #713f12, #a16207); }
-        .bg-earth { background: linear-gradient(135deg, #451a03, #78350f); }
-        .bg-poison { background: linear-gradient(135deg, #14532d, #15803d); }
-        .bg-holy { background: linear-gradient(135deg, #581c87, #7e22ce); }
-        .bg-wind { background: linear-gradient(135deg, #064e3b, #047857); }
-        .bg-water { background: linear-gradient(135deg, #172554, #1d4ed8); }
-        .bg-neutral { background: linear-gradient(135deg, #374151, #4b5563); }
+        .bg-fire { background: linear-gradient(135deg, #991b1b, #dc2626); }
+        .bg-ice { background: linear-gradient(135deg, #075985, #0ea5e9); }
+        .bg-thunder { background: linear-gradient(135deg, #854d0e, #ca8a04); }
+        .bg-earth { background: linear-gradient(135deg, #573618, #9a5d26); }
+        .bg-poison { background: linear-gradient(135deg, #166534, #22c55e); }
+        .bg-holy { background: linear-gradient(135deg, #6b21a8, #a855f7); }
+        .bg-wind { background: linear-gradient(135deg, #065f46, #10b981); }
+        .bg-water { background: linear-gradient(135deg, #1e3a8a, #3b82f6); }
+        .bg-neutral { background: linear-gradient(135deg, #374151, #6b7280); }
 
         .card-icon-bg { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; opacity: 0.15; transform: scale(1.5); pointer-events: none; }
         .card-icon-center { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); z-index: 5; }
@@ -117,9 +121,9 @@
             100% { box-shadow: 0 0 0 rgba(255,255,255,0); filter: brightness(1); }
         }
 
-        .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .turn-active { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.2), transparent); }
-        .turn-active-p2 { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.2), transparent); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .turn-active { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.3), transparent); }
+        .turn-active-p2 { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.3), transparent); }
 
         /* Fixed Rule Notice CSS */
         #rule-notice {
@@ -221,7 +225,7 @@
         </div>
     </div>
 
-    <!-- Rule Notice Notification (Revised Structure) -->
+    <!-- Rule Notice Notification -->
     <div id="rule-notice">
         <div class="bg-yellow-500 text-black font-black text-4xl px-12 py-3 rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
             <span class="block skew-x-12 tracking-widest" id="rule-text">SAME!</span>
@@ -300,74 +304,112 @@
             startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn')
         };
 
-        // --- AUDIO ENGINE ---
+        // --- AUDIO ENGINE v3.0 (Fantasy Lo-Fi) ---
         let isAudioStarted = false;
-        let sfxPlace, sfxFlip, sfxWin, sfxLose, sfxAlert; 
-        let bgmBassSynth, bgmMelodySynth, bgmKick, bgmHiHat, bgmSnareSynth;
-        let bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart;
+        let sfx = { place: null, flip: null, alert: null, win: null, lose: null };
+        let music = { bass: null, melody: null, chords: null, drums: null };
+        let effects = { reverb: null, delay: null };
+        let loops = [];
         let isBgmPlaying = false;
 
         async function initAudioEngine() {
             if (isAudioStarted) return;
             await Tone.start();
             isAudioStarted = true;
+            Tone.context.lookAhead = 0.1;
 
-            sfxPlace = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
-            sfxFlip = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, release: 0.1 } }).toDestination();
-            sfxAlert = new Tone.MetalSynth({ 
-                frequency: 200, envelope: { attack: 0.001, decay: 0.1, release: 0.01 }, 
-                harmonicity: 5.1, modulationIndex: 32, resonance: 4000, volume: -5 
-            }).toDestination();
-            sfxWin = new Tone.Synth().toDestination();
-            sfxLose = new Tone.Synth().toDestination();
+            // Master Effects
+            effects.reverb = new Tone.Reverb({ decay: 3, wet: 0.2 }).toDestination();
+            effects.delay = new Tone.PingPongDelay({ delayTime: "8n", feedback: 0.2, wet: 0.1 }).connect(effects.reverb);
+
+            // --- SFX ---
+            sfx.place = new Tone.MembraneSynth({
+                pitchDecay: 0.05, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }, volume: -6
+            }).connect(effects.reverb);
+
+            sfx.flip = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.2 }, volume: -8
+            }).connect(effects.delay);
+
+            sfx.alert = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -5
+            }).connect(effects.reverb);
+
+            sfx.win = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 2 }, volume: -10
+            }).connect(effects.reverb);
             
-            bgmBassSynth = new Tone.FMSynth({
-                harmonicity: 3, modulationIndex: 10, oscillator: { type: "sine" },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
-                modulation: { type: "square" }, modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.5 },
+            sfx.lose = new Tone.PolySynth(Tone.FMSynth, {
+                harmonicity: 1.5, modulationIndex: 5, envelope: { attack: 0.1, decay: 1, sustain: 0.1 }, volume: -8
+            }).connect(effects.reverb);
+
+            // --- BGM INSTRUMENTS (Brighter, Fantasy RPG Style) ---
+            // 1. Harp-like Arpeggio (Bright & Clean)
+            music.melody = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 1 },
+                volume: -12
+            }).connect(effects.delay);
+
+            // 2. Soft Electric Piano (Chords)
+            music.chords = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.05, decay: 0.5, sustain: 0.4, release: 2 },
+                volume: -14
+            }).connect(effects.reverb);
+
+            // 3. Warm Bass
+            music.bass = new Tone.MonoSynth({
+                oscillator: { type: "triangle" },
+                filter: { type: "lowpass", frequency: 600 },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 1 },
                 volume: -10
             }).toDestination();
 
-            bgmMelodySynth = new Tone.AMSynth({
-                harmonicity: 2, oscillator: { type: "sawtooth" },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 1 },
-                modulation: { type: "square" }, modulationEnvelope: { attack: 0.1, decay: 0, sustain: 1, release: 0.5 },
-                volume: -10
-            }).toDestination();
-            
-            bgmKick = new Tone.MembraneSynth({
-                pitchDecay: 0.05, octaves: 10, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
-                volume: -10
-            }).toDestination();
-            
-            bgmHiHat = new Tone.NoiseSynth({
-                noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 },
-                volume: -10
-            }).toDestination();
-            
-            bgmSnareSynth = new Tone.NoiseSynth({
-                noise: { type: "pink" }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 },
-                volume: -10
-            }).toDestination();
+            // 4. Light Percussion
+            music.drums = new Tone.MembraneSynth({ volume: -15 }).toDestination();
 
-            bgmBassPart = new Tone.Sequence((time, note) => bgmBassSynth.triggerAttackRelease(note, "16n", time), 
-                ["C2", null, "C3", "C3", "C2", null, "C3", "C3", "C2", null, "C3", "C3", "C2", null, "C3", "C3"], "16n");
-            bgmMelodyPart = new Tone.Sequence((time, note) => bgmMelodySynth.triggerAttackRelease(note, "8n", time), 
-                ["G3", "E3", "G3", "A3", "G3", "E3", "G3", null, "C4", "B3", "A3", "G3", "E3", "D3", "E3", "C3"], "8n");
-            bgmKickPart = new Tone.Sequence((time, note) => bgmKick.triggerAttackRelease(note, "8n", time), 
-                ["C1", null, "C1", null, "C1", null, "C1", null], "4n");
-            bgmHiHatPart = new Tone.Sequence((time, note) => bgmHiHat.triggerAttackRelease("16n", time), 
-                [null, null, "C5", "C5", null, null, "C5", "C5"], "4n");
-            bgmSnarePart = new Tone.Sequence((time, note) => bgmSnareSynth.triggerAttackRelease("16n", time), 
-                ["C4", null, null, null, "C4", "C4", null, "C4", "C4", null, null, null, "C4", "C4", null, "C4"], "16n");
-            
-            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.loop = true);
+            // --- LOOPS (BPM 110 - Lydian/Major Vibe) ---
+            Tone.Transport.bpm.value = 110;
+
+            // Chord Progression: IV - V - iii - vi (F - G - Em - Am in C major context, but let's use something fantasy-ish)
+            // Let's go with Fmaj7 - G6 - Em7 - Am9
+            const chordLoop = new Tone.Loop(time => {
+                // Bar 1: Fmaj7
+                music.chords.triggerAttackRelease(["F3", "A3", "C4", "E4"], "2n", time);
+                // Bar 2: G6
+                music.chords.triggerAttackRelease(["G3", "B3", "D4", "E4"], "2n", time + Tone.Time("2n"));
+                 // Bar 3: Em7
+                music.chords.triggerAttackRelease(["E3", "G3", "B3", "D4"], "2n", time + Tone.Time("1m"));
+                 // Bar 4: Am9
+                music.chords.triggerAttackRelease(["A3", "C4", "E4", "G4", "B4"], "2n", time + Tone.Time("1m") + Tone.Time("2n"));
+            }, "2m");
+
+            // Melody: Arpeggios
+            const arpLoop = new Tone.Sequence((time, note) => {
+                if (note && Math.random() > 0.1) music.melody.triggerAttackRelease(note, "16n", time);
+            }, [
+                "A4", "C5", "E5", null, "G4", "B4", "D5", null, // F -> G
+                "G4", "B4", "D5", null, "C5", "E5", "G5", "B5"  // Em -> Am
+            ], "8n");
+
+            // Bass: Gentle walking
+            const bassLoop = new Tone.Sequence((time, note) => {
+                if (note) music.bass.triggerAttackRelease(note, "8n", time);
+            }, ["F2", null, "F2", "A2", "G2", null, "G2", "B2", "E2", null, "E2", "G2", "A2", "E2", "A2", "C3"], "8n");
+
+            // Drums: Simple Shaker/Kick feel
+            const drumLoop = new Tone.Loop(time => {
+                music.drums.triggerAttackRelease("C1", "16n", time);
+                // Off-beat accents could be added here with another synth if needed, but keep it simple
+            }, "2n");
+
+            loops = [chordLoop, arpLoop, bassLoop, drumLoop];
         }
 
         function startBGM() {
             if (!isAudioStarted || isBgmPlaying) return;
-            Tone.Transport.bpm.value = 130;
-            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.start(0));
+            loops.forEach(l => l.start(0));
             Tone.Transport.start();
             isBgmPlaying = true;
         }
@@ -375,29 +417,37 @@
         function stopBGM() {
             if (!isBgmPlaying) return;
             Tone.Transport.stop();
-            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.stop(0));
+            loops.forEach(l => l.stop());
             isBgmPlaying = false;
         }
 
         function playSound(type) {
             if (!isAudioStarted) return;
             const now = Tone.now();
-            if (type === 'place') sfxPlace.triggerAttackRelease("C2", "8n", now);
-            if (type === 'flip') {
-                sfxFlip.frequency.cancelScheduledValues(now);
-                sfxFlip.frequency.setValueAtTime("G4", now);
-                sfxFlip.frequency.linearRampToValueAtTime("C5", now + 0.1);
-                sfxFlip.triggerAttackRelease("G4", "16n", now);
+            
+            switch(type) {
+                case 'place':
+                    sfx.place.triggerAttackRelease("C2", "16n", now);
+                    break;
+                case 'flip':
+                    // Magic-like flip sound
+                    sfx.flip.triggerAttackRelease(["C5", "E5"], "16n", now);
+                    sfx.flip.triggerAttackRelease(["G5", "B5"], "16n", now + 0.05);
+                    break;
+                case 'alert':
+                    // Success chime
+                    sfx.alert.triggerAttackRelease(["A5", "C6", "E6"], "16n", now);
+                    break;
+                case 'win':
+                    // Victory fanfare
+                    const winMelody = ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"];
+                    winMelody.forEach((n, i) => sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1));
+                    break;
+                case 'lose':
+                    // Sad chord
+                    sfx.lose.triggerAttackRelease(["A3", "F3", "D3", "A2"], "2m", now);
+                    break;
             }
-            if (type === 'win') {
-                sfxWin.triggerAttackRelease("C4", "8n", now); sfxWin.triggerAttackRelease("E4", "8n", now+0.1);
-                sfxWin.triggerAttackRelease("G4", "8n", now+0.2); sfxWin.triggerAttackRelease("C5", "4n", now+0.3);
-            }
-            if (type === 'lose') {
-                sfxLose.triggerAttackRelease("C5", "8n", now); sfxLose.triggerAttackRelease("G4", "8n", now+0.1);
-                sfxLose.triggerAttackRelease("E4", "8n", now+0.2); sfxLose.triggerAttackRelease("C4", "4n", now+0.3);
-            }
-            if (type === 'alert') sfxAlert.triggerAttackRelease("C6", "32n", now);
         }
 
         // --- RENDER HELPERS ---
@@ -408,8 +458,9 @@
             if (!card) return '';
             const ownerCls = card.owner === 1 ? 'owner-p1' : 'owner-p2';
             const interactCls = isHand ? 'cursor-pointer hover:-translate-y-1 transition-transform' : '';
+            // Added explicit width/height for stability
             return `
-            <div class="card-wrapper ${interactCls}" data-uid="${card.uid}">
+            <div class="card-wrapper ${interactCls} w-full h-full" data-uid="${card.uid}">
                 <div class="card-inner ${ownerCls}">
                     <div class="card-face ${card.type}">
                         <div class="card-icon-bg"><svg viewBox="0 0 24 24" fill="currentColor">${card.icon}</svg></div>
@@ -426,31 +477,90 @@
             </div>`;
         }
 
-        function render() {
+        // --- OPTIMIZED UI UPDATE ---
+        // Initial setup (Called once)
+        function initBoardUI() {
             el.board.innerHTML = '';
-            gameState.board.forEach((card, idx) => {
+            for(let i=0; i<9; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell flex items-center justify-center';
-                cell.dataset.idx = idx;
-                if (card) cell.innerHTML = createCardHTML(card, false);
-                else if (gameState.isPlayerTurn) cell.classList.add('cell-empty-hover');
+                cell.dataset.idx = i;
                 el.board.appendChild(cell);
-            });
-            
-            el.h1.innerHTML = gameState.p1Hand.map((c, i) => {
-                const isActive = gameState.selectedCard?.index === i;
-                return `<div class="w-[18%] max-w-[60px] aspect-[3/4] ${isActive ? 'selected-card' : ''}" data-idx="${i}" data-player="1">${createCardHTML(c, true)}</div>`;
-            }).join('');
-            
-            el.h2.innerHTML = gameState.p2Hand.map((c, i) => {
-                return `<div class="w-[18%] max-w-[60px] aspect-[3/4] transition-transform duration-300" data-idx="${i}" data-player="2">${createCardHTML(c, false)}</div>`;
-            }).join('');
+            }
+        }
 
-            const p1 = gameState.board.filter(c => c && c.owner === 1).length;
-            const p2 = gameState.board.filter(c => c && c.owner === 2).length;
-            el.s1.innerText = p1; el.s2.innerText = p2;
+        // Update only changed elements (Diffing)
+        function updateView() {
+            // 1. Update Board
+            gameState.board.forEach((card, idx) => {
+                const cell = el.board.children[idx];
+                const currentCardWrapper = cell.querySelector('.card-wrapper');
+                
+                // Clean up hint if exists
+                if(card) cell.classList.remove('cell-hint', 'cell-empty-hover');
+                else if(gameState.isPlayerTurn) cell.classList.add('cell-empty-hover');
+                else cell.classList.remove('cell-empty-hover');
+
+                if (card && !currentCardWrapper) {
+                    // New card placed
+                    cell.innerHTML = createCardHTML(card, false);
+                } else if (card && currentCardWrapper) {
+                    // Card exists, update owner if needed (for flips)
+                    const inner = currentCardWrapper.querySelector('.card-inner');
+                    // Check current owner class
+                    const isP1 = inner.classList.contains('owner-p1');
+                    const isP2 = inner.classList.contains('owner-p2');
+                    
+                    if (card.owner === 1 && !isP1) {
+                        inner.classList.remove('owner-p2'); inner.classList.add('owner-p1');
+                    } else if (card.owner === 2 && !isP2) {
+                        inner.classList.remove('owner-p1'); inner.classList.add('owner-p2');
+                    }
+                } else if (!card && currentCardWrapper) {
+                    // Card removed (shouldn't happen in this game but good for safety)
+                    cell.innerHTML = '';
+                }
+            });
+
+            // 2. Update Hand P1
+            updateHandUI(el.h1, gameState.p1Hand, 1);
+            // 3. Update Hand P2
+            updateHandUI(el.h2, gameState.p2Hand, 2);
+
+            // 4. Scores & Turn
+            const p1Score = gameState.board.filter(c => c && c.owner === 1).length;
+            const p2Score = gameState.board.filter(c => c && c.owner === 2).length;
+            el.s1.innerText = p1Score;
+            el.s2.innerText = p2Score;
+
             if (gameState.turn === 1) { el.t1.classList.add('turn-active'); el.t2.classList.remove('turn-active-p2'); }
             else { el.t2.classList.add('turn-active-p2'); el.t1.classList.remove('turn-active'); }
+        }
+
+        function updateHandUI(container, handData, owner) {
+            // Simple strategy: if count differs, rebuild. If same, just update selection.
+            // Since hands only shrink, this is cheap.
+            // To strictly avoid flicker, we can diff by UID.
+            
+            const existingWrappers = Array.from(container.children);
+            
+            // If hand size changed, full rebuild (simplest for layout, usually only happens on turn start/end)
+            if (existingWrappers.length !== handData.length) {
+                container.innerHTML = handData.map((c, i) => {
+                    const isActive = owner === 1 && gameState.selectedCard?.index === i;
+                    return `<div class="w-[18%] max-w-[60px] aspect-[3/4] ${isActive ? 'selected-card' : ''} transition-transform duration-300" data-idx="${i}">${createCardHTML(c, true)}</div>`;
+                }).join('');
+            } else {
+                // Just update selection class
+                existingWrappers.forEach((wrap, i) => {
+                    wrap.dataset.idx = i; // Ensure index is correct after splice? No, splice removes element.
+                    // Hand logic: splice removes card, so length check above handles "card used".
+                    // This block handles "selecting card".
+                    const isActive = owner === 1 && gameState.selectedCard?.index === i;
+                    if (isActive) wrap.classList.add('selected-card');
+                    else wrap.classList.remove('selected-card');
+                });
+            }
         }
 
         // --- GAME LOGIC ---
@@ -464,17 +574,12 @@
         }
 
         function showNotice(text) {
-            // Reset animation by removing and adding class with a small delay
             el.ruleText.innerText = text;
             el.ruleNotice.classList.remove('show');
-            void el.ruleNotice.offsetWidth; // Trigger reflow
+            void el.ruleNotice.offsetWidth; 
             el.ruleNotice.classList.add('show');
             playSound('alert');
-            
-            // Auto hide
-            setTimeout(() => {
-                el.ruleNotice.classList.remove('show');
-            }, 1500);
+            setTimeout(() => el.ruleNotice.classList.remove('show'), 1500);
         }
 
         async function flashCells(indices) {
@@ -494,13 +599,18 @@
             playSound('flip');
             
             await new Promise(r => setTimeout(r, 200));
+            
+            // Logic Update
+            gameState.board[idx].owner = newOwner;
+            // View Update (Partial)
             const inner = wrapper.querySelector('.card-inner');
             inner.classList.remove('owner-p1', 'owner-p2');
             inner.classList.add(newOwner === 1 ? 'owner-p1' : 'owner-p2');
-            gameState.board[idx].owner = newOwner;
             
             await new Promise(r => setTimeout(r, 200));
             wrapper.classList.remove('is-flipping');
+            // Sync View just in case
+            updateView();
         }
 
         async function playTurn(boardIdx, handIdx, isPlayer) {
@@ -513,7 +623,9 @@
             }
             card.owner = isPlayer ? 1 : 2;
             gameState.board[boardIdx] = card;
-            render(); 
+            
+            // Immediate update for placement
+            updateView();
             playSound('place');
 
             const targets = getAdjacents(boardIdx).map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
@@ -547,10 +659,7 @@
                     });
                 }
             }
-            if (isPlus) {
-                // Use delay to avoid overlapping with SAME notice
-                setTimeout(() => showNotice('PLUS!'), 800);
-            }
+            if (isPlus) setTimeout(() => showNotice('PLUS!'), 800);
 
             // Basic Flip
             targets.forEach(t => {
@@ -565,9 +674,7 @@
 
             // Combo Rule
             if (comboQueue.length > 0) {
-                // Wait for primary flips to finish before starting combos
                 await new Promise(r => setTimeout(r, 400));
-                
                 while (comboQueue.length > 0) {
                     const cIdx = comboQueue.shift();
                     const cCard = gameState.board[cIdx];
@@ -578,10 +685,7 @@
                         const target = gameState.board[adj.idx];
                         if (target && target.owner !== card.owner) {
                             if (cCard.stats[adj.side] > target.stats[adj.opp]) {
-                                if (!comboHappened) {
-                                    showNotice('COMBO!');
-                                    comboHappened = true;
-                                }
+                                if (!comboHappened) { showNotice('COMBO!'); comboHappened = true; }
                                 await flipCard(adj.idx, card.owner); 
                                 comboQueue.push(adj.idx);
                             }
@@ -595,7 +699,9 @@
             else {
                 gameState.turn = gameState.turn === 1 ? 2 : 1;
                 gameState.isPlayerTurn = gameState.turn === 1;
-                render();
+                
+                updateView(); // Update turn indicators
+
                 if (!gameState.isPlayerTurn) setTimeout(cpuMove, 1000);
             }
         }
@@ -604,12 +710,16 @@
             if (gameState.isGameOver) return;
             
             const avail = gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
+            
+            // Simple thinking animation without full rerender
             if(gameState.p2Hand.length > 0) {
                 const thinkIdx = Math.floor(Math.random() * gameState.p2Hand.length);
                 const handEl = el.h2.children[thinkIdx];
-                if(handEl) handEl.classList.add('cpu-thinking');
-                await new Promise(r => setTimeout(r, 600));
-                if(handEl) handEl.classList.remove('cpu-thinking');
+                if(handEl) {
+                    handEl.classList.add('cpu-thinking');
+                    await new Promise(r => setTimeout(r, 600));
+                    handEl.classList.remove('cpu-thinking');
+                }
             }
 
             let best = { handIdx: 0, cellIdx: avail[0], score: -1 };
@@ -637,7 +747,6 @@
             const p1 = gameState.board.filter(c => c.owner === 1).length;
             const p2 = gameState.board.filter(c => c.owner === 2).length;
             
-            // Update Streak Logic
             if (p1 > p2) {
                 gameState.streak++;
                 if(gameState.streak > gameState.maxStreak) {
@@ -693,7 +802,10 @@
             gameState.board = Array(9).fill(null);
             gameState.isGameOver = false; gameState.selectedCard = null;
             gameState.turn = Math.random() < 0.5 ? 1 : 2; gameState.isPlayerTurn = gameState.turn === 1;
-            render(); startBGM();
+            
+            initBoardUI(); // Create cells
+            updateView(); // Fill content
+            startBGM();
             
             el.turnText.innerText = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
             el.turnOverlay.classList.remove('hidden');
@@ -711,11 +823,13 @@
             
             if(gameState.selectedCard?.index === idx) {
                 gameState.selectedCard = null;
-                render();
+                updateView();
             } else {
                 gameState.selectedCard = { index: idx };
-                render();
-
+                updateView();
+                
+                // Hint Logic (Class toggle only, no innerHTML changes)
+                document.querySelectorAll('.cell-hint').forEach(c => c.classList.remove('cell-hint'));
                 const card = gameState.p1Hand[idx];
                 gameState.board.forEach((c, i) => {
                     if(!c) {
