@@ -285,11 +285,42 @@
 
         #rule-notice {
             position: fixed;
-            top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0) skewX(-12deg);
-            opacity: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            z-index: 100; pointer-events: none;
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) scale(0) skewX(-12deg);
+            opacity: 0; 
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            z-index: 100; 
+            pointer-events: none;
+            max-width: 90vw;
         }
-        #rule-notice.show { opacity: 1; transform: translate(-50%, -50%) scale(1.2) skewX(-12deg); }
+        #rule-notice.show { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1) skewX(-12deg); 
+        }
+        
+        #rule-notice > div {
+            font-size: clamp(1.5rem, 8vw, 2.5rem);
+            padding: clamp(0.5rem, 3vw, 0.75rem) clamp(1.5rem, 8vw, 3rem);
+            white-space: nowrap;
+        }
+        
+        /* スマートフォン向けの調整 */
+        @media (max-width: 640px) {
+            #rule-notice.show { 
+                transform: translate(-50%, -50%) scale(0.8) skewX(-12deg); 
+            }
+        }
+        
+        @media (max-height: 600px) {
+            #rule-notice {
+                top: 40%;
+            }
+            #rule-notice.show { 
+                transform: translate(-50%, -50%) scale(0.7) skewX(-12deg); 
+            }
+        }
+        
         .hidden { display: none !important; }
         
         .rank-badge {
@@ -516,7 +547,7 @@
 
     <!-- Rule Notice Notification (Revised Structure) -->
     <div id="rule-notice">
-        <div class="bg-yellow-500 text-black font-black text-4xl px-12 py-3 rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
+        <div class="bg-yellow-500 text-black font-black rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
             <span class="block skew-x-12 tracking-widest" id="rule-text">SAME!</span>
         </div>
     </div>
