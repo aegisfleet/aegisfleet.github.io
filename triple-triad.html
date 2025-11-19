@@ -3,460 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=448, user-scalable=no">
-    <title>Triple Triad</title>
-    <link rel="icon" href="favicon.png">
+    <title>Triple Triad Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
+        :root {
+            --card-radius: 6px;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Rajdhani', 'Noto Sans JP', sans-serif;
             touch-action: manipulation;
-            background-color: #111827;
-            background-image: linear-gradient(to bottom, #111827, #1e3a8a);
+            background-color: #0f172a;
             color: white;
             width: 100vw;
             height: 100vh;
-            overflow: hidden;  
-        }
-
-        @keyframes flipEffect {
-            0% { transform: scale(1.0) rotateY(0deg); opacity: 1; }
-            50% { transform: scale(0.9) rotateY(90deg); opacity: 0.7; }
-            100% { transform: scale(1.0) rotateY(0deg); opacity: 1; }
-        }
-        .is-flipping {
-            animation: flipEffect 0.5s ease-out;
-            animation-fill-mode: forwards;
-        }
-
-        .card-flip {
-            transition: background-color 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
             overflow: hidden;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
         }
 
-        .card-num {
-            position: absolute;
-            width: 1.25rem;
-            height: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 0.875rem;
-            border-radius: 0.25rem;
-            background-color: rgba(0, 0, 0, 0.4);
-            color: white;
-            line-height: 1;
-        }
-        .card-num-a { color: #FACC15; }
-        .card-num-top { top: 2px; left: 50%; transform: translateX(-50%); }
-        .card-num-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
-        .card-num-left { left: 2px; top: 50%; transform: translateY(-50%); }
-        .card-num-right { right: 2px; top: 50%; transform: translateY(-50%); }
+        /* Scrollbar hidden */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .card-name {
-            font-size: 0.6rem;
-            font-weight: 700;
-            opacity: 0.8;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            letter-spacing: -0.05em;
-            color: white;    
+        /* Grid BG */
+        .bg-grid {
+            position: absolute; inset: -50%; width: 200%; height: 200%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(800px) rotateX(60deg);
+            animation: gridScroll 60s linear infinite;
+            z-index: -1; pointer-events: none;
+        }
+        @keyframes gridScroll {
+            0% { transform: perspective(800px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(800px) rotateX(60deg) translateY(40px); }
         }
 
-        .selected-card {
-            transform: scale(1.1) translateY(-10px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            border-color: #FACC15;
-            z-index: 10;
+        /* Card */
+        .card-wrapper { position: relative; width: 100%; height: 100%; perspective: 1000px; }
+        .card-inner {
+            position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: var(--card-radius); box-shadow: 0 2px 4px rgba(0,0,0,0.5); background: #334155;
         }
-        
-        .cpu-thinking-card {
-            transform: scale(1.1) translateY(10px);
-            box-shadow: 0 -10px 20px rgba(0,0,0,0.3);
-            border-color: #F87171;
-            z-index: 10;
+        .is-flipping .card-inner { animation: flipAnim 0.4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+        @keyframes flipAnim {
+            0% { transform: rotateY(0); }
+            50% { transform: rotateY(90deg) scale(1.1); }
+            100% { transform: rotateY(0); }
+        }
+        .card-face {
+            position: absolute; inset: 0; backface-visibility: hidden;
+            border-radius: var(--card-radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-face::after {
+            content: ''; position: absolute; inset: 0; border: 3px solid transparent;
+            border-radius: var(--card-radius); pointer-events: none; z-index: 20;
+        }
+        .owner-p1 .card-face::after { border-color: #3b82f6; box-shadow: inset 0 0 8px #3b82f6; }
+        .owner-p2 .card-face::after { border-color: #ef4444; box-shadow: inset 0 0 8px #ef4444; }
+
+        /* Element Gradients */
+        .bg-fire { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
+        .bg-ice { background: linear-gradient(135deg, #0c4a6e, #0369a1); }
+        .bg-thunder { background: linear-gradient(135deg, #713f12, #a16207); }
+        .bg-earth { background: linear-gradient(135deg, #451a03, #78350f); }
+        .bg-poison { background: linear-gradient(135deg, #14532d, #15803d); }
+        .bg-holy { background: linear-gradient(135deg, #581c87, #7e22ce); }
+        .bg-wind { background: linear-gradient(135deg, #064e3b, #047857); }
+        .bg-water { background: linear-gradient(135deg, #172554, #1d4ed8); }
+        .bg-neutral { background: linear-gradient(135deg, #374151, #4b5563); }
+
+        .card-icon-bg { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; opacity: 0.15; transform: scale(1.5); pointer-events: none; }
+        .card-icon-center { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); z-index: 5; }
+        .card-icon-center svg { width: 60%; height: 60%; fill: rgba(255,255,255,0.9); }
+
+        .stats-grid { position: absolute; inset: 2px; z-index: 30; pointer-events: none; }
+        .stat-box {
+            position: absolute; width: 1.2rem; height: 1.2rem;
+            background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255,255,255,0.2); border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .stat-a { color: #fbbf24; text-shadow: 0 0 3px #fbbf24; }
+        .pos-top { top: 2px; left: 50%; transform: translateX(-50%); }
+        .pos-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .pos-left { top: 50%; left: 2px; transform: translateY(-50%); }
+        .pos-right { top: 50%; right: 2px; transform: translateY(-50%); }
+
+        .selected-card .card-inner { transform: translateY(-8px) scale(1.05); box-shadow: 0 0 15px rgba(250, 204, 21, 0.6); border-color: #facc15; }
+        .cpu-thinking .card-inner { transform: translateY(8px) scale(1.05); box-shadow: 0 0 15px rgba(248, 113, 113, 0.6); }
+
+        /* Board */
+        #game-board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px);
+            padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        }
+        .cell { aspect-ratio: 3/4; position: relative; border-radius: var(--card-radius); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
+        .cell-hint { background: rgba(250, 204, 21, 0.15); box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
+        .cell-empty-hover:hover { background: rgba(255,255,255,0.1); cursor: pointer; }
+
+        .trigger-flash { animation: flashAnim 0.5s ease-out forwards; }
+        @keyframes flashAnim {
+            0% { box-shadow: 0 0 0 rgba(255,255,255,0); filter: brightness(1.5); }
+            50% { box-shadow: 0 0 20px #fff; filter: brightness(2); }
+            100% { box-shadow: 0 0 0 rgba(255,255,255,0); filter: brightness(1); }
         }
 
-        .turn-indicator {
-            transition: all 0.3s ease;
-        }
+        .glass-panel { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .turn-active { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.2), transparent); }
+        .turn-active-p2 { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.2), transparent); }
 
-        @keyframes scoreUpdate {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); background-color: #374151; }
-            100% { transform: scale(1); }
-        }
-        .score-updating {
-            animation: scoreUpdate 0.4s ease-out;
-        }
-
-        @keyframes winnerCard {
-            0% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-            50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(255, 255, 150, 0.7); }
-            100% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        }
-        .winner-card {
-            animation: winnerCard 0.5s ease-in-out 0.2s;
-            z-index: 5;
-        }
-
-        .cell {
-            background-color: rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-        .cell-empty-hover:hover {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #game-wrapper {
-            width: 448px;  
-            position: relative;
-        }
-
-        .rule-notice {
+        /* Fixed Rule Notice CSS */
+        #rule-notice {
             position: fixed;
-            top: 15%;
+            top: 30%;
             left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.85);
-            color: #FACC15;
-            font-size: 1.5rem;
-            font-weight: bold;
-            padding: 1rem 2rem;
-            border-radius: 0.5rem;
-            border: 2px solid #FACC15;
-            z-index: 100;
+            transform: translate(-50%, -50%) scale(0) skewX(-12deg);
             opacity: 0;
-            transition: opacity 0.3s ease, top 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            z-index: 100;
             pointer-events: none;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
         }
-        .rule-notice.show {
+
+        #rule-notice.show {
             opacity: 1;
-            top: 10%;
+            transform: translate(-50%, -50%) scale(1.2) skewX(-12deg);
         }
 
-        .cell-hint {
-            background-color: rgba(250, 204, 21, 0.4) !important;
-            box-shadow: 0 0 10px #FACC15;
-        }
-
+        .hidden { display: none !important; }
     </style>
 </head>
 
-<body class="flex items-center justify-center">
+<body class="flex items-center justify-center overflow-hidden">
+    <div class="bg-grid"></div>
 
-    <div id="game-wrapper" class="flex flex-col justify-between p-4">
-
-        <div id="start-overlay" class="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50 p-8">
-    
-            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-lg max-w-md w-full text-left mb-8 overflow-y-auto" style="max-height: 60vh;">
-                <h2 class="text-2xl font-bold text-yellow-400 mb-4 text-center">ゲームルール</h2>
-                
-                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">基本ルール</h3>
-                <p class="text-sm mb-4">
-                    ボードにカードを置き、隣接する相手のカードより数字が大きければ、そのカードをひっくり返して自分のものにできます。最終的にボード上のカードが多い方の勝利です。
-                </p>
-                
-                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">特殊ルール</h3>
-                <ul class="list-disc list-inside text-sm space-y-2">
-                    <li>
-                        <strong>セイム (Same):</strong>
-                        カードを置いた時、2辺以上で「相手カードの数字」と「自分のカードの数字」が<strong>一致</strong>した場合、それらの相手カードを全てひっくり返します。（数字の大小は問いません）
-                    </li>
-                    <li>
-                        <strong>プラス (Plus):</strong>
-                        カードを置いた時、2辺以上で「相手カードの数字」と「自分のカードの数字」の<strong>合計値</strong>が同じになった場合、それらの相手カードを全てひっくり返します。
-                    </li>
-                    <li>
-                        <strong>コンボ (Combo):</strong>
-                        「セイム」または「プラス」でカードをひっくり返した時、そのカードがさらに隣接する別の相手カードに（基本ルールで）勝てる場合、そのカードも連鎖してひっくり返します。
-                    </li>
+    <div id="game-wrapper" class="flex flex-col justify-between p-2 h-full max-w-sm w-full relative z-10">
+        
+        <!-- Start Overlay -->
+        <div id="start-overlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center z-50 px-6">
+            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-4 tracking-tight drop-shadow-lg shrink-0">TRIPLE TRIAD</h1>
+            
+            <div class="w-full bg-slate-900/80 border border-slate-700 rounded-xl p-6 mb-8 shadow-2xl text-left overflow-y-auto max-h-[60vh]">
+                <h2 class="text-lg font-bold text-yellow-400 mb-4 text-center border-b border-slate-700 pb-2">GAME RULES</h2>
+                <ul class="space-y-4 text-sm text-slate-300">
+                    <li class="flex items-start"><span class="font-bold text-blue-400 w-16 shrink-0">WIN:</span><span>3x3の盤面を取り合い、最終的にカードが多い方の勝利。（全9枚）</span></li>
+                    <li class="flex items-start"><span class="font-bold text-red-400 w-16 shrink-0">SAME:</span><div><p>隣接する数字が<strong class="text-white">2辺以上一致</strong>で発動。</p><p class="text-yellow-200 text-xs mt-1">※自分のカードとの一致も条件に含まれます</p></div></li>
+                    <li class="flex items-start"><span class="font-bold text-green-400 w-16 shrink-0">PLUS:</span><div><p>隣接する数字の<strong class="text-white">合計値が2辺以上一致</strong>で発動。</p></div></li>
+                    <li class="flex items-start"><span class="font-bold text-purple-400 w-16 shrink-0">COMBO:</span><span>Same/Plusでひっくり返したカードから連鎖が発生します。</span></li>
                 </ul>
-    
-                <h3 class="text-lg font-bold text-yellow-500 mt-4 mb-2">ヒント</h3>
-                <p class="text-sm">
-                    自分の手札からカードを選ぶと、「セイム」または「プラス」が発動できるマスが黄色く光ります。
-                </p>
             </div>
-    
-            <button id="start-game-button" class="w-full max-w-sm bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform animate-pulse">
-                ゲーム開始
-            </button>
+            <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 rounded-lg text-white font-bold text-xl shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all transform hover:scale-105 active:scale-95">GAME START</button>
         </div>
 
-        <div id="player-2-area" class="w-full">
-            <div id="turn-p2" class="turn-indicator text-center p-2 mb-2 rounded-lg bg-gray-800 border-2 border-transparent">
-                <h2 class="font-bold text-red-400">CPU</h2>
-                <p>スコア: <span id="score-p2" class="font-bold text-xl">0</span></p>
-            </div>
-            <div id="hand-p2" class="flex justify-center h-24 space-x-1">
-            </div>
-        </div>
-
-        <div id="game-board" class="w-full max-w-xs mx-auto grid grid-cols-3 gap-1 aspect-square my-4">
-        </div>
-
-        <div id="player-1-area" class="w-full">
-            <div id="hand-p1" class="flex justify-center h-24 space-x-1 mb-2">
-            </div>
-            <div id="turn-p1" class="turn-indicator text-center p-2 mt-2 rounded-lg bg-gray-800 border-2 border-transparent">
-                <h2 class="font-bold text-blue-400">あなた</h2>
-                <p>スコア: <span id="score-p1" class="font-bold text-xl">0</span></p>
-            </div>
-        </div>
-    </div>
-
-    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
-            <h2 id="result-message" class="text-3xl font-bold mb-6"></h2>
-            <p class="text-lg mb-6">最終スコア</p>
-            <div class="flex justify-around mb-8">
-                <div class="text-blue-400">
-                    <span class="text-sm">あなた</span>
-                    <p id="result-score-p1" class="text-4xl font-bold">0</p>
+        <!-- Player 2 (CPU) Area -->
+        <div class="w-full">
+            <div id="turn-p2" class="glass-panel flex justify-between items-center p-3 rounded-lg mb-2 transition-all duration-300">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-900 flex items-center justify-center border border-red-500 shadow-lg">
+                        <svg class="w-5 h-5 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    </div>
+                    <span class="font-bold text-red-200 tracking-wider">CPU</span>
                 </div>
-                <div class="text-red-400">
-                    <span class="text-sm">CPU</span>
-                    <p id="result-score-p2" class="text-4xl font-bold">0</p>
-                </div>
+                <span id="score-p2" class="text-3xl font-bold font-mono text-white">5</span>
             </div>
-            
-            <div id="win-streak-area" class="my-6 text-yellow-400"></div>
-            
-            <button id="restart-button" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-xl transition-all duration-200 hover:scale-105 transform">
-                もう一度遊ぶ
-            </button>
+            <div id="hand-p2" class="flex justify-center h-20 gap-2 px-2"></div>
+        </div>
+
+        <!-- Game Board -->
+        <div id="game-board" class="mx-auto w-full max-w-[320px]"></div>
+
+        <!-- Player 1 (You) Area -->
+        <div class="w-full">
+            <div id="hand-p1" class="flex justify-center h-20 gap-2 mb-2 px-2"></div>
+            <div id="turn-p1" class="glass-panel flex justify-between items-center p-3 rounded-lg transition-all duration-300">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center border border-blue-500 shadow-lg">
+                        <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <span class="font-bold text-blue-200 tracking-wider">YOU</span>
+                </div>
+                <span id="score-p1" class="text-3xl font-bold font-mono text-white">5</span>
+            </div>
         </div>
     </div>
 
-    <div id="turn-notice" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-40 p-4">
-        <div class="bg-gray-700 p-6 rounded-lg shadow-xl text-center">
-            <p id="turn-notice-message" class="text-2xl font-bold"></p>
+    <!-- Result Modal -->
+    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="glass-panel w-full max-w-xs p-8 rounded-2xl text-center border-t border-white/20">
+            <h2 id="result-title" class="text-4xl font-black mb-8 text-white tracking-wider drop-shadow-md">VICTORY</h2>
+            <div class="flex justify-center items-end gap-8 mb-8">
+                <div class="text-center"><p class="text-xs text-blue-400 font-bold mb-1">YOU</p><p id="final-score-p1" class="text-6xl font-mono font-bold text-white">6</p></div>
+                <div class="text-slate-500 text-2xl font-bold mb-4">-</div>
+                <div class="text-center"><p class="text-xs text-red-400 font-bold mb-1">CPU</p><p id="final-score-p2" class="text-6xl font-mono font-bold text-white">3</p></div>
+            </div>
+            <div id="streak-container" class="h-8 mb-6 font-bold text-yellow-400"></div>
+            <button id="restart-btn" class="w-full py-3 bg-white text-slate-900 font-bold rounded hover:bg-slate-200 transition">REMATCH</button>
         </div>
     </div>
 
-    <div id="rule-notice" class="rule-notice"></div>
+    <!-- Rule Notice Notification (Revised Structure) -->
+    <div id="rule-notice">
+        <div class="bg-yellow-500 text-black font-black text-4xl px-12 py-3 rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
+            <span class="block skew-x-12 tracking-widest" id="rule-text">SAME!</span>
+        </div>
+    </div>
+
+    <!-- Turn Overlay -->
+    <div id="turn-overlay" class="hidden fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+        <div class="bg-slate-900/80 px-12 py-4 rounded border-y border-white/20 backdrop-blur">
+            <p id="turn-text" class="text-2xl font-bold text-white tracking-[0.5em]"></p>
+        </div>
+    </div>
 
     <script>
-        const allCards = [
-            { id: 1, name: 'イフリート', stats: { top: 6, right: 9, bottom: 4, left: 8 } },
-            { id: 2, name: 'トンベリ', stats: { top: 4, right: 8, bottom: 9, left: 4 } },
-            { id: 3, name: 'シヴァ', stats: { top: 2, right: 6, bottom: 9, left: 7 } },
-            { id: 4, name: 'セイレーン', stats: { top: 5, right: 1, bottom: 6, left: 4 } },
-            { id: 5, name: 'ミノタウロス', stats: { top: 9, right: 5, bottom: 2, left: 8 } },
-            { id: 6, name: 'カーバンクル', stats: { top: 8, right: 4, bottom: 4, left: 6 } },
-            { id: 7, name: 'ケツァクウァトル', stats: { top: 7, right: 4, bottom: 8, left: 1 } },
-            { id: 8, name: 'サボテンダー', stats: { top: 10, right: 3, bottom: 3, left: 3 } },
-            { id: 9, name: 'グラシャラボラス', stats: { top: 5, right: 8, bottom: 3, left: 5 } },
-            { id: 10, name: 'コモーグリ', stats: { top: 1, right: 3, bottom: 1, left: 7 } },
-            { id: 11, name: 'ディアブロス', stats: { top: 5, right: 10, bottom: 8, left: 3 } },
-            { id: 12, name: 'バハムート', stats: { top: 10, right: 8, bottom: 6, left: 8 } },
-            { id: 13, name: 'オーディン', stats: { top: 10, right: 4, bottom: 8, left: 8 } },
-            { id: 14, name: 'ギルガメッシュ', stats: { top: 3, right: 7, bottom: 10, left: 6 } },
-            { id: 15, name: 'キスティス', stats: { top: 9, right: 6, bottom: 2, left: 7 } },
-            { id: 16, name: 'コチョコボ', stats: { top: 2, right: 1, bottom: 4, left: 2 } },
-            { id: 17, name: 'リヴァイアサン', stats: { top: 7, right: 7, bottom: 9, left: 3 } },
-            { id: 18, name: 'ラムウ', stats: { top: 6, right: 4, bottom: 8, left: 7 } },
-            { id: 19, name: 'タイタン', stats: { top: 4, right: 9, bottom: 6, left: 5 } },
-            { id: 20, name: 'フェンリル', stats: { top: 8, right: 8, bottom: 5, left: 5 } }
+        // --- DATA ---
+        const icons = {
+            fire: `<path d="M12 2c0 0-6 4-6 9s3 8 6 11c3-3 6-6 6-11s-6-9-6-9z" />`,
+            ice: `<path d="M12 2L14 8L20 10L15 14L17 20L12 16L7 20L9 14L4 10L10 8L12 2Z" />`,
+            thunder: `<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />`,
+            earth: `<path d="M4 20h16l-2-6h-3l-2-5-3 4-3-2-3 9z" />`,
+            poison: `<path d="M12 2C7 2 4 5 4 9c0 4 3 8 8 13 5-5 8-9 8-13 0-4-3-7-8-7z" />`,
+            wind: `<path d="M12.5 2C10 2 9 4 9 4s-1.5 2-4 2C2.5 6 2 8 2 8s2 2 5 0c0 0 2-1.5 4 0 2 1.5 3 2 5 0 2.5-2.5 6-4 6-4s-2-2-5.5-2h-4z" />`,
+            water: `<path d="M12 20c4.4 0 8-3.6 8-8 0-5.4-8-12-8-12S4 6.6 4 12c0 4.4 3.6 8 8 8z" />`,
+            holy: `<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2"/>`,
+            sword: `<path d="M14.5 4l-5 13-3-1 5-13 3 1zM7 18l-2 2 2 2 2-2-2-2z" />`,
+            dragon: `<path d="M4 18c0-5 4-8 6-8 0 0 1-4 4-4s5 2 6 6c0 0-3 2-4 2 0 0 2 2 2 5s-4 4-8 4-4-3-6-5z" />`
+        };
+
+        const cardDatabase = [
+            { name: "Geezard", type: "bg-neutral", icon: icons.sword, stats: { top: 1, right: 5, bottom: 4, left: 1 } },
+            { name: "Funguar", type: "bg-poison", icon: icons.poison, stats: { top: 5, right: 3, bottom: 1, left: 1 } },
+            { name: "Bite Bug", type: "bg-neutral", icon: icons.sword, stats: { top: 1, right: 5, bottom: 3, left: 3 } },
+            { name: "Red Bat", type: "bg-neutral", icon: icons.wind, stats: { top: 6, right: 2, bottom: 1, left: 1 } },
+            { name: "Blobra", type: "bg-neutral", icon: icons.poison, stats: { top: 2, right: 5, bottom: 3, left: 1 } },
+            { name: "Gayla", type: "bg-thunder", icon: icons.thunder, stats: { top: 2, right: 4, bottom: 1, left: 4 } },
+            { name: "Gesper", type: "bg-neutral", icon: icons.fire, stats: { top: 1, right: 1, bottom: 5, left: 4 } },
+            { name: "Fastitocalon-F", type: "bg-earth", icon: icons.earth, stats: { top: 3, right: 1, bottom: 5, left: 2 } },
+            { name: "Blood Soul", type: "bg-neutral", icon: icons.sword, stats: { top: 2, right: 1, bottom: 1, left: 6 } },
+            { name: "Caterchipillar", type: "bg-neutral", icon: icons.poison, stats: { top: 4, right: 3, bottom: 2, left: 4 } },
+            { name: "Cockatrice", type: "bg-thunder", icon: icons.thunder, stats: { top: 2, right: 6, bottom: 1, left: 2 } },
+            { name: "Grat", type: "bg-neutral", icon: icons.poison, stats: { top: 7, right: 1, bottom: 1, left: 3 } },
+            { name: "Buel", type: "bg-neutral", icon: icons.thunder, stats: { top: 6, right: 3, bottom: 2, left: 2 } },
+            { name: "Mesmerize", type: "bg-neutral", icon: icons.sword, stats: { top: 5, right: 4, bottom: 3, left: 3 } },
+            { name: "Glacial Eye", type: "bg-ice", icon: icons.ice, stats: { top: 6, right: 3, bottom: 1, left: 4 } },
+            { name: "Belhelmel", type: "bg-neutral", icon: icons.sword, stats: { top: 3, right: 3, bottom: 4, left: 5 } },
+            { name: "Thrustaevis", type: "bg-wind", icon: icons.wind, stats: { top: 5, right: 5, bottom: 3, left: 2 } },
+            { name: "Anacondaur", type: "bg-poison", icon: icons.poison, stats: { top: 5, right: 5, bottom: 1, left: 3 } },
+            { name: "Creeps", type: "bg-thunder", icon: icons.thunder, stats: { top: 5, right: 2, bottom: 2, left: 5 } },
+            { name: "Grendel", type: "bg-neutral", icon: icons.dragon, stats: { top: 4, right: 2, bottom: 4, left: 5 } },
+            { name: "Ifrit", type: "bg-fire", icon: icons.fire, stats: { top: 9, right: 8, bottom: 6, left: 2 } },
+            { name: "Shiva", type: "bg-ice", icon: icons.ice, stats: { top: 6, right: 9, bottom: 7, left: 4 } },
+            { name: "Siren", type: "bg-neutral", icon: icons.wind, stats: { top: 8, right: 2, bottom: 9, left: 6 } },
+            { name: "Seifer", type: "bg-neutral", icon: icons.sword, stats: { top: 6, right: 9, bottom: 10, left: 4 } },
+            { name: "Squall", type: "bg-neutral", icon: icons.sword, stats: { top: 10, right: 4, bottom: 6, left: 9 } }
         ];
 
-        let player1Hand = [];
-        let player2Hand = [];
-        let board = Array(9).fill(null);  
-        let currentPlayer = 1;
-        let selectedCard = null;  
-        let scores = { player1: 0, player2: 0 };
-        let isPlayerTurn = true;  
-        let isGameOver = false;
-        let winStreak = parseInt(localStorage.getItem('tripleTriadWinStreak') || '0');
-        let maxWinStreak = parseInt(localStorage.getItem('tripleTriadMaxWinStreak') || '0');
+        let gameState = {
+            board: Array(9).fill(null),
+            p1Hand: [], p2Hand: [], turn: 1, isPlayerTurn: false, selectedCard: null, isGameOver: false,
+            streak: parseInt(localStorage.getItem('tt_streak') || '0'),
+            maxStreak: parseInt(localStorage.getItem('tt_maxStreak') || '0')
+        };
 
-        const boardElement = document.getElementById('game-board');
-        const handP1Element = document.getElementById('hand-p1');
-        const handP2Element = document.getElementById('hand-p2');
-        const scoreP1Element = document.getElementById('score-p1');
-        const scoreP2Element = document.getElementById('score-p2');
-        const turnP1Element = document.getElementById('turn-p1');
-        const turnP2Element = document.getElementById('turn-p2');
-        const modalElement = document.getElementById('result-modal');
-        const resultMessageElement = document.getElementById('result-message');
-        const resultScoreP1Element = document.getElementById('result-score-p1');
-        const resultScoreP2Element = document.getElementById('result-score-p2');
-        const restartButton = document.getElementById('restart-button');
-        const winStreakElement = document.getElementById('win-streak-area');
-        const turnNoticeElement = document.getElementById('turn-notice');
-        const turnNoticeMessageElement = document.getElementById('turn-notice-message');
-        const ruleNoticeElement = document.getElementById('rule-notice');
-        const gameWrapper = document.getElementById('game-wrapper');
-        const startOverlay = document.getElementById('start-overlay');
-        const startGameButton = document.getElementById('start-game-button');
+        const el = {
+            board: document.getElementById('game-board'),
+            h1: document.getElementById('hand-p1'), h2: document.getElementById('hand-p2'),
+            s1: document.getElementById('score-p1'), s2: document.getElementById('score-p2'),
+            t1: document.getElementById('turn-p1'), t2: document.getElementById('turn-p2'),
+            overlay: document.getElementById('start-overlay'),
+            modal: document.getElementById('result-modal'),
+            resTitle: document.getElementById('result-title'),
+            resS1: document.getElementById('final-score-p1'), resS2: document.getElementById('final-score-p2'),
+            streak: document.getElementById('streak-container'),
+            turnOverlay: document.getElementById('turn-overlay'), turnText: document.getElementById('turn-text'),
+            ruleNotice: document.getElementById('rule-notice'), ruleText: document.getElementById('rule-text'),
+            startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn')
+        };
 
-        function showRuleNotice(message) {
-            if (!ruleNoticeElement) return;
-            ruleNoticeElement.textContent = message;
-            ruleNoticeElement.classList.add('show');
-            
-            setTimeout(() => {
-                ruleNoticeElement.classList.remove('show');
-            }, 1500);
-        }
-        
-        let isAudioReady = false;
-        let sfxPlace, sfxFlip, sfxWin, sfxLose;
+        // --- AUDIO ENGINE ---
+        let isAudioStarted = false;
+        let sfxPlace, sfxFlip, sfxWin, sfxLose, sfxAlert; 
         let bgmBassSynth, bgmMelodySynth, bgmKick, bgmHiHat, bgmSnareSynth;
         let bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart;
         let isBgmPlaying = false;
 
-        async function checkAndInitAudio() {
-            if (isAudioReady) return;
-            try {
-                await Tone.start();
-                console.log('Audio Context started');
-                isAudioReady = true;
-            } catch (e) {
-                console.error("Tone.start failed", e);
-            }
-        }
+        async function initAudioEngine() {
+            if (isAudioStarted) return;
+            await Tone.start();
+            isAudioStarted = true;
 
-        function setupAudio() {
-            sfxPlace = new Tone.MembraneSynth({
-                pitchDecay: 0.01,
-                octaves: 2,
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0 }
+            sfxPlace = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
+            sfxFlip = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, release: 0.1 } }).toDestination();
+            sfxAlert = new Tone.MetalSynth({ 
+                frequency: 200, envelope: { attack: 0.001, decay: 0.1, release: 0.01 }, 
+                harmonicity: 5.1, modulationIndex: 32, resonance: 4000, volume: -5 
             }).toDestination();
-            
-            sfxFlip = new Tone.Synth({
-                oscillator: { type: 'triangle' },
-                envelope: { attack: 0.01, decay: 0.1, release: 0.1 }
-            }).toDestination();
-            
             sfxWin = new Tone.Synth().toDestination();
             sfxLose = new Tone.Synth().toDestination();
             
             bgmBassSynth = new Tone.FMSynth({
-                harmonicity: 3,
-                modulationIndex: 10,
-                oscillator: { type: "sine" },
+                harmonicity: 3, modulationIndex: 10, oscillator: { type: "sine" },
                 envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
-                modulation: { type: "square" },
-                modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.5 },
+                modulation: { type: "square" }, modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.5 },
                 volume: -10
             }).toDestination();
 
             bgmMelodySynth = new Tone.AMSynth({
-                harmonicity: 2,
-                oscillator: { type: "sawtooth" },
+                harmonicity: 2, oscillator: { type: "sawtooth" },
                 envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 1 },
-                modulation: { type: "square" },
-                modulationEnvelope: { attack: 0.1, decay: 0, sustain: 1, release: 0.5 },
+                modulation: { type: "square" }, modulationEnvelope: { attack: 0.1, decay: 0, sustain: 1, release: 0.5 },
                 volume: -10
             }).toDestination();
             
             bgmKick = new Tone.MembraneSynth({
-                pitchDecay: 0.05,
-                octaves: 10,
-                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
+                pitchDecay: 0.05, octaves: 10, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
                 volume: -10
             }).toDestination();
             
             bgmHiHat = new Tone.NoiseSynth({
-                noise: { type: "white" },
-                envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 },
+                noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 },
                 volume: -10
             }).toDestination();
             
             bgmSnareSynth = new Tone.NoiseSynth({
-                noise: { type: "pink" },
-                envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 },
+                noise: { type: "pink" }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 },
                 volume: -10
             }).toDestination();
 
-            const bassPattern = [
-                "C2", null, "C3", "C3", "C2", null, "C3", "C3",
-                "C2", null, "C3", "C3", "C2", null, "C3", "C3"
-            ];
-            bgmBassPart = new Tone.Sequence((time, note) => {
-                bgmBassSynth.triggerAttackRelease(note, "16n", time);
-            }, bassPattern, "16n");
-            bgmBassPart.loop = true;
-
-            const melodyPattern = [
-                "G3", "E3", "G3", "A3", "G3", "E3", "G3", null,
-                "C4", "B3", "A3", "G3", "E3", "D3", "E3", "C3"
-            ];
-            bgmMelodyPart = new Tone.Sequence((time, note) => {
-                bgmMelodySynth.triggerAttackRelease(note, "8n", time);
-            }, melodyPattern, "8n");
-            bgmMelodyPart.loop = true;
-
-            bgmKickPart = new Tone.Sequence((time, note) => {
-                bgmKick.triggerAttackRelease(note, "8n", time);
-            }, ["C1", null, "C1", null, "C1", null, "C1", null], "4n");
-            bgmKickPart.loop = true;
+            bgmBassPart = new Tone.Sequence((time, note) => bgmBassSynth.triggerAttackRelease(note, "16n", time), 
+                ["C2", null, "C3", "C3", "C2", null, "C3", "C3", "C2", null, "C3", "C3", "C2", null, "C3", "C3"], "16n");
+            bgmMelodyPart = new Tone.Sequence((time, note) => bgmMelodySynth.triggerAttackRelease(note, "8n", time), 
+                ["G3", "E3", "G3", "A3", "G3", "E3", "G3", null, "C4", "B3", "A3", "G3", "E3", "D3", "E3", "C3"], "8n");
+            bgmKickPart = new Tone.Sequence((time, note) => bgmKick.triggerAttackRelease(note, "8n", time), 
+                ["C1", null, "C1", null, "C1", null, "C1", null], "4n");
+            bgmHiHatPart = new Tone.Sequence((time, note) => bgmHiHat.triggerAttackRelease("16n", time), 
+                [null, null, "C5", "C5", null, null, "C5", "C5"], "4n");
+            bgmSnarePart = new Tone.Sequence((time, note) => bgmSnareSynth.triggerAttackRelease("16n", time), 
+                ["C4", null, null, null, "C4", "C4", null, "C4", "C4", null, null, null, "C4", "C4", null, "C4"], "16n");
             
-            bgmHiHatPart = new Tone.Sequence((time, note) => {
-                bgmHiHat.triggerAttackRelease("16n", time);
-            }, [null, null, "C5", "C5", null, null, "C5", "C5"], "4n");
-            bgmHiHatPart.loop = true;
-
-            const snarePattern = [
-                "C4", null, null, null, "C4", "C4", null, "C4",
-                "C4", null, null, null, "C4", "C4", null, "C4"
-            ];
-            bgmSnarePart = new Tone.Sequence((time, note) => {
-                bgmSnareSynth.triggerAttackRelease("16n", time);
-            }, snarePattern, "16n");
-            bgmSnarePart.loop = true;
-        }
-
-        function playPlaceSfx() {
-            if (!isAudioReady) return;
-            sfxPlace.triggerAttackRelease("C2", "8n", Tone.now());
-        }
-
-        function playFlipSfx() {
-            if (!isAudioReady) return;
-            sfxFlip.triggerAttackRelease("G4", "16n", Tone.now());
-            sfxFlip.frequency.setValueAtTime("G4", Tone.now());
-            sfxFlip.frequency.linearRampToValueAtTime("C5", Tone.now() + 0.1);
-        }
-
-        function playWinSfx() {
-            if (!isAudioReady) return;
-            const now = Tone.now();
-            sfxWin.triggerAttackRelease("C4", "8n", now);
-            sfxWin.triggerAttackRelease("E4", "8n", now + 0.1);
-            sfxWin.triggerAttackRelease("G4", "8n", now + 0.2);
-            sfxWin.triggerAttackRelease("C5", "4n", now + 0.3);
-        }
-
-        function playLoseSfx() {
-            if (!isAudioReady) return;
-            const now = Tone.now();
-            sfxLose.triggerAttackRelease("C5", "8n", now);
-            sfxLose.triggerAttackRelease("G4", "8n", now + 0.1);
-            sfxLose.triggerAttackRelease("E4", "8n", now + 0.2);
-            sfxLose.triggerAttackRelease("C4", "4n", now + 0.3);
+            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.loop = true);
         }
 
         function startBGM() {
-            if (!isAudioReady || isBgmPlaying) return;
+            if (!isAudioStarted || isBgmPlaying) return;
             Tone.Transport.bpm.value = 130;
-            bgmBassPart.start(0);
-            bgmMelodyPart.start(0);
-            bgmKickPart.start(0);
-            bgmHiHatPart.start(0);
-            bgmSnarePart.start(0);
+            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.start(0));
             Tone.Transport.start();
             isBgmPlaying = true;
         }
@@ -464,617 +363,351 @@
         function stopBGM() {
             if (!isBgmPlaying) return;
             Tone.Transport.stop();
-            Tone.Transport.cancel(0);
-            bgmBassPart.stop(0);
-            bgmMelodyPart.stop(0);
-            bgmKickPart.stop(0);
-            bgmHiHatPart.stop(0);
-            bgmSnarePart.stop(0);
+            [bgmBassPart, bgmMelodyPart, bgmKickPart, bgmHiHatPart, bgmSnarePart].forEach(p => p.stop(0));
             isBgmPlaying = false;
         }
 
-        function displayValue(value) {
-            return value === 10 ? 'A' : String(value);
-        }
-        function getNumClass(value) {
-            return value === 10 ? 'card-num-a' : '';
-        }
-
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [
-                    array[randomIndex], array[currentIndex]];
+        function playSound(type) {
+            if (!isAudioStarted) return;
+            const now = Tone.now();
+            if (type === 'place') sfxPlace.triggerAttackRelease("C2", "8n", now);
+            if (type === 'flip') {
+                sfxFlip.frequency.cancelScheduledValues(now);
+                sfxFlip.frequency.setValueAtTime("G4", now);
+                sfxFlip.frequency.linearRampToValueAtTime("C5", now + 0.1);
+                sfxFlip.triggerAttackRelease("G4", "16n", now);
             }
-            return array;
-        }
-
-        function createCardElement(card, isP1Hand = false) {
-            const cardEl = document.createElement('div');
-            cardEl.className = 'card-flip w-1/5 aspect-[3/4] rounded-lg border-2 flex-shrink-0 shadow-lg';
-            
-            const isP1 = card.owner === 1;
-            const gradient = isP1
-                ? 'bg-gradient-to-br from-blue-600 to-blue-800'
-                : 'bg-gradient-to-br from-red-600 to-red-800';
-            const borderColor = isP1
-                ? 'border-blue-400'
-                : 'border-red-400';
-            
-            gradient.split(' ').forEach(cls => cardEl.classList.add(cls));
-            cardEl.classList.add(borderColor);
-
-            if (isP1Hand) {
-                cardEl.classList.add('cursor-pointer');
+            if (type === 'win') {
+                sfxWin.triggerAttackRelease("C4", "8n", now); sfxWin.triggerAttackRelease("E4", "8n", now+0.1);
+                sfxWin.triggerAttackRelease("G4", "8n", now+0.2); sfxWin.triggerAttackRelease("C5", "4n", now+0.3);
             }
-
-            const stats = card.stats;
-            cardEl.innerHTML = `
-                <span class="card-num card-num-top ${getNumClass(stats.top)}">${displayValue(stats.top)}</span>
-                <span class="card-num card-num-bottom ${getNumClass(stats.bottom)}">${displayValue(stats.bottom)}</span>
-                <span class="card-num card-num-left ${getNumClass(stats.left)}">${displayValue(stats.left)}</span>
-                <span class="card-num card-num-right ${getNumClass(stats.right)}">${displayValue(stats.right)}</span>
-                <span class="card-name absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2">${card.name}</span>
-            `;
-            return cardEl;
+            if (type === 'lose') {
+                sfxLose.triggerAttackRelease("C5", "8n", now); sfxLose.triggerAttackRelease("G4", "8n", now+0.1);
+                sfxLose.triggerAttackRelease("E4", "8n", now+0.2); sfxLose.triggerAttackRelease("C4", "4n", now+0.3);
+            }
+            if (type === 'alert') sfxAlert.triggerAttackRelease("C6", "32n", now);
         }
 
-        function renderBoard() {
-            boardElement.innerHTML = '';
-            board.forEach((card, index) => {
+        // --- RENDER HELPERS ---
+        const fmtNum = n => n === 10 ? 'A' : n;
+        const numCls = n => n === 10 ? 'stat-a' : '';
+
+        function createCardHTML(card, isHand) {
+            if (!card) return '';
+            const ownerCls = card.owner === 1 ? 'owner-p1' : 'owner-p2';
+            const interactCls = isHand ? 'cursor-pointer hover:-translate-y-1 transition-transform' : '';
+            return `
+            <div class="card-wrapper ${interactCls}" data-uid="${card.uid}">
+                <div class="card-inner ${ownerCls}">
+                    <div class="card-face ${card.type}">
+                        <div class="card-icon-bg"><svg viewBox="0 0 24 24" fill="currentColor">${card.icon}</svg></div>
+                        <div class="card-icon-center"><svg viewBox="0 0 24 24" fill="currentColor">${card.icon}</svg></div>
+                        <div class="stats-grid">
+                            <div class="stat-box pos-top ${numCls(card.stats.top)}">${fmtNum(card.stats.top)}</div>
+                            <div class="stat-box pos-bottom ${numCls(card.stats.bottom)}">${fmtNum(card.stats.bottom)}</div>
+                            <div class="stat-box pos-left ${numCls(card.stats.left)}">${fmtNum(card.stats.left)}</div>
+                            <div class="stat-box pos-right ${numCls(card.stats.right)}">${fmtNum(card.stats.right)}</div>
+                        </div>
+                        <div class="absolute bottom-1 w-full text-center text-[8px] font-bold text-white/80 tracking-widest uppercase drop-shadow-md">${card.name}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function render() {
+            el.board.innerHTML = '';
+            gameState.board.forEach((card, idx) => {
                 const cell = document.createElement('div');
-                cell.className = 'cell border-2 rounded-lg flex items-center justify-center p-0.5 transition-all';
-                
-                if (card) {
-                    const cardEl = createCardElement(card, false);
-                    cardEl.classList.remove('w-1/5', 'aspect-[3/4]');
-                    cardEl.classList.add('w-full', 'h-full');
-                    cell.appendChild(cardEl);
-                } else {
-                    cell.dataset.index = index;
-                    if (isPlayerTurn) {
-                        cell.classList.add('cursor-pointer', 'cell-empty-hover');
-                    }
-                }
-                boardElement.appendChild(cell);
+                cell.className = 'cell flex items-center justify-center';
+                cell.dataset.idx = idx;
+                if (card) cell.innerHTML = createCardHTML(card, false);
+                else if (gameState.isPlayerTurn) cell.classList.add('cell-empty-hover');
+                el.board.appendChild(cell);
             });
-        }
-
-        function renderHands() {
-            handP1Element.innerHTML = '';
-            player1Hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, true);
-                cardEl.dataset.index = index;
-                cardEl.dataset.player = 1;
-                if (selectedCard && selectedCard.player === 1 && selectedCard.handIndex === index) {
-                    cardEl.classList.add('selected-card');
-                }
-                handP1Element.appendChild(cardEl);
-            });
-
-            handP2Element.innerHTML = '';
-            player2Hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, false);
-                cardEl.dataset.index = index;
-                cardEl.dataset.player = 2;
-                handP2Element.appendChild(cardEl);
-            });
-        }
-        
-        function renderStatus() {
-            const oldScore1 = parseInt(scoreP1Element.textContent, 10);
-            const newScore1 = scores.player1;
-            if (newScore1 !== oldScore1) {
-                scoreP1Element.textContent = newScore1;
-                turnP1Element.classList.add('score-updating');
-                setTimeout(() => turnP1Element.classList.remove('score-updating'), 400);
-            } else {
-                 scoreP1Element.textContent = newScore1;
-            }
-
-            const oldScore2 = parseInt(scoreP2Element.textContent, 10);
-            const newScore2 = scores.player2;
-            if (newScore2 !== oldScore2) {
-                scoreP2Element.textContent = newScore2;
-                turnP2Element.classList.add('score-updating');
-                setTimeout(() => turnP2Element.classList.remove('score-updating'), 400);
-            } else {
-                scoreP2Element.textContent = newScore2;
-            }
-
-            if (isGameOver) {
-                turnP1Element.classList.remove('border-yellow-400', 'bg-gray-700');
-                turnP2Element.classList.remove('border-yellow-400', 'bg-gray-700');
-            } else if (currentPlayer === 1) {
-                turnP1Element.classList.add('border-yellow-400', 'bg-gray-700');
-                turnP2Element.classList.remove('border-yellow-400', 'bg-gray-700');
-            } else {
-                turnP2Element.classList.add('border-yellow-400', 'bg-gray-700');
-                turnP1Element.classList.remove('border-yellow-400', 'bg-gray-700');
-            }
-        }
-
-        function renderAll() {
-            renderBoard();
-            renderHands();
-            renderStatus();
-        }
-        
-        function startGame() {
-            gameWrapper.classList.remove('hidden');
-            isGameOver = false;
-            const deck = shuffle([...allCards]);
-            player1Hand = deck.slice(0, 5).map(c => ({ ...c, owner: 1 }));
-            player2Hand = deck.slice(5, 10).map(c => ({ ...c, owner: 2 }));
-            board = Array(9).fill(null);
             
-            if (Math.random() < 0.5) {
-                currentPlayer = 1;
-                isPlayerTurn = true;
-            } else {
-                currentPlayer = 2;
-                isPlayerTurn = false;
-            }
-            selectedCard = null;
-            scores = { player1: 0, player2: 0 };
+            el.h1.innerHTML = gameState.p1Hand.map((c, i) => {
+                const isActive = gameState.selectedCard?.index === i;
+                return `<div class="w-[18%] max-w-[60px] aspect-[3/4] ${isActive ? 'selected-card' : ''}" data-idx="${i}" data-player="1">${createCardHTML(c, true)}</div>`;
+            }).join('');
             
-            scoreP1Element.textContent = '0';
-            scoreP2Element.textContent = '0';
+            el.h2.innerHTML = gameState.p2Hand.map((c, i) => {
+                return `<div class="w-[18%] max-w-[60px] aspect-[3/4] transition-transform duration-300" data-idx="${i}" data-player="2">${createCardHTML(c, false)}</div>`;
+            }).join('');
 
-            modalElement.classList.add('hidden');
+            const p1 = gameState.board.filter(c => c && c.owner === 1).length;
+            const p2 = gameState.board.filter(c => c && c.owner === 2).length;
+            el.s1.innerText = p1; el.s2.innerText = p2;
+            if (gameState.turn === 1) { el.t1.classList.add('turn-active'); el.t2.classList.remove('turn-active-p2'); }
+            else { el.t2.classList.add('turn-active-p2'); el.t1.classList.remove('turn-active'); }
+        }
+
+        // --- GAME LOGIC ---
+        function getAdjacents(idx) {
+            const adjs = [];
+            if (idx >= 3) adjs.push({ idx: idx - 3, side: 'top', opp: 'bottom' });
+            if (idx <= 5) adjs.push({ idx: idx + 3, side: 'bottom', opp: 'top' });
+            if (idx % 3 !== 0) adjs.push({ idx: idx - 1, side: 'left', opp: 'right' });
+            if (idx % 3 !== 2) adjs.push({ idx: idx + 1, side: 'right', opp: 'left' });
+            return adjs;
+        }
+
+        function showNotice(text) {
+            // Reset animation by removing and adding class with a small delay
+            el.ruleText.innerText = text;
+            el.ruleNotice.classList.remove('show');
+            void el.ruleNotice.offsetWidth; // Trigger reflow
+            el.ruleNotice.classList.add('show');
+            playSound('alert');
             
-            renderAll();  
-
-            if (isPlayerTurn) {
-                turnNoticeMessageElement.textContent = "あなたが先行です";
-            } else {
-                turnNoticeMessageElement.textContent = "CPUが先行です";
-            }
-            turnNoticeElement.classList.remove('hidden');
-
+            // Auto hide
             setTimeout(() => {
-                turnNoticeElement.classList.add('hidden');
-                if (!isPlayerTurn) {
-                    setTimeout(cpuTurn, 500);  
-                }
-            }, 2000);
-            
-            startBGM();
+                el.ruleNotice.classList.remove('show');
+            }, 1500);
         }
 
-        function checkAndFlip(boardIndex, cardToPlace) {
-            const placedPlayer = cardToPlace.owner;
-            const adjacentCards = [];
-
-            const adjacentIndices = [
-                { idx: boardIndex - 3, side: 'top', opposite: 'bottom' },
-                { idx: boardIndex + 3, side: 'bottom', opposite: 'top' },
-                { idx: boardIndex - 1, side: 'left', opposite: 'right' },
-                { idx: boardIndex + 1, side: 'right', opposite: 'left' }
-            ];
-
-            for (const adj of adjacentIndices) {
-                const adjIndex = adj.idx;
-                if (adjIndex < 0 || adjIndex > 8) continue;
-                if (adj.side === 'left' && boardIndex % 3 === 0) continue;
-                if (adj.side === 'right' && boardIndex % 3 === 2) continue;
-
-                const adjacentCard = board[adjIndex];
-                if (adjacentCard && adjacentCard.owner !== placedPlayer) {
-                    adjacentCards.push({
-                        index: adj.idx,
-                        card: adjacentCard,
-                        side: adj.side,
-                        opposite: adj.opposite
-                    });
-                }
-            }
-
-            if (adjacentCards.length === 0) {
-                return { type: 'none', indices: [] };
-            }
-
-            const comparisons = adjacentCards.map(adj => {
-                const placedValue = cardToPlace.stats[adj.side];
-                const adjacentValue = adj.card.stats[adj.opposite];
-                return {
-                    index: adj.index,
-                    sameValue: placedValue === adjacentValue ? placedValue : null,
-                    plusValue: placedValue + adjacentValue
-                };
+        async function flashCells(indices) {
+            indices.forEach(idx => {
+                if(idx >= 0 && idx < 9) el.board.children[idx]?.querySelector('.card-inner')?.classList.add('trigger-flash');
             });
+            await new Promise(r => setTimeout(r, 600));
+            indices.forEach(idx => {
+                if(idx >= 0 && idx < 9) el.board.children[idx]?.querySelector('.card-inner')?.classList.remove('trigger-flash');
+            });
+        }
 
-            const sameMatches = comparisons.filter(c => c.sameValue !== null);
+        async function flipCard(idx, newOwner) {
+            const wrapper = el.board.children[idx]?.querySelector('.card-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.add('is-flipping'); 
+            playSound('flip');
+            
+            await new Promise(r => setTimeout(r, 200));
+            const inner = wrapper.querySelector('.card-inner');
+            inner.classList.remove('owner-p1', 'owner-p2');
+            inner.classList.add(newOwner === 1 ? 'owner-p1' : 'owner-p2');
+            gameState.board[idx].owner = newOwner;
+            
+            await new Promise(r => setTimeout(r, 200));
+            wrapper.classList.remove('is-flipping');
+        }
+
+        async function playTurn(boardIdx, handIdx, isPlayer) {
+            let card;
+            if (isPlayer) {
+                card = gameState.p1Hand.splice(handIdx, 1)[0];
+                gameState.selectedCard = null;
+            } else {
+                card = gameState.p2Hand.splice(handIdx, 1)[0];
+            }
+            card.owner = isPlayer ? 1 : 2;
+            gameState.board[boardIdx] = card;
+            render(); 
+            playSound('place');
+
+            const targets = getAdjacents(boardIdx).map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
+            let flips = new Set(), specialFlips = new Set(), involvedIndices = new Set();
+
+            // Same Check
+            const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
             if (sameMatches.length >= 2) {
-                const flippedIndices = sameMatches.map(c => c.index);
-                return { type: 'same', indices: [...new Set(flippedIndices)] };
+                showNotice('SAME!');
+                involvedIndices.add(boardIdx);
+                sameMatches.forEach(m => {
+                    involvedIndices.add(m.idx);
+                    if (m.card.owner !== card.owner) { flips.add(m.idx); specialFlips.add(m.idx); }
+                });
             }
 
-            const plusCounts = {};
-            comparisons.forEach(c => {
-                plusCounts[c.plusValue] = (plusCounts[c.plusValue] || 0) + 1;
+            // Plus Check
+            const sums = {};
+            targets.forEach(t => {
+                const s = card.stats[t.side] + t.card.stats[t.opp];
+                if (!sums[s]) sums[s] = [];
+                sums[s].push(t);
             });
-            const plusTriggeredValue = Object.keys(plusCounts).find(value => plusCounts[value] >= 2);
-
-            if (plusTriggeredValue) {
-                const flippedIndices = comparisons
-                    .filter(c => c.plusValue == plusTriggeredValue)
-                    .map(c => c.index);
-                return { type: 'plus', indices: [...new Set(flippedIndices)] };
-            }
-
-            const basicFlips = adjacentCards.filter(adj => {
-                const placedValue = cardToPlace.stats[adj.side];
-                const adjacentValue = adj.card.stats[adj.opposite];
-                return placedValue > adjacentValue;
-            }).map(adj => adj.index);
-
-            return { type: 'basic', indices: basicFlips };
-        }
-
-        function updateScores() {
-            scores.player1 = board.filter(c => c && c.owner === 1).length;
-            scores.player2 = board.filter(c => c && c.owner === 2).length;
-        }
-
-        function checkGameOver() {
-            if (board.every(cell => cell !== null)) {
-                isGameOver = true;
-                isPlayerTurn = false;
-                renderStatus();  
-                stopBGM();
-
-                let message = "";
-                let winner = 0;
-                if (scores.player1 > scores.player2) {
-                    message = "あなたの勝利！";
-                    playWinSfx();
-                    winner = 1;
-                    winStreak++;
-                    if (winStreak > maxWinStreak) {
-                        maxWinStreak = winStreak;
-                        localStorage.setItem('tripleTriadMaxWinStreak', maxWinStreak.toString());
-                    }
-                } else if (scores.player2 > scores.player1) {
-                    message = "CPUの勝利！";
-                    playLoseSfx();
-                    winner = 2;
-                    winStreak = 0;
-                } else {
-                    message = "引き分け！";
-                    playLoseSfx();
-                    winner = 0;
-                    winStreak = 0;
-                }
-                
-                localStorage.setItem('tripleTriadWinStreak', winStreak.toString());
-                
-                if (winner !== 0) {
-                    board.forEach((card, index) => {
-                        if (card && card.owner === winner) {
-                            const cell = boardElement.children[index];
-                            const cardEl = cell.querySelector('.card-flip');
-                            if (cardEl) {
-                                cardEl.classList.add('winner-card');
-                            }
-                        }
+            let isPlus = false;
+            for (const s in sums) {
+                if (sums[s].length >= 2) {
+                    isPlus = true;
+                    sums[s].forEach(m => {
+                        involvedIndices.add(boardIdx); involvedIndices.add(m.idx);
+                        if (m.card.owner !== card.owner) { flips.add(m.idx); specialFlips.add(m.idx); }
                     });
                 }
-                
-                setTimeout(() => {
-                    resultMessageElement.textContent = message;
-                    resultScoreP1Element.textContent = scores.player1;
-                    resultScoreP2Element.textContent = scores.player2;
-
-                    winStreakElement.innerHTML = '';
-                    if (winStreak > 0) {
-                        winStreakElement.innerHTML = `
-                            <p class="text-xl font-bold">${winStreak} 連勝中！</p>
-                        `;
-                        if (winStreak === maxWinStreak && winStreak > 1) {
-                             winStreakElement.innerHTML += `
-                                <p class="text-sm text-yellow-300 mt-2">最高記録更新！</p>
-                            `;
-                        }
-                    } else {
-                        if (maxWinStreak > 0) {
-                            winStreakElement.innerHTML = `
-                                <p class="text-lg">最高連勝記録: <span class="text-2xl font-bold">${maxWinStreak}</span> 回</p>
-                            `;
-                        }
-                    }
-
-                    modalElement.classList.remove('hidden');
-                    gameWrapper.classList.add('hidden');
-                }, 1000);  
             }
-        }
-
-        function switchPlayer() {
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            isPlayerTurn = (currentPlayer === 1);
-            renderStatus();
-
-            if (!isPlayerTurn) {
-                setTimeout(cpuTurn, 1000);
-            }
-        }
-        
-        async function playTurn(boardIndex, cardToPlace) {
-            const placedPlayer = cardToPlace.owner;
-            
-            board[boardIndex] = cardToPlace;
-            
-            renderAll();
-            playPlaceSfx();
-            await new Promise(resolve => setTimeout(resolve, 50));  
-            
-            const initialFlipResult = checkAndFlip(boardIndex, cardToPlace);
-            
-            if (initialFlipResult.type === 'same') {
-                showRuleNotice("セイム！");
-            } else if (initialFlipResult.type === 'plus') {
-                showRuleNotice("プラス！");
+            if (isPlus) {
+                // Use delay to avoid overlapping with SAME notice
+                setTimeout(() => showNotice('PLUS!'), 800);
             }
 
-            const allFlippedIndices = new Set();
-            const flipQueue = [];
-
-            if (initialFlipResult.indices.length > 0) {
-                playFlipSfx();
-                
-                for (const index of initialFlipResult.indices) {
-                    if (!allFlippedIndices.has(index)) {
-                        const card = board[index];
-                        card.owner = placedPlayer;
-                        allFlippedIndices.add(index);
-                        
-                        if (initialFlipResult.type === 'same' || initialFlipResult.type === 'plus') {
-                            flipQueue.push(index);
-                        }
-                        
-                        const cell = boardElement.children[index];
-                        const cardEl = cell.querySelector('.card-flip');
-                        if (cardEl) cardEl.classList.add('is-flipping');
-                    }
-                }
-            }
-            
-            while (flipQueue.length > 0) {
-                const currentIndex = flipQueue.shift();
-                const currentCard = board[currentIndex];
-                
-                const adjacentIndices = [
-                    { idx: currentIndex - 3, side: 'top', opposite: 'bottom' },
-                    { idx: currentIndex + 3, side: 'bottom', opposite: 'top' },
-                    { idx: currentIndex - 1, side: 'left', opposite: 'right' },
-                    { idx: currentIndex + 1, side: 'right', opposite: 'left' }
-                ];
-
-                for (const adj of adjacentIndices) {
-                    const adjIndex = adj.idx;
-                    
-                    if (adjIndex < 0 || adjIndex > 8) continue;
-                    if (adj.side === 'left' && currentIndex % 3 === 0) continue;
-                    if (adj.side === 'right' && currentIndex % 3 === 2) continue;
-                    
-                    const adjacentCard = board[adjIndex];
-                    
-                    if (adjacentCard && adjacentCard.owner !== placedPlayer && !allFlippedIndices.has(adjIndex)) {
-                        
-                        const placedValue = currentCard.stats[adj.side];
-                        const adjacentValue = adjacentCard.stats[adj.opposite];
-
-                        if (placedValue > adjacentValue) {
-                            adjacentCard.owner = placedPlayer;
-                            allFlippedIndices.add(adjIndex);
-                            flipQueue.push(adjIndex);
-                            
-                            const cell = boardElement.children[adjIndex];
-                            const cardEl = cell.querySelector('.card-flip');
-                            if (cardEl) cardEl.classList.add('is-flipping');
-                        }
-                    }
-                }
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 500));
-            updateScores();
-            renderAll();
-            
-            checkGameOver();
-            if (!isGameOver) {
-                switchPlayer();
-            }
-        }
-
-        async function cpuTurn() {
-            if (isGameOver || player2Hand.length === 0) return;
-
-            await new Promise(resolve => setTimeout(resolve, 300));  
-            let randomHighlight = 0;
-            const maxHighlights = player2Hand.length > 1 ? 2 : 1;
-            
-            for (let i = 0; i < maxHighlights; i++) {
-                randomHighlight = Math.floor(Math.random() * player2Hand.length);
-                const cardEl = handP2Element.children[randomHighlight];
-                if(cardEl) {
-                    cardEl.classList.add('cpu-thinking-card');
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    cardEl.classList.remove('cpu-thinking-card');
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            }
-
-            const availableCells = [];
-            board.forEach((cell, index) => {
-                if (cell === null) {
-                    availableCells.push(index);
-                }
+            // Basic Flip
+            targets.forEach(t => {
+                if (t.card.owner !== card.owner && card.stats[t.side] > t.card.stats[t.opp]) flips.add(t.idx);
             });
-            if (availableCells.length === 0) return;
 
-            let bestMove = { cardIndex: -1, boardIndex: -1, flips: -1 };
+            if (involvedIndices.size > 0) await flashCells([...involvedIndices]);
 
-            for (let i = 0; i < player2Hand.length; i++) {
-                const card = player2Hand[i];
-                for (const boardIndex of availableCells) {
-                    const cardToPlace = { ...card, owner: 2 };
-                    let currentFlips = 0;
-                    const adjacentIndices = [
-                        { idx: boardIndex - 3, side: 'top', opposite: 'bottom' },  
-                        { idx: boardIndex + 3, side: 'bottom', opposite: 'top' },
-                        { idx: boardIndex - 1, side: 'left', opposite: 'right' },
-                        { idx: boardIndex + 1, side: 'right', opposite: 'left' }
-                    ];
+            const queue = [...flips];
+            let comboQueue = [...specialFlips];
+            for (const idx of queue) await flipCard(idx, card.owner);
 
-                    for (const adj of adjacentIndices) {
-                        const adjIndex = adj.idx;
-                        if (adjIndex < 0 || adjIndex > 8) continue;
-                        if (adj.side === 'left' && boardIndex % 3 === 0) continue;
-                        if (adj.side === 'right' && boardIndex % 3 === 2) continue;
-                        
-                        const adjacentCard = board[adjIndex];
-                        if (adjacentCard && adjacentCard.owner === 1) {  
-                            if (cardToPlace.stats[adj.side] > adjacentCard.stats[adj.opposite]) {
-                                currentFlips++;
+            // Combo Rule
+            if (comboQueue.length > 0) {
+                // Wait for primary flips to finish before starting combos
+                await new Promise(r => setTimeout(r, 400));
+                
+                while (comboQueue.length > 0) {
+                    const cIdx = comboQueue.shift();
+                    const cCard = gameState.board[cIdx];
+                    const cAdjs = getAdjacents(cIdx);
+                    let comboHappened = false;
+                    
+                    for (const adj of cAdjs) {
+                        const target = gameState.board[adj.idx];
+                        if (target && target.owner !== card.owner) {
+                            if (cCard.stats[adj.side] > target.stats[adj.opp]) {
+                                if (!comboHappened) {
+                                    showNotice('COMBO!');
+                                    comboHappened = true;
+                                }
+                                await flipCard(adj.idx, card.owner); 
+                                comboQueue.push(adj.idx);
                             }
                         }
                     }
+                    if(comboHappened) await new Promise(r => setTimeout(r, 500));
+                }
+            }
 
-                    if (currentFlips > bestMove.flips) {
-                        bestMove = { cardIndex: i, boardIndex: boardIndex, flips: currentFlips };
+            if (gameState.board.every(c => c !== null)) endGame();
+            else {
+                gameState.turn = gameState.turn === 1 ? 2 : 1;
+                gameState.isPlayerTurn = gameState.turn === 1;
+                render();
+                if (!gameState.isPlayerTurn) setTimeout(cpuMove, 1000);
+            }
+        }
+
+        async function cpuMove() {
+            if (gameState.isGameOver) return;
+            
+            const avail = gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
+            if(gameState.p2Hand.length > 0) {
+                const thinkIdx = Math.floor(Math.random() * gameState.p2Hand.length);
+                const handEl = el.h2.children[thinkIdx];
+                if(handEl) handEl.classList.add('cpu-thinking');
+                await new Promise(r => setTimeout(r, 600));
+                if(handEl) handEl.classList.remove('cpu-thinking');
+            }
+
+            let best = { handIdx: 0, cellIdx: avail[0], score: -1 };
+            gameState.p2Hand.forEach((card, hIdx) => {
+                avail.forEach(cIdx => {
+                    let score = 0;
+                    const adjs = getAdjacents(cIdx);
+                    adjs.forEach(a => {
+                        const t = gameState.board[a.idx];
+                        if(t && t.owner === 1 && card.stats[a.side] > t.stats[a.opp]) score++;
+                    });
+                    if(score > best.score) best = { handIdx: hIdx, cellIdx: cIdx, score: score };
+                });
+            });
+            
+            if (best.score <= 0) { 
+                 best.handIdx = Math.floor(Math.random() * gameState.p2Hand.length);
+                 best.cellIdx = avail[Math.floor(Math.random() * avail.length)];
+            }
+            playTurn(best.cellIdx, best.handIdx, false);
+        }
+
+        function endGame() {
+            gameState.isGameOver = true; stopBGM();
+            const p1 = gameState.board.filter(c => c.owner === 1).length;
+            const p2 = gameState.board.filter(c => c.owner === 2).length;
+            setTimeout(() => {
+                el.resS1.innerText = p1; el.resS2.innerText = p2;
+                el.modal.classList.remove('hidden');
+                if(p1 > p2) {
+                    el.resTitle.innerText = "VICTORY"; 
+                    el.resTitle.className = "text-4xl font-black mb-8 text-yellow-400 tracking-wider drop-shadow-md";
+                    playSound('win');
+                } else {
+                    el.resTitle.innerText = "DEFEAT"; 
+                    el.resTitle.className = "text-4xl font-black mb-8 text-slate-500 tracking-wider drop-shadow-md";
+                    playSound('lose');
+                }
+            }, 1000);
+        }
+
+        function getDeck() {
+            const pool = [...cardDatabase];
+            for(let i=pool.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+            return pool.slice(0,10).map((c,i)=>({...c, uid:i, owner:i<5?1:2}));
+        }
+
+        async function startGame() {
+            const deck = getDeck();
+            gameState.p1Hand = deck.slice(0, 5).map(c => ({ ...c, owner: 1 }));
+            gameState.p2Hand = deck.slice(5, 10).map(c => ({ ...c, owner: 2 }));
+            gameState.board = Array(9).fill(null);
+            gameState.isGameOver = false; gameState.selectedCard = null;
+            gameState.turn = Math.random() < 0.5 ? 1 : 2; gameState.isPlayerTurn = gameState.turn === 1;
+            render(); startBGM();
+            
+            el.turnText.innerText = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
+            el.turnOverlay.classList.remove('hidden');
+            setTimeout(() => el.turnOverlay.classList.add('hidden'), 1500);
+            if(!gameState.isPlayerTurn) setTimeout(cpuMove, 1500);
+        }
+
+        el.startBtn.addEventListener('click', async () => { await initAudioEngine(); el.overlay.classList.add('hidden'); startGame(); });
+        el.restartBtn.addEventListener('click', async () => { el.modal.classList.add('hidden'); startGame(); });
+
+        el.h1.addEventListener('click', e => {
+            if(!gameState.isPlayerTurn || gameState.isGameOver) return;
+            const t = e.target.closest('[data-idx]'); if(!t) return;
+            const idx = parseInt(t.dataset.idx);
+            
+            if(gameState.selectedCard?.index === idx) {
+                gameState.selectedCard = null;
+                render();
+            } else {
+                gameState.selectedCard = { index: idx };
+                render();
+
+                const card = gameState.p1Hand[idx];
+                gameState.board.forEach((c, i) => {
+                    if(!c) {
+                        const adjs = getAdjacents(i);
+                        const targets = adjs.map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
+                        
+                        const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
+                        const same = sameMatches.length >= 2 && sameMatches.some(m => m.card.owner !== 1);
+
+                        const sums = {}; targets.forEach(t => { const s = card.stats[t.side] + t.card.stats[t.opp]; if(!sums[s]) sums[s]=[]; sums[s].push(t); });
+                        const plus = Object.values(sums).some(arr => arr.length >= 2 && arr.some(m => m.card.owner !== 1));
+
+                        if(same || plus) {
+                             const cell = el.board.children[i];
+                             if(cell) cell.classList.add('cell-hint');
+                        }
                     }
-                }
-            }
-            
-            if (bestMove.flips <= 0) {
-                bestMove.cardIndex = Math.floor(Math.random() * player2Hand.length);
-                bestMove.boardIndex = availableCells[Math.floor(Math.random() * availableCells.length)];
-            }
-            
-            const cardToPlay = player2Hand.splice(bestMove.cardIndex, 1)[0];
-            cardToPlay.owner = 2;
-            
-            await new Promise(resolve => setTimeout(resolve, 500));  
-
-            await playTurn(bestMove.boardIndex, cardToPlay);
-        }
-
-        function clearHints() {
-            boardElement.querySelectorAll('.cell.cell-hint').forEach(cell => {
-                cell.classList.remove('cell-hint');
-            });
-        }
-
-        function renderHints(indices) {
-            clearHints();
-            indices.forEach(index => {
-                const cell = boardElement.children[index];
-                if (cell && !board[index]) {
-                    cell.classList.add('cell-hint');
-                }
-            });
-        }
-
-        function calculateHints(card) {
-            if (!card) return [];
-            
-            const hintIndices = [];
-            const availableCells = [];
-            board.forEach((cell, index) => {
-                if (cell === null) availableCells.push(index);
-            });
-
-            for (const boardIndex of availableCells) {
-                const cardToPlace = { ...card, owner: 1 };
-                const result = checkAndFlip(boardIndex, cardToPlace);
-                
-                if (result.type === 'same' || result.type === 'plus') {
-                    hintIndices.push(boardIndex);
-                }
-            }
-            return hintIndices;
-        }
-
-        async function onHandClick(e) {
-            if (!isPlayerTurn || isGameOver || !isAudioReady) return;
-
-            clearHints();
-
-            const cardEl = e.target.closest('[data-player="1"]');
-            if (!cardEl) return;
-
-            const handIndex = parseInt(cardEl.dataset.index, 10);
-            
-            if (selectedCard && selectedCard.handIndex === handIndex) {
-                selectedCard = null;
-            } else {
-                selectedCard = {
-                    card: player1Hand[handIndex],
-                    handIndex: handIndex,
-                    player: 1
-                };
-                
-                const hints = calculateHints(selectedCard.card);
-                renderHints(hints);
-            }
-            renderHands();
-        }
-
-        async function onBoardClick(e) {
-            if (!isPlayerTurn || isGameOver || !selectedCard || !isAudioReady) return;
-
-            const cell = e.target.closest('[data-index]');
-            if (!cell) return;
-
-            const boardIndex = parseInt(cell.dataset.index, 10);
-            if (board[boardIndex]) return;
-
-            isPlayerTurn = false;  
-            clearHints();
-
-            const cardToPlace = player1Hand.splice(selectedCard.handIndex, 1)[0];
-            cardToPlace.owner = 1;
-            selectedCard = null;
-
-            await playTurn(boardIndex, cardToPlace);
-        }
-
-        async function onRestartClick() {
-            stopBGM();
-            modalElement.classList.add('hidden');
-            winStreakElement.innerHTML = '';
-            gameWrapper.classList.remove('hidden');
-            startGame();
-        }
-
-        handP1Element.addEventListener('click', onHandClick);
-        boardElement.addEventListener('click', onBoardClick);
-        restartButton.addEventListener('click', onRestartClick);
-
-        startGameButton.addEventListener('click', async () => {
-            await checkAndInitAudio();
-            if (isAudioReady) {
-                setupAudio();
-            }
-            startOverlay.classList.add('hidden');
-            startGame();
-        }, { once: true });
-
-        document.addEventListener("visibilitychange", () => {
-            if (!isAudioReady) return;
-            if (document.hidden) {
-                Tone.Transport.pause();
-            } else {
-                if (isBgmPlaying) {
-                    Tone.Transport.start();
-                }
+                });
             }
         });
 
+        el.board.addEventListener('click', e => {
+            if(!gameState.isPlayerTurn || !gameState.selectedCard || gameState.isGameOver) return;
+            const c = e.target.closest('.cell');
+            if(!c || gameState.board[c.dataset.idx]) return;
+            playTurn(parseInt(c.dataset.idx), gameState.selectedCard.index, true);
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if(!isAudioStarted) return;
+            if(document.hidden) { Tone.Transport.pause(); }
+            else if(!gameState.isGameOver && isBgmPlaying) { Tone.Transport.start(); }
+        });
     </script>
 </body>
 </html>
