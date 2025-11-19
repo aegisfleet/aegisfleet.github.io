@@ -94,7 +94,7 @@
             padding: 2%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 15px 30px rgba(0,0,0,0.5);
             
-            /* サイズ調整ロジックの変更: */
+            /* サイズ調整ロジック: */
             width: 100%;
             /* 高さが幅を超えて伸びすぎないように、アスペクト比（正方形に近い）を維持しつつ
                親コンテナ(.board-area)の高さ・幅の小さい方に合わせる */
@@ -458,14 +458,15 @@
             startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn')
         };
 
-        // --- AUDIO ENGINE (Same as before) ---
+        // --- AUDIO ENGINE (Adjusted Volumes) ---
         let isAudioStarted = false;
         let sfx = { place: null, flip: null, alert: null, win: null, lose: null };
         let music = { bass: null, melody: null, chords: null, drums: null };
         let effects = { reverb: null, delay: null };
         let parts = [];
         let isBgmPlaying = false;
-        const VOL = { MELODY: -10, CHORDS: -20, BASS: -30, DRUMS: -20 };
+        // Reduced BGM volumes slightly
+        const VOL = { MELODY: -12, CHORDS: -22, BASS: -32, DRUMS: -22 };
 
         async function initAudioEngine() {
             if (isAudioStarted) return;
@@ -475,11 +476,14 @@
             Tone.Transport.bpm.value = 110; 
             effects.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).toDestination();
             effects.delay = new Tone.PingPongDelay({ delayTime: "8n.", feedback: 0.2, wet: 0.15 }).connect(effects.reverb);
-            sfx.place = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }, volume: -6 }).toDestination();
-            sfx.flip = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.2 }, volume: -8 }).connect(effects.reverb);
-            sfx.alert = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 3, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -5 }).connect(effects.delay);
-            sfx.win = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 2 }, volume: -10 }).connect(effects.reverb);
-            sfx.lose = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: "fatsawtooth", count: 3, spread: 30 }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 2 }, volume: -8 }).connect(effects.reverb);
+            
+            // Reduced SFX volumes to prevent clipping and loudness
+            sfx.place = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }, volume: -12 }).toDestination();
+            sfx.flip = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.2 }, volume: -15 }).connect(effects.reverb);
+            sfx.alert = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 3, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -16 }).connect(effects.delay); // Much lower
+            sfx.win = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 4, oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 2 }, volume: -15 }).connect(effects.reverb);
+            sfx.lose = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: "fatsawtooth", count: 3, spread: 30 }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 2 }, volume: -12 }).connect(effects.reverb);
+            
             music.melody = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 2, oscillator: { type: "triangle" }, envelope: { attack: 0.05, decay: 0.1, sustain: 0.5, release: 0.5 }, volume: VOL.MELODY }).connect(effects.delay);
             music.chords = new Tone.PolySynth(Tone.Synth, { maxPolyphony: 6, oscillator: { type: "sawtooth" }, filter: { type: "lowpass", frequency: 800 }, envelope: { attack: 0.5, decay: 0.5, sustain: 0.4, release: 1.5 }, volume: VOL.CHORDS }).connect(effects.reverb);
             music.bass = new Tone.MonoSynth({ oscillator: { type: "square" }, filter: { type: "lowpass", frequency: 600 }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 0.5 }, volume: VOL.BASS }).toDestination();
