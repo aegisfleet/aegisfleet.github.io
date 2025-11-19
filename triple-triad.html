@@ -290,9 +290,10 @@
             transform: translate(-50%, -50%) scale(0) skewX(-12deg);
             opacity: 0; 
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            z-index: 100; 
+            z-index: 9998; 
             pointer-events: none;
             max-width: 90vw;
+            will-change: transform, opacity;
         }
         #rule-notice.show { 
             opacity: 1; 
@@ -303,6 +304,8 @@
             font-size: clamp(1.5rem, 8vw, 2.5rem);
             padding: clamp(0.5rem, 3vw, 0.75rem) clamp(1.5rem, 8vw, 3rem);
             white-space: nowrap;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         /* スマートフォン向けの調整 */
@@ -324,12 +327,16 @@
         /* Turn Overlay のレスポンシブ対応 */
         #turn-overlay {
             position: fixed;
-            inset: 0;
-            z-index: 40;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
+            transform: none;
         }
         
         #turn-overlay > div {
@@ -340,6 +347,8 @@
             border-radius: 0.375rem;
             padding: clamp(0.75rem, 3vw, 1rem) clamp(2rem, 8vw, 3rem);
             max-width: 90vw;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         #turn-text {
