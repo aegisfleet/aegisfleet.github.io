@@ -226,7 +226,7 @@
             justify-content: center; 
             gap: 0.5rem;
             width: 100%; 
-            height: auto; /* 自動高さ */
+            min-height: 5.33rem; /* カードのアスペクト比3/4を考慮した最小高さ (4rem * 4/3) */
         }
         .hand-card {
             width: 18%; 
@@ -238,11 +238,13 @@
         /* メディアクエリ: 画面が大きいときは手札を大きくする */
         @media (min-height: 800px) {
             .hand-card { max-width: 5rem; }
+            .hand-container { min-height: 6.67rem; } /* 5rem * 4/3 */
         }
         
         /* 縦幅が短い場合の対応 */
         @media (max-height: 700px) {
             .hand-card { max-width: 3.5rem; }
+            .hand-container { min-height: 4.67rem; } /* 3.5rem * 4/3 */
             
             .glass-panel {
                 padding: 0.5rem !important;
@@ -256,6 +258,7 @@
         
         @media (max-height: 600px) {
             .hand-card { max-width: 2.8rem; }
+            .hand-container { min-height: 3.73rem; } /* 2.8rem * 4/3 */
             
             .glass-panel {
                 padding: 0.4rem !important;
@@ -270,6 +273,7 @@
         
         @media (max-height: 500px) {
             .hand-card { max-width: 2.2rem; }
+            .hand-container { min-height: 2.93rem; } /* 2.2rem * 4/3 */
             
             .glass-panel {
                 padding: 0.3rem !important;
