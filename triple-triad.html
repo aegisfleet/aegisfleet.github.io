@@ -302,29 +302,24 @@
 
         #rule-notice {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) skewX(-12deg);
             opacity: 0; 
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
             z-index: 9998; 
             pointer-events: none;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
         }
         #rule-notice.show { 
             opacity: 1; 
             visibility: visible;
-            display: flex;
+            transition: opacity 0.3s ease, visibility 0s linear 0s;
         }
         
         #rule-notice > div {
             font-size: clamp(1.5rem, 8vw, 2.5rem);
-            padding: clamp(0.5rem, 3vw, 0.75rem) clamp(1.5rem, 8vw, 3rem);
+            padding: clamp(0.5rem, 3vw, 0.75rem) clamp(3.5rem, 15vw, 6rem) clamp(0.5rem, 3vw, 0.75rem) clamp(2.5rem, 10vw, 4rem);
             white-space: nowrap;
             display: inline-block;
             max-width: 90%;
@@ -332,16 +327,13 @@
         
         /* スマートフォン向けの調整 */
         @media (max-width: 640px) {
-            #rule-notice.show { 
+            #rule-notice { 
                 transform: translate(-50%, -50%) scale(0.8) skewX(-12deg); 
             }
         }
         
         @media (max-height: 600px) {
-            #rule-notice {
-                top: 40%;
-            }
-            #rule-notice.show { 
+            #rule-notice { 
                 transform: translate(-50%, -50%) scale(0.7) skewX(-12deg); 
             }
         }
@@ -969,25 +961,18 @@
         function showNotice(text) {
             el.ruleText.innerText = text;
             el.ruleNotice.classList.remove('show');
-            el.ruleNotice.style.display = 'none';
             
-            // Force display first, then animate
+            // Force reflow
+            void el.ruleNotice.offsetWidth;
+            
             requestAnimationFrame(() => {
-                el.ruleNotice.style.display = 'flex';
-                // Force reflow
-                void el.ruleNotice.offsetWidth;
-                requestAnimationFrame(() => {
-                    el.ruleNotice.classList.add('show');
-                });
+                el.ruleNotice.classList.add('show');
             });
             
             playSound('alert');
             
             setTimeout(() => {
                 el.ruleNotice.classList.remove('show');
-                setTimeout(() => {
-                    el.ruleNotice.style.display = 'none';
-                }, 300);
             }, 1500);
         }
 
