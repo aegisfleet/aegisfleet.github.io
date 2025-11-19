@@ -22,7 +22,6 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            /* 背景を少し明るめのミッドナイトブルーに変更 */
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
         }
 
@@ -51,7 +50,6 @@
             position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: var(--card-radius); box-shadow: 0 2px 4px rgba(0,0,0,0.5); background: #334155;
-            /* チラつき防止のためのGPUアクセラレーション */
             backface-visibility: hidden;
             transform: translateZ(0); 
         }
@@ -225,7 +223,7 @@
         </div>
     </div>
 
-    <!-- Rule Notice Notification -->
+    <!-- Rule Notice Notification (Revised Structure) -->
     <div id="rule-notice">
         <div class="bg-yellow-500 text-black font-black text-4xl px-12 py-3 rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
             <span class="block skew-x-12 tracking-widest" id="rule-text">SAME!</span>
@@ -304,7 +302,7 @@
             startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn')
         };
 
-        // --- AUDIO ENGINE v3.0 (Fantasy Lo-Fi) ---
+        // --- AUDIO ENGINE v4.0 (Final Stability Tuning) ---
         let isAudioStarted = false;
         let sfx = { place: null, flip: null, alert: null, win: null, lose: null };
         let music = { bass: null, melody: null, chords: null, drums: null };
@@ -316,9 +314,10 @@
             if (isAudioStarted) return;
             await Tone.start();
             isAudioStarted = true;
-            Tone.context.lookAhead = 0.1;
+            // Increase lookAhead to prevent dropouts
+            Tone.context.lookAhead = 0.2;
 
-            // Master Effects
+            // Master Effects (Reduced Wetness for Clarity)
             effects.reverb = new Tone.Reverb({ decay: 3, wet: 0.2 }).toDestination();
             effects.delay = new Tone.PingPongDelay({ delayTime: "8n", feedback: 0.2, wet: 0.1 }).connect(effects.reverb);
 
@@ -328,80 +327,85 @@
             }).connect(effects.reverb);
 
             sfx.flip = new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 4, // Limit polyphony
                 oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.2 }, volume: -8
             }).connect(effects.delay);
 
             sfx.alert = new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 3,
                 oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -5
             }).connect(effects.reverb);
 
             sfx.win = new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 4,
                 oscillator: { type: "sawtooth" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 2 }, volume: -10
             }).connect(effects.reverb);
             
             sfx.lose = new Tone.PolySynth(Tone.FMSynth, {
+                maxPolyphony: 4,
                 harmonicity: 1.5, modulationIndex: 5, envelope: { attack: 0.1, decay: 1, sustain: 0.1 }, volume: -8
             }).connect(effects.reverb);
 
-            // --- BGM INSTRUMENTS (Brighter, Fantasy RPG Style) ---
-            // 1. Harp-like Arpeggio (Bright & Clean)
+            // --- BGM INSTRUMENTS (Clearer Mix) ---
+            // 1. Harp-like Arpeggio (Reduced Decay to avoid muddiness)
             music.melody = new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 4,
                 oscillator: { type: "triangle" },
-                envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 1 },
-                volume: -12
+                envelope: { attack: 0.02, decay: 0.2, sustain: 0.1, release: 0.5 },
+                volume: -25 // Lowered
             }).connect(effects.delay);
 
             // 2. Soft Electric Piano (Chords)
             music.chords = new Tone.PolySynth(Tone.Synth, {
+                maxPolyphony: 6,
                 oscillator: { type: "sine" },
-                envelope: { attack: 0.05, decay: 0.5, sustain: 0.4, release: 2 },
-                volume: -14
+                envelope: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 1 },
+                volume: -26 // Lowered
             }).connect(effects.reverb);
 
-            // 3. Warm Bass
+            // 3. Warm Bass (Mono for stability)
             music.bass = new Tone.MonoSynth({
                 oscillator: { type: "triangle" },
-                filter: { type: "lowpass", frequency: 600 },
-                envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 1 },
-                volume: -10
+                filter: { type: "lowpass", frequency: 400 },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 0.5 },
+                volume: -22 // Lowered
             }).toDestination();
 
             // 4. Light Percussion
-            music.drums = new Tone.MembraneSynth({ volume: -15 }).toDestination();
+            music.drums = new Tone.MembraneSynth({ volume: -28 }).toDestination(); // Lowered
 
-            // --- LOOPS (BPM 110 - Lydian/Major Vibe) ---
-            Tone.Transport.bpm.value = 110;
+            // --- LOOPS (Optimized Progression) ---
+            Tone.Transport.bpm.value = 108;
 
-            // Chord Progression: IV - V - iii - vi (F - G - Em - Am in C major context, but let's use something fantasy-ish)
-            // Let's go with Fmaj7 - G6 - Em7 - Am9
+            // Progression: Fmaj7 | G6 | Em7 | Am (Open Voicing)
+            // Avoid close intervals in low register
             const chordLoop = new Tone.Loop(time => {
-                // Bar 1: Fmaj7
-                music.chords.triggerAttackRelease(["F3", "A3", "C4", "E4"], "2n", time);
-                // Bar 2: G6
-                music.chords.triggerAttackRelease(["G3", "B3", "D4", "E4"], "2n", time + Tone.Time("2n"));
-                 // Bar 3: Em7
-                music.chords.triggerAttackRelease(["E3", "G3", "B3", "D4"], "2n", time + Tone.Time("1m"));
-                 // Bar 4: Am9
-                music.chords.triggerAttackRelease(["A3", "C4", "E4", "G4", "B4"], "2n", time + Tone.Time("1m") + Tone.Time("2n"));
+                // Fmaj7 (Open: F2, C3, E3, A3)
+                music.chords.triggerAttackRelease(["F3", "C4", "E4", "A4"], "2n", time);
+                // G6 (Open: G2, D3, E3, B3)
+                music.chords.triggerAttackRelease(["G3", "D4", "E4", "B4"], "2n", time + Tone.Time("2n"));
+                 // Em7 (Open: E2, B2, D3, G3)
+                music.chords.triggerAttackRelease(["E3", "B3", "D4", "G4"], "2n", time + Tone.Time("1m"));
+                 // Am9 (Open: A2, E3, G3, C4)
+                music.chords.triggerAttackRelease(["A3", "E4", "G4", "C5"], "2n", time + Tone.Time("1m") + Tone.Time("2n"));
             }, "2m");
 
-            // Melody: Arpeggios
+            // Melody: Arpeggios (Pentatonic-ish to avoid clash)
             const arpLoop = new Tone.Sequence((time, note) => {
-                if (note && Math.random() > 0.1) music.melody.triggerAttackRelease(note, "16n", time);
+                if (note && Math.random() > 0.2) music.melody.triggerAttackRelease(note, "16n", time);
             }, [
-                "A4", "C5", "E5", null, "G4", "B4", "D5", null, // F -> G
-                "G4", "B4", "D5", null, "C5", "E5", "G5", "B5"  // Em -> Am
+                "C5", "E5", "A4", null, "D5", "B4", "G4", null, 
+                "B4", "G4", "E4", null, "C5", "A4", "E4", null
             ], "8n");
 
-            // Bass: Gentle walking
+            // Bass: Simple Root Notes
             const bassLoop = new Tone.Sequence((time, note) => {
-                if (note) music.bass.triggerAttackRelease(note, "8n", time);
-            }, ["F2", null, "F2", "A2", "G2", null, "G2", "B2", "E2", null, "E2", "G2", "A2", "E2", "A2", "C3"], "8n");
+                if (note) music.bass.triggerAttackRelease(note, "4n", time);
+            }, ["F2", null, "G2", null, "E2", null, "A2", null], "2n");
 
-            // Drums: Simple Shaker/Kick feel
+            // Drums: Minimal Pulse
             const drumLoop = new Tone.Loop(time => {
-                music.drums.triggerAttackRelease("C1", "16n", time);
-                // Off-beat accents could be added here with another synth if needed, but keep it simple
+                music.drums.triggerAttackRelease("C1", "32n", time);
             }, "2n");
 
             loops = [chordLoop, arpLoop, bassLoop, drumLoop];
@@ -430,21 +434,17 @@
                     sfx.place.triggerAttackRelease("C2", "16n", now);
                     break;
                 case 'flip':
-                    // Magic-like flip sound
                     sfx.flip.triggerAttackRelease(["C5", "E5"], "16n", now);
                     sfx.flip.triggerAttackRelease(["G5", "B5"], "16n", now + 0.05);
                     break;
                 case 'alert':
-                    // Success chime
                     sfx.alert.triggerAttackRelease(["A5", "C6", "E6"], "16n", now);
                     break;
                 case 'win':
-                    // Victory fanfare
                     const winMelody = ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"];
                     winMelody.forEach((n, i) => sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1));
                     break;
                 case 'lose':
-                    // Sad chord
                     sfx.lose.triggerAttackRelease(["A3", "F3", "D3", "A2"], "2m", now);
                     break;
             }
@@ -458,7 +458,6 @@
             if (!card) return '';
             const ownerCls = card.owner === 1 ? 'owner-p1' : 'owner-p2';
             const interactCls = isHand ? 'cursor-pointer hover:-translate-y-1 transition-transform' : '';
-            // Added explicit width/height for stability
             return `
             <div class="card-wrapper ${interactCls} w-full h-full" data-uid="${card.uid}">
                 <div class="card-inner ${ownerCls}">
@@ -478,7 +477,6 @@
         }
 
         // --- OPTIMIZED UI UPDATE ---
-        // Initial setup (Called once)
         function initBoardUI() {
             el.board.innerHTML = '';
             for(let i=0; i<9; i++) {
@@ -489,25 +487,19 @@
             }
         }
 
-        // Update only changed elements (Diffing)
         function updateView() {
-            // 1. Update Board
             gameState.board.forEach((card, idx) => {
                 const cell = el.board.children[idx];
                 const currentCardWrapper = cell.querySelector('.card-wrapper');
                 
-                // Clean up hint if exists
                 if(card) cell.classList.remove('cell-hint', 'cell-empty-hover');
                 else if(gameState.isPlayerTurn) cell.classList.add('cell-empty-hover');
                 else cell.classList.remove('cell-empty-hover');
 
                 if (card && !currentCardWrapper) {
-                    // New card placed
                     cell.innerHTML = createCardHTML(card, false);
                 } else if (card && currentCardWrapper) {
-                    // Card exists, update owner if needed (for flips)
                     const inner = currentCardWrapper.querySelector('.card-inner');
-                    // Check current owner class
                     const isP1 = inner.classList.contains('owner-p1');
                     const isP2 = inner.classList.contains('owner-p2');
                     
@@ -517,17 +509,13 @@
                         inner.classList.remove('owner-p1'); inner.classList.add('owner-p2');
                     }
                 } else if (!card && currentCardWrapper) {
-                    // Card removed (shouldn't happen in this game but good for safety)
                     cell.innerHTML = '';
                 }
             });
 
-            // 2. Update Hand P1
             updateHandUI(el.h1, gameState.p1Hand, 1);
-            // 3. Update Hand P2
             updateHandUI(el.h2, gameState.p2Hand, 2);
 
-            // 4. Scores & Turn
             const p1Score = gameState.board.filter(c => c && c.owner === 1).length;
             const p2Score = gameState.board.filter(c => c && c.owner === 2).length;
             el.s1.innerText = p1Score;
@@ -538,24 +526,15 @@
         }
 
         function updateHandUI(container, handData, owner) {
-            // Simple strategy: if count differs, rebuild. If same, just update selection.
-            // Since hands only shrink, this is cheap.
-            // To strictly avoid flicker, we can diff by UID.
-            
             const existingWrappers = Array.from(container.children);
-            
-            // If hand size changed, full rebuild (simplest for layout, usually only happens on turn start/end)
             if (existingWrappers.length !== handData.length) {
                 container.innerHTML = handData.map((c, i) => {
                     const isActive = owner === 1 && gameState.selectedCard?.index === i;
                     return `<div class="w-[18%] max-w-[60px] aspect-[3/4] ${isActive ? 'selected-card' : ''} transition-transform duration-300" data-idx="${i}">${createCardHTML(c, true)}</div>`;
                 }).join('');
             } else {
-                // Just update selection class
                 existingWrappers.forEach((wrap, i) => {
-                    wrap.dataset.idx = i; // Ensure index is correct after splice? No, splice removes element.
-                    // Hand logic: splice removes card, so length check above handles "card used".
-                    // This block handles "selecting card".
+                    wrap.dataset.idx = i; 
                     const isActive = owner === 1 && gameState.selectedCard?.index === i;
                     if (isActive) wrap.classList.add('selected-card');
                     else wrap.classList.remove('selected-card');
@@ -600,16 +579,13 @@
             
             await new Promise(r => setTimeout(r, 200));
             
-            // Logic Update
             gameState.board[idx].owner = newOwner;
-            // View Update (Partial)
             const inner = wrapper.querySelector('.card-inner');
             inner.classList.remove('owner-p1', 'owner-p2');
             inner.classList.add(newOwner === 1 ? 'owner-p1' : 'owner-p2');
             
             await new Promise(r => setTimeout(r, 200));
             wrapper.classList.remove('is-flipping');
-            // Sync View just in case
             updateView();
         }
 
@@ -624,14 +600,12 @@
             card.owner = isPlayer ? 1 : 2;
             gameState.board[boardIdx] = card;
             
-            // Immediate update for placement
             updateView();
             playSound('place');
 
             const targets = getAdjacents(boardIdx).map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
             let flips = new Set(), specialFlips = new Set(), involvedIndices = new Set();
 
-            // Same Check
             const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
             if (sameMatches.length >= 2) {
                 showNotice('SAME!');
@@ -642,7 +616,6 @@
                 });
             }
 
-            // Plus Check
             const sums = {};
             targets.forEach(t => {
                 const s = card.stats[t.side] + t.card.stats[t.opp];
@@ -661,7 +634,6 @@
             }
             if (isPlus) setTimeout(() => showNotice('PLUS!'), 800);
 
-            // Basic Flip
             targets.forEach(t => {
                 if (t.card.owner !== card.owner && card.stats[t.side] > t.card.stats[t.opp]) flips.add(t.idx);
             });
@@ -672,7 +644,6 @@
             let comboQueue = [...specialFlips];
             for (const idx of queue) await flipCard(idx, card.owner);
 
-            // Combo Rule
             if (comboQueue.length > 0) {
                 await new Promise(r => setTimeout(r, 400));
                 while (comboQueue.length > 0) {
@@ -700,7 +671,7 @@
                 gameState.turn = gameState.turn === 1 ? 2 : 1;
                 gameState.isPlayerTurn = gameState.turn === 1;
                 
-                updateView(); // Update turn indicators
+                updateView(); 
 
                 if (!gameState.isPlayerTurn) setTimeout(cpuMove, 1000);
             }
@@ -711,7 +682,6 @@
             
             const avail = gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
             
-            // Simple thinking animation without full rerender
             if(gameState.p2Hand.length > 0) {
                 const thinkIdx = Math.floor(Math.random() * gameState.p2Hand.length);
                 const handEl = el.h2.children[thinkIdx];
@@ -828,7 +798,6 @@
                 gameState.selectedCard = { index: idx };
                 updateView();
                 
-                // Hint Logic (Class toggle only, no innerHTML changes)
                 document.querySelectorAll('.cell-hint').forEach(c => c.classList.remove('cell-hint'));
                 const card = gameState.p1Hand[idx];
                 gameState.board.forEach((c, i) => {
