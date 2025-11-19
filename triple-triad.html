@@ -58,31 +58,30 @@
             position: relative;
             width: 100%;
             height: 100%;
-            /* 縦長比率を維持しつつ、画面からはみ出さない最大幅を設定 */
-            max-width: 500px; /* スマホ・タブレット的な幅に制限 */
-            /* max-heightは設定せず、中身の高さで調整するが、flexコンテナとして振る舞う */
+            max-width: 500px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* 上下に振り分け */
-            padding: 1vh 1rem; /* 画面端との余白 */
+            padding: 0.5rem;
             box-sizing: border-box;
+            overflow-y: auto; /* スクロール可能にする */
+            gap: 0.5rem; /* 要素間のギャップを統一 */
         }
 
-        /* 上下のエリア（CPU、プレイヤー）は縮ませない */
+        /* 上下のエリア（CPU、プレイヤー）は縮小可能にする */
         .player-area {
-            flex-shrink: 0;
+            flex-shrink: 0; /* 最小サイズは維持 */
             z-index: 20;
         }
 
         /* 中央エリア（盤面）は可変サイズにする */
         .board-area {
-            flex-grow: 1;
+            flex: 0 1 auto; /* 必要なサイズだけ取る */
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 0; /* Flexアイテムがコンテンツサイズ以上に縮めるようにする重要設定 */
-            padding: 1rem 0; /* 上下の手札と盤面の間の最小マージン */
+            min-height: 0;
+            padding: 0;
         }
 
         /* Board */
@@ -96,14 +95,22 @@
             
             /* サイズ調整ロジック: */
             width: 100%;
-            /* 高さが幅を超えて伸びすぎないように、アスペクト比（正方形に近い）を維持しつつ
-               親コンテナ(.board-area)の高さ・幅の小さい方に合わせる */
-            max-width: 100%;
-            max-height: 100%;
+            max-width: min(100%, 400px); /* 最大幅を制限 */
             aspect-ratio: 3.2/4; /* カード3枚(横) x カード3枚(縦) の比率 + ギャップ考慮 */
-            
-            /* コンテンツが中央に来るように */
-            margin: auto; 
+            margin: 0 auto;
+        }
+        
+        /* 縦幅が非常に短い場合はボードをさらに縮小 */
+        @media (max-height: 700px) {
+            #game-board {
+                max-width: min(100%, 300px);
+            }
+        }
+        
+        @media (max-height: 600px) {
+            #game-board {
+                max-width: min(100%, 250px);
+            }
         }
 
         /* Card Styling */
@@ -215,18 +222,59 @@
         
         /* 手札のサイズ調整 */
         .hand-container {
-            display: flex; justify-content: center; gap: 0.5rem;
-            width: 100%; height: 5rem; /* 固定高さ確保 */
+            display: flex; 
+            justify-content: center; 
+            gap: 0.5rem;
+            width: 100%; 
+            height: auto; /* 自動高さ */
         }
         .hand-card {
-            width: 18%; max-width: 4rem; aspect-ratio: 3/4;
+            width: 18%; 
+            max-width: 4rem; 
+            aspect-ratio: 3/4;
             transition: transform 0.3s;
         }
         
         /* メディアクエリ: 画面が大きいときは手札を大きくする */
         @media (min-height: 800px) {
-            .hand-container { height: 7rem; }
-            .hand-card { max-width: 5.5rem; }
+            .hand-card { max-width: 5rem; }
+        }
+        
+        /* 縦幅が短い場合の対応 */
+        @media (max-height: 700px) {
+            .hand-card { max-width: 3.5rem; }
+            
+            .glass-panel {
+                padding: 0.5rem !important;
+            }
+            
+            #game-wrapper {
+                padding: 0.25rem;
+                gap: 0.25rem;
+            }
+        }
+        
+        @media (max-height: 600px) {
+            .hand-card { max-width: 2.8rem; }
+            
+            .glass-panel {
+                padding: 0.4rem !important;
+                font-size: 0.85rem;
+            }
+            
+            #game-wrapper {
+                padding: 0.2rem;
+                gap: 0.2rem;
+            }
+        }
+        
+        @media (max-height: 500px) {
+            .hand-card { max-width: 2.2rem; }
+            
+            .glass-panel {
+                padding: 0.3rem !important;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
