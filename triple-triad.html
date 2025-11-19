@@ -287,25 +287,28 @@
             position: fixed;
             top: 50%; 
             left: 50%; 
-            transform: translate(-50%, -50%) scale(0) skewX(-12deg);
+            margin-left: -45vw;
+            margin-top: -3rem;
+            width: 90vw;
             opacity: 0; 
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             z-index: 9998; 
             pointer-events: none;
-            max-width: 90vw;
-            will-change: transform, opacity;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         #rule-notice.show { 
             opacity: 1; 
-            transform: translate(-50%, -50%) scale(1) skewX(-12deg); 
+            visibility: visible;
         }
         
         #rule-notice > div {
             font-size: clamp(1.5rem, 8vw, 2.5rem);
             padding: clamp(0.5rem, 3vw, 0.75rem) clamp(1.5rem, 8vw, 3rem);
             white-space: nowrap;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
+            display: inline-block;
         }
         
         /* スマートフォン向けの調整 */
@@ -332,23 +335,27 @@
             right: 0;
             bottom: 0;
             z-index: 9999;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             pointer-events: none;
-            transform: none;
+            background: transparent;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #turn-overlay.hidden {
+            display: none !important;
         }
         
         #turn-overlay > div {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.375rem;
+            background: rgba(15, 23, 42, 0.9);
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0.5rem;
             padding: clamp(0.75rem, 3vw, 1rem) clamp(2rem, 8vw, 3rem);
             max-width: 90vw;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
         
         #turn-text {
@@ -357,6 +364,7 @@
             color: white;
             letter-spacing: 0.3em;
             white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         
         @media (max-width: 640px) {
@@ -599,7 +607,7 @@
     <!-- Rule Notice Notification (Revised Structure) -->
     <div id="rule-notice">
         <div class="bg-yellow-500 text-black font-black rounded border-4 border-white shadow-[0_0_30px_rgba(250,204,21,0.8)]">
-            <span class="block skew-x-12 tracking-widest" id="rule-text">SAME!</span>
+            <span class="block tracking-widest" id="rule-text">SAME!</span>
         </div>
     </div>
 
@@ -942,10 +950,19 @@
         function showNotice(text) {
             el.ruleText.innerText = text;
             el.ruleNotice.classList.remove('show');
+            el.ruleNotice.style.display = 'flex';
+            // Force reflow
             void el.ruleNotice.offsetWidth; 
-            el.ruleNotice.classList.add('show');
+            requestAnimationFrame(() => {
+                el.ruleNotice.classList.add('show');
+            });
             playSound('alert');
-            setTimeout(() => el.ruleNotice.classList.remove('show'), 1500);
+            setTimeout(() => {
+                el.ruleNotice.classList.remove('show');
+                setTimeout(() => {
+                    el.ruleNotice.style.display = '';
+                }, 300);
+            }, 1500);
         }
 
         async function flashCells(indices) {
@@ -1232,9 +1249,20 @@
             updateView();
             startBGM();
             
+            // Show turn overlay with better Android compatibility
             el.turnText.innerText = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
+            el.turnOverlay.style.display = 'flex';
             el.turnOverlay.classList.remove('hidden');
-            setTimeout(() => el.turnOverlay.classList.add('hidden'), 1500);
+            requestAnimationFrame(() => {
+                el.turnOverlay.style.opacity = '1';
+            });
+            setTimeout(() => {
+                el.turnOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    el.turnOverlay.classList.add('hidden');
+                    el.turnOverlay.style.display = 'none';
+                }, 300);
+            }, 1500);
             if(!gameState.isPlayerTurn) setTimeout(cpuMove, 1500);
         }
 
