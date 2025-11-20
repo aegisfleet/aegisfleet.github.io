@@ -841,7 +841,7 @@
                 case 'flip': sfx.flip.triggerAttackRelease(["C5", "E5"], "16n", now); sfx.flip.triggerAttackRelease(["G5", "B5"], "16n", now + 0.05); break;
                 case 'alert': sfx.alert.triggerAttackRelease(["A5", "C6", "E6"], "16n", now); break;
                 case 'win': ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"].forEach((n, i) => sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1)); break;
-                case 'lose': sfx.lose.triggerAttackRelease(["G3", "Bb3", "D4"], "4n", now); sfx.lose.triggerAttackRelease(["A3", "Db4", "E4", "G4"], "4n", now + 0.5); sfx.lose.triggerAttackRelease(["D2", "D3", "F3", "A3", "E4"], "1m", now + 1.0); break;
+                case 'lose': ["E4", "D4", "C4", "B3", "A3", "G3"].forEach((n, i) => sfx.lose.triggerAttackRelease(n, "8n", now + i * 0.12)); break;
             }
         }
 
