@@ -347,12 +347,49 @@
             bottom: 0;
             z-index: 9999;
             display: none;
-            align-items: center;
-            justify-content: center;
             pointer-events: none;
             background: transparent;
             opacity: 0;
             transition: opacity 0.3s ease;
+        }
+        
+        #turn-overlay.player-turn {
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: calc(18% + 6rem); /* 手札の高さ + 更に上 */
+        }
+        
+        #turn-overlay.cpu-turn {
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: calc(18% + 6rem); /* 手札の高さ + 更に下 */
+        }
+        
+        @media (max-height: 700px) {
+            #turn-overlay.player-turn {
+                padding-bottom: calc(16% + 5.5rem);
+            }
+            #turn-overlay.cpu-turn {
+                padding-top: calc(16% + 5.5rem);
+            }
+        }
+        
+        @media (max-height: 600px) {
+            #turn-overlay.player-turn {
+                padding-bottom: calc(14% + 5rem);
+            }
+            #turn-overlay.cpu-turn {
+                padding-top: calc(14% + 5rem);
+            }
+        }
+        
+        @media (max-height: 500px) {
+            #turn-overlay.player-turn {
+                padding-bottom: calc(12% + 4.5rem);
+            }
+            #turn-overlay.cpu-turn {
+                padding-top: calc(12% + 4.5rem);
+            }
         }
         
         #turn-overlay.hidden {
@@ -1337,6 +1374,14 @@
             el.turnText.innerText = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
             el.turnOverlay.style.display = 'flex';
             el.turnOverlay.classList.remove('hidden');
+            // プレイヤーターンは下側、CPUターンは上側に表示
+            if (gameState.isPlayerTurn) {
+                el.turnOverlay.classList.add('player-turn');
+                el.turnOverlay.classList.remove('cpu-turn');
+            } else {
+                el.turnOverlay.classList.add('cpu-turn');
+                el.turnOverlay.classList.remove('player-turn');
+            }
             requestAnimationFrame(() => {
                 el.turnOverlay.style.opacity = '1';
             });
