@@ -825,6 +825,12 @@
             let feedbackTimeout = null;
             let bgmStepIndex = 0;
             
+            // テスト用に状態を公開
+            window.getGameState = () => ({
+                playerHp, enemyHp, currentStage, currentSequence,
+                isPlayerTurn, skillGauge, isDangerMode, successfulAttacksInARow
+            });
+
             // === 4. オーディオ (Tone.js) ===
             const BGM_PATTERNS = {
                 stage1: {
