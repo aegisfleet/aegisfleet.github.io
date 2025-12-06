@@ -779,7 +779,7 @@
             return { ...c, rank, sum };
         });
 
-        let gameState = {
+        window.gameState = {
             board: Array(9).fill(null),
             p1Hand: [], p2Hand: [], turn: 1, isPlayerTurn: false, selectedCard: null, isGameOver: false,
             streak: parseInt(localStorage.getItem('tt_streak') || '0'),
@@ -1136,8 +1136,8 @@
         }
 
         async function cpuMove() {
-            if (gameState.isGameOver) return;
-            const avail = gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
+            if (window.gameState.isGameOver) return;
+            const avail = window.gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
             
             // Phase 1: 複数のカードを検討する演出（2枚程度）
             if(gameState.p2Hand.length > 1) {
@@ -1232,20 +1232,20 @@
         }
 
         function endGame() {
-            gameState.isGameOver = true; 
+            window.gameState.isGameOver = true;
             stopBGM(); 
-            const p1 = gameState.board.filter(c => c.owner === 1).length;
-            const p2 = gameState.board.filter(c => c.owner === 2).length;
+            const p1 = window.gameState.board.filter(c => c.owner === 1).length;
+            const p2 = window.gameState.board.filter(c => c.owner === 2).length;
             if (p1 > p2) {
-                gameState.streak++;
-                if(gameState.streak > gameState.maxStreak) {
-                    gameState.maxStreak = gameState.streak;
-                    localStorage.setItem('tt_maxStreak', gameState.maxStreak);
+                window.gameState.streak++;
+                if(window.gameState.streak > window.gameState.maxStreak) {
+                    window.gameState.maxStreak = window.gameState.streak;
+                    localStorage.setItem('tt_maxStreak', window.gameState.maxStreak);
                 }
             } else {
-                gameState.streak = 0;
+                window.gameState.streak = 0;
             }
-            localStorage.setItem('tt_streak', gameState.streak);
+            localStorage.setItem('tt_streak', window.gameState.streak);
 
             setTimeout(() => {
                 el.resS1.innerText = p1; el.resS2.innerText = p2;
@@ -1255,10 +1255,10 @@
                 document.body.style.position = 'fixed';
                 document.body.style.width = '100%';
                 let streakHTML = '';
-                if(gameState.streak > 0) {
-                     streakHTML = `<div class="text-xl font-bold text-yellow-300">WIN STREAK: <span class="text-4xl">${gameState.streak}</span></div>`;
-                     if(gameState.streak === gameState.maxStreak && gameState.streak > 1) streakHTML += `<div class="text-xs font-bold text-yellow-100 animate-pulse mt-1">NEW RECORD!</div>`;
-                } else if (gameState.maxStreak > 0) streakHTML = `<div class="text-sm font-bold text-slate-400">MAX STREAK: ${gameState.maxStreak}</div>`;
+                if(window.gameState.streak > 0) {
+                     streakHTML = `<div class="text-xl font-bold text-yellow-300">WIN STREAK: <span class="text-4xl">${window.gameState.streak}</span></div>`;
+                     if(window.gameState.streak === window.gameState.maxStreak && window.gameState.streak > 1) streakHTML += `<div class="text-xs font-bold text-yellow-100 animate-pulse mt-1">NEW RECORD!</div>`;
+                } else if (window.gameState.maxStreak > 0) streakHTML = `<div class="text-sm font-bold text-slate-400">MAX STREAK: ${window.gameState.maxStreak}</div>`;
                 el.streak.innerHTML = streakHTML;
 
                 if(p1 > p2) {
