@@ -370,7 +370,6 @@ class Player {
             // Hit wall during dodge?
             if (this.y >= MAX_Y) {
                 this.y = MAX_Y;
-                // Maybe punish? No, just stop.
             }
             
             if (this.dodgeTimer <= 0) this.state = 'IDLE';
@@ -405,9 +404,15 @@ class Player {
         shakeIntensity = 15;
         createSparks(this.x, this.y - 100, '#ff0', 30);
         
-        if (gameState === 'TUTORIAL' && tutorialStep === 11) {
-             showMsg("EXCELLENT!");
-             tutorialStep = 12; 
+        // Tutorial Success Check
+        if (gameState === 'TUTORIAL') {
+            if (tutorialStep === 11) {
+                 showMsg("EXCELLENT!");
+                 tutorialStep = 12; 
+            } else if (tutorialStep === 14) {
+                 showMsg("NICE REFLEX!");
+                 tutorialStep = 15;
+            }
         }
         
         let nearestEnemy = null;
@@ -425,6 +430,10 @@ class Player {
 
         if(nearestEnemy && gameState === 'PLAYING') {
             nearestEnemy.getHit(1);
+        }
+        // Tutorial hit override
+        if (nearestEnemy && gameState === 'TUTORIAL') {
+             nearestEnemy.getHit(0); // No damage in tutorial, just knockback
         }
     }
 
@@ -478,12 +487,6 @@ class Enemy {
         this.attackType = 'NONE'; this.flashing = false; this.flashColor = '#fff';
         this.isAttackActive = false; this.attackWindow = 0;
         this.hp = 3;
-        
-        // Attack Variation
-        // 0: Slash (Parryable)
-        // 1: Smash (Slow Parryable)
-        // 2: Thrust (Red - Dodge)
-        // 3: Vertical Beam (Straight - Dodge horizontally)
     }
 
     update(dt) {
@@ -499,6 +502,14 @@ class Enemy {
                  const p = new Particle(px, py, this.flashColor, 0, 3 * scale, 0.4);
                  p.vx = (this.x - px) * 3; p.vy = (this.y - (60*scale) - py) * 3;
                  particles.push(p);
+            }
+            // TRACKING LOGIC FOR BEAM
+            if (this.attackType === 'BEAM') {
+                // Lock position 0.4s before firing
+                if (this.timer > 0.4) {
+                    const targetX = player.x;
+                    this.x += (targetX - this.x) * 5 * dt; // Smooth track
+                }
             }
         }
 
@@ -538,27 +549,68 @@ class Enemy {
             showTutorial("PHASE 1: PARRY", "<span class='tut-key blue'>青いリング</span>が重なる瞬間に<br><span class='tut-key blue'>Aボタン</span>で弾け。");
             this.attackType = 'SLASH'; this.flashColor = '#0ff'; this.timer = 1.2; this.maxTimer = 1.2;
             this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 2; 
+        } else if (tutorialStep === 2) {
+            // RETRY
+            this.attackType = 'SLASH'; this.flashColor = '#0ff';
+            this.timer = 1.2; this.maxTimer = 1.2;
+            this.state = 'PREPARE'; Audio.playCharge();
         } else if (tutorialStep === 3) {
             this.timer = 0.5; tutorialStep = 4;
         } else if (tutorialStep === 4 || tutorialStep === 5) {
             showTutorial("PHASE 2: DELAY", "<span class='tut-key yellow'>黄色</span>は遅れてやってくる。<br>リングをよく見て待て。");
             this.attackType = 'SMASH'; this.flashColor = '#ff0'; this.timer = 2.0; this.maxTimer = 2.0;
             this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 5; 
+        } else if (tutorialStep === 5) {
+            // RETRY
+            this.attackType = 'SMASH'; this.flashColor = '#ff0';
+            this.timer = 2.0; this.maxTimer = 2.0;
+            this.state = 'PREPARE'; Audio.playCharge();
         } else if (tutorialStep === 6) {
             this.timer = 0.5; tutorialStep = 7;
         } else if (tutorialStep === 7 || tutorialStep === 8) {
             showTutorial("PHASE 3: EVASION", "<span class='tut-key red'>赤いリング</span>はガード不能。<br><span class='tut-key red'>Bボタン</span>で回避せよ。<br>回避すると後ろに下がる。");
             this.attackType = 'THRUST'; this.flashColor = '#f04'; this.timer = 1.0; this.maxTimer = 1.0;
             this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 8;
+        } else if (tutorialStep === 8) {
+            // RETRY
+            this.attackType = 'THRUST'; this.flashColor = '#f04';
+            this.timer = 1.0; this.maxTimer = 1.0;
+            this.state = 'PREPARE'; Audio.playCharge();
         } else if (tutorialStep === 9) {
             this.timer = 0.5; tutorialStep = 10;
         } else if (tutorialStep === 10 || tutorialStep === 11) {
              showTutorial("PHASE 4: COUNTER", "回避成功直後に<br><span class='tut-key blue'>Aボタン</span>で反撃せよ。");
              this.attackType = 'THRUST'; this.flashColor = '#f04'; this.timer = 1.0; this.maxTimer = 1.0;
              this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 11; 
+        } else if (tutorialStep === 11) {
+             // RETRY (Dodged but didn't counter)
+             showMsg("ATTACK NOW!", true);
+             this.attackType = 'THRUST'; this.flashColor = '#f04';
+             this.timer = 1.0; this.maxTimer = 1.0;
+             this.state = 'PREPARE'; Audio.playCharge();
         } else if (tutorialStep === 12) {
              this.timer = 0.5; tutorialStep = 13;
-        } else if (tutorialStep === 13) {
+        } 
+        
+        // --- PHASE 5: SIDE STEP (New) ---
+        else if (tutorialStep === 13 || tutorialStep === 14) {
+             showTutorial("PHASE 5: SIDE STEP", "縦攻撃は<span class='tut-key blue'>十字キー左右</span>でかわせ。<br>回避後に<span class='tut-key blue'>Aボタン</span>で即反撃。");
+             this.attackType = 'BEAM'; this.flashColor = '#0ff'; 
+             this.timer = 1.5; this.maxTimer = 1.5; // Slower for tutorial
+             this.state = 'PREPARE'; Audio.playCharge();
+             tutorialStep = 14; 
+        } else if (tutorialStep === 14) {
+             // RETRY Side Step
+             showMsg("MOVE SIDEWAYS!", true);
+             this.attackType = 'BEAM'; this.flashColor = '#0ff';
+             this.timer = 1.5; this.maxTimer = 1.5;
+             this.state = 'PREPARE'; Audio.playCharge();
+        }
+        
+        else if (tutorialStep === 15) {
+             this.timer = 0.5; tutorialStep = 16;
+        }
+        else if (tutorialStep === 16) {
             showTutorial("SYSTEM ONLINE", "全プログラム完了。<br>下がったラインは<span class='tut-key blue'>上キー</span>で回復せよ。");
             setTimeout(() => { hideTutorial(); gameState = 'PLAYING'; this.reset(); }, 4000); this.timer = 999;
         }
@@ -586,9 +638,9 @@ class Enemy {
         
         // Attack Target Logic
         if (this.attackType === 'BEAM') {
-            // Straight shot, no tracking
-            this.x = this.x; // Stay at current X
-            this.y = player.y; // Extend to player Y
+            // Straight shot, no tracking (locked in prepare)
+            this.x = this.x; 
+            this.y = player.y; 
             this.attackWindow = 0.2;
         } else {
             // Dash to player
@@ -602,15 +654,20 @@ class Enemy {
 
     checkHit() {
         // Hitbox Check
-        // Basic distance check on X axis
         const distX = Math.abs(this.x - player.x);
         
         if (this.attackType === 'BEAM') {
             // Narrow hitbox for beam
-            if (distX > 30) {
+            if (distX > 40) {
                 // Dodged by moving sideways!
                 this.isAttackActive = false;
+                player.onDodgeSuccess(); // Grant counter chance
                 showMsg("SIDE STEP!");
+                
+                if (gameState === 'TUTORIAL' && tutorialStep === 14) {
+                    // Success logic handled in player.executeCounter, 
+                    // but we can show msg here
+                }
                 return;
             }
         }
@@ -619,9 +676,17 @@ class Enemy {
             if (this.attackType === 'THRUST' || this.attackType === 'BEAM') this.hitPlayer();
             else this.getParried();
         } else if (player.state === 'DODGE') {
-            this.isAttackActive = false;
-            player.onDodgeSuccess();
-            if (gameState === 'TUTORIAL' && tutorialStep === 8) { showMsg("PERFECT DODGE"); tutorialStep = 9; }
+            if (this.attackType === 'BEAM') {
+                // Cannot B-dodge beam easily (it's long), but maybe ok?
+                // Let's say beam penetrates dodge for game balance?
+                // Or standard dodge works too. Let's make standard dodge work for now.
+                this.isAttackActive = false;
+                player.onDodgeSuccess();
+            } else {
+                this.isAttackActive = false;
+                player.onDodgeSuccess();
+                if (gameState === 'TUTORIAL' && tutorialStep === 8) { showMsg("PERFECT DODGE"); tutorialStep = 9; }
+            }
         } else {
             this.hitPlayer();
         }
@@ -663,7 +728,8 @@ class Enemy {
         
         if (gameState === 'TUTORIAL') {
             showMsg("RETRY"); this.x = this.baseX; this.y = this.baseY;
-            if (tutorialStep === 11) { showMsg("ATTACK NOW!", true); } // Specific hint for counter
+            if (tutorialStep === 11) { showMsg("ATTACK NOW!", true); } 
+            if (tutorialStep === 14) { showMsg("MOVE SIDEWAYS!", true); } 
         } else {
             health -= 20;
             if (health <= 0) {
