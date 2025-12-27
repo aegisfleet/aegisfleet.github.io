@@ -1485,16 +1485,46 @@
                 this.counterTimer = 0;
                 this.color = '#0ff';
                 this.isWallStun = false; // Cannot dodge
+                // 初速ブーストシステム用プロパティ
+                this.moveBoostTimer = { left: 0, right: 0, up: 0, down: 0 };
+                this.lastInput = { left: false, right: false, up: false, down: false };
             }
 
             update(dt) {
-                // Movement (X & Y)
+                // Movement (X & Y) with initial boost
                 const moveSpeed = 200;
+                const initialBoostSpeed = 350;
+                const boostDuration = 0.1;
+
                 if (this.state === 'IDLE') {
-                    if (input.left) this.x -= moveSpeed * dt;
-                    if (input.right) this.x += moveSpeed * dt;
-                    if (input.up) this.y -= moveSpeed * 0.8 * dt; // Move forward
-                    if (input.down) this.y += moveSpeed * 0.8 * dt; // Move back manually
+                    // キーが押された瞬間を検出してブーストタイマーを開始
+                    if (input.left && !this.lastInput.left) this.moveBoostTimer.left = boostDuration;
+                    if (input.right && !this.lastInput.right) this.moveBoostTimer.right = boostDuration;
+                    if (input.up && !this.lastInput.up) this.moveBoostTimer.up = boostDuration;
+                    if (input.down && !this.lastInput.down) this.moveBoostTimer.down = boostDuration;
+
+                    // ブーストタイマーを減少
+                    this.moveBoostTimer.left = Math.max(0, this.moveBoostTimer.left - dt);
+                    this.moveBoostTimer.right = Math.max(0, this.moveBoostTimer.right - dt);
+                    this.moveBoostTimer.up = Math.max(0, this.moveBoostTimer.up - dt);
+                    this.moveBoostTimer.down = Math.max(0, this.moveBoostTimer.down - dt);
+
+                    // 移動処理（ブースト中は高速移動）
+                    const leftSpeed = this.moveBoostTimer.left > 0 ? initialBoostSpeed : moveSpeed;
+                    const rightSpeed = this.moveBoostTimer.right > 0 ? initialBoostSpeed : moveSpeed;
+                    const upSpeed = (this.moveBoostTimer.up > 0 ? initialBoostSpeed : moveSpeed) * 0.8;
+                    const downSpeed = (this.moveBoostTimer.down > 0 ? initialBoostSpeed : moveSpeed) * 0.8;
+
+                    if (input.left) this.x -= leftSpeed * dt;
+                    if (input.right) this.x += rightSpeed * dt;
+                    if (input.up) this.y -= upSpeed * dt;
+                    if (input.down) this.y += downSpeed * dt;
+
+                    // 現在の入力状態を保存
+                    this.lastInput.left = input.left;
+                    this.lastInput.right = input.right;
+                    this.lastInput.up = input.up;
+                    this.lastInput.down = input.down;
 
                     // Bounds
                     this.x = Math.max(40, Math.min(canvas.width - 40, this.x));
