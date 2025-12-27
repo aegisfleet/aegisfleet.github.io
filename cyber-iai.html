@@ -312,20 +312,29 @@
             top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 3rem;
+            font-size: clamp(1.5rem, 8vw, 3rem);
             font-weight: bold;
             color: #fff;
             text-shadow: 0 0 20px #fff;
             opacity: 0;
             pointer-events: none;
             white-space: nowrap;
+            max-width: 90vw;
+            text-align: center;
             z-index: 5;
+            transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+        }
+
+        /* 長いメッセージ用に改行を許容 */
+        #msg-overlay.wrap-text {
+            white-space: normal;
+            word-break: keep-all;
         }
 
         .counter-msg {
             color: #ff0 !important;
-            text-shadow: 0 0 20px #ff0 !important;
-            font-size: 3.5rem !important;
+            text-shadow: 0 0 20px #ff0, 0 0 40px #ff0 !important;
+            font-size: clamp(1.8rem, 10vw, 3.5rem) !important;
         }
 
         #danger-warning {
@@ -2368,9 +2377,18 @@
 
         function spawnEnemy(index) { enemies.push(new Enemy(index)); showMsg("WARNING: REINFORCEMENTS"); Audio.playEnemySpawn(); }
         function showMsg(text, isCounter = false) {
-            const el = document.getElementById('msg-overlay'); el.innerText = text; el.style.opacity = 1;
-            el.className = isCounter ? 'counter-msg' : ''; el.style.transform = "translate(-50%, -50%) scale(1.5)";
-            setTimeout(() => { el.style.opacity = 0; el.style.transform = "translate(-50%, -50%) scale(1)"; }, 500);
+            const el = document.getElementById('msg-overlay');
+            el.innerText = text;
+            el.style.opacity = 1;
+            // 長いメッセージには改行クラスを追加
+            const wrapClass = text.length > 15 ? 'wrap-text' : '';
+            el.className = isCounter ? `counter-msg ${wrapClass}` : wrapClass;
+            // スケールを抑制してスマートフォンでも見やすく
+            el.style.transform = "translate(-50%, -50%) scale(1.15)";
+            setTimeout(() => {
+                el.style.opacity = 0;
+                el.style.transform = "translate(-50%, -50%) scale(1)";
+            }, 500);
         }
         function showTutorial(title, text) {
             const el = document.getElementById('tutorial-overlay');
