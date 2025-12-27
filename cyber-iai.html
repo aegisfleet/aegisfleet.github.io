@@ -369,6 +369,148 @@
                 box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
             }
         }
+
+        /* === UI改善: HPバーシェイク === */
+        @keyframes hp-shake {
+
+            0%,
+            100% {
+                transform: skewX(-20deg) translateX(0);
+            }
+
+            20% {
+                transform: skewX(-20deg) translateX(-5px);
+            }
+
+            40% {
+                transform: skewX(-20deg) translateX(5px);
+            }
+
+            60% {
+                transform: skewX(-20deg) translateX(-3px);
+            }
+
+            80% {
+                transform: skewX(-20deg) translateX(3px);
+            }
+        }
+
+        #health-bar-container.shake {
+            animation: hp-shake 0.3s ease-out;
+        }
+
+        #health-bar-container.danger {
+            animation: hp-danger-pulse 0.5s infinite;
+        }
+
+        @keyframes hp-danger-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px #f04;
+            }
+
+            50% {
+                box-shadow: 0 0 20px #f04, 0 0 30px #f00;
+            }
+        }
+
+        /* 遅延減少バー */
+        #health-bar-delay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            transition: width 0.5s ease-out 0.2s;
+        }
+
+        /* === UI改善: スコアポップアップ === */
+        #score-popup {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease-out;
+        }
+
+        #score-popup.show {
+            opacity: 1;
+            transform: translateY(-20px);
+        }
+
+        /* === UI改善: コンボカウンター === */
+        #combo-counter {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            text-align: right;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        #combo-counter.active {
+            opacity: 1;
+        }
+
+        #combo-count {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 0 0 20px #ff0;
+        }
+
+        #combo-label {
+            font-size: 1rem;
+            color: #fff;
+            letter-spacing: 3px;
+        }
+
+        /* コンボ数による色変化 */
+        #combo-counter.combo-high #combo-count {
+            color: #f0f;
+            text-shadow: 0 0 30px #f0f;
+        }
+
+        #combo-counter.combo-max #combo-count {
+            color: #0ff;
+            text-shadow: 0 0 40px #0ff, 0 0 60px #0ff;
+            animation: combo-glow 0.5s infinite alternate;
+        }
+
+        @keyframes combo-glow {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
+        }
+
+        /* === UI改善: ダメージフラッシュ === */
+        #damage-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            opacity: 0;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(255, 0, 0, 0.6) 100%);
+            transition: opacity 0.1s;
+        }
+
+        #damage-vignette.active {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -381,8 +523,18 @@
         <div id="hud">
             <div class="hud-text">SCORE: <span id="score-display">0</span></div>
             <div id="health-bar-container">
+                <div id="health-bar-delay"></div>
                 <div id="health-bar"></div>
             </div>
+        </div>
+
+        <!-- スコアポップアップ -->
+        <div id="score-popup">+100</div>
+
+        <!-- コンボカウンター -->
+        <div id="combo-counter">
+            <div id="combo-count">0</div>
+            <div id="combo-label">COMBO</div>
         </div>
 
         <div id="msg-overlay">JUST PARRY!</div>
@@ -426,6 +578,9 @@
         <div class="subtitle">CYBER IAI</div>
         <button class="start-btn" id="start-btn">INITIATE LINK</button>
     </div>
+
+    <!-- ダメージビネット -->
+    <div id="damage-vignette"></div>
 
     <script>
         // --- Audio Synth ---
@@ -491,6 +646,12 @@
         let trailParticles = []; // 斬撃トレイル
         let afterimages = [];    // 残像
         let shockwaves = [];     // 衝撃波
+
+        // === UI改善用変数 ===
+        let combo = 0;
+        let comboTimer = 0;
+        let delayedHealth = 100;
+        let lastScore = 0;
 
         // Screen Constants
         let GROUND_Y = 0;
@@ -1310,6 +1471,8 @@
                 createSparks(player.x, player.y - 100, '#0ff', 20);
                 // 衝撃波エフェクト追加
                 shockwaves.push(new Shockwave(player.x, player.y - 50, '#0ff'));
+                // コンボ追加
+                if (gameState === 'PLAYING') addCombo();
 
                 if (gameState === 'PLAYING') {
                     this.hp--;
@@ -1329,6 +1492,10 @@
                     if (tutorialStep === 14) { showMsg("MOVE SIDEWAYS!", true); }
                 } else {
                     health -= 20;
+                    // UI改善: ダメージ効果
+                    triggerHPShake();
+                    triggerDamageVignette();
+                    combo = 0; updateComboDisplay(); // コンボリセット
                     if (health <= 0) {
                         gameState = 'GAMEOVER';
                         document.getElementById('start-screen').style.display = 'flex';
@@ -1506,6 +1673,39 @@
                 Background.update(dt, player.x);
                 if (shakeIntensity > 0) shakeIntensity *= 0.9;
                 if (flashIntensity > 0) flashIntensity -= dt * 2;
+
+                // === UI改善: 更新処理 ===
+                // スコアポップアップ
+                if (score !== lastScore) {
+                    const diff = score - lastScore;
+                    showScorePopup(diff);
+                    lastScore = score;
+                }
+
+                // コンボタイマー
+                if (comboTimer > 0) {
+                    comboTimer -= dt;
+                    if (comboTimer <= 0) {
+                        combo = 0;
+                        updateComboDisplay();
+                    }
+                }
+
+                // 遅延HPバー
+                if (delayedHealth > health) {
+                    delayedHealth -= dt * 30;
+                    if (delayedHealth < health) delayedHealth = health;
+                }
+                document.getElementById('health-bar-delay').style.width = delayedHealth + '%';
+
+                // HP危険時パルス
+                const hpContainer = document.getElementById('health-bar-container');
+                if (health <= 30 && !hpContainer.classList.contains('shake')) {
+                    hpContainer.classList.add('danger');
+                } else if (health > 30) {
+                    hpContainer.classList.remove('danger');
+                }
+
                 document.getElementById('score-display').innerText = score;
                 document.getElementById('health-bar').style.width = health + '%';
             }
@@ -1610,12 +1810,61 @@
         }
         function hideTutorial() { document.getElementById('tutorial-overlay').style.display = 'none'; }
 
+        // === UI改善: ヘルパー関数 ===
+        function showScorePopup(amount) {
+            const el = document.getElementById('score-popup');
+            el.innerText = '+' + amount;
+            el.classList.add('show');
+            setTimeout(() => { el.classList.remove('show'); }, 400);
+        }
+
+        function updateComboDisplay() {
+            const counter = document.getElementById('combo-counter');
+            const countEl = document.getElementById('combo-count');
+
+            if (combo > 0) {
+                counter.classList.add('active');
+                countEl.innerText = combo;
+
+                // 色変化
+                counter.classList.remove('combo-high', 'combo-max');
+                if (combo >= 10) {
+                    counter.classList.add('combo-max');
+                } else if (combo >= 5) {
+                    counter.classList.add('combo-high');
+                }
+            } else {
+                counter.classList.remove('active', 'combo-high', 'combo-max');
+            }
+        }
+
+        function addCombo() {
+            combo++;
+            comboTimer = 3.0; // 3秒でリセット
+            updateComboDisplay();
+        }
+
+        function triggerHPShake() {
+            const container = document.getElementById('health-bar-container');
+            container.classList.add('shake');
+            setTimeout(() => { container.classList.remove('shake'); }, 300);
+        }
+
+        function triggerDamageVignette() {
+            const vignette = document.getElementById('damage-vignette');
+            vignette.classList.add('active');
+            setTimeout(() => { vignette.classList.remove('active'); }, 200);
+        }
+
         resize();
         document.getElementById('start-btn').addEventListener('click', () => {
             Audio.init(); document.getElementById('start-screen').style.display = 'none';
             resize(); score = 0; health = 100; enemies = []; enemies.push(new Enemy(0));
             // エフェクト配列リセット
             trailParticles = []; afterimages = []; shockwaves = []; particles = [];
+            // UI変数リセット
+            combo = 0; comboTimer = 0; delayedHealth = 100; lastScore = 0;
+            updateComboDisplay();
             Background.init();
             gameState = 'TUTORIAL'; tutorialStep = 0;
             requestAnimationFrame(gameLoop);
