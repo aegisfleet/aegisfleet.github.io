@@ -810,6 +810,13 @@
                     this.playTone(300, 'square', 0.2, 0.1);
                     this.playTone(350, 'triangle', 0.15, 0.08);
                 }, 150);
+            },
+
+            // 回復音
+            playHeal: function () {
+                this.playTone(523.25, 'sine', 0.15, 0.15);     // C5
+                this.playTone(659.25, 'sine', 0.15, 0.12);     // E5
+                setTimeout(() => this.playTone(783.99, 'sine', 0.2, 0.1), 100); // G5
             }
         };
 
@@ -1082,6 +1089,8 @@
         let trailParticles = []; // 斬撃トレイル
         let afterimages = [];    // 残像
         let shockwaves = [];     // 衝撃波
+        let recoveryItems = [];  // 回復アイテム
+        let recoverySpawnTimer = 10; // 次の出現までのタイマー
 
         // === UI改善用変数 ===
         let combo = 0;
@@ -1248,6 +1257,103 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI * 2);
                 ctx.stroke();
+                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        // --- 回復アイテム（おにぎり） ---
+        class RecoveryItem {
+            constructor() {
+                this.spawn();
+            }
+
+            spawn() {
+                // ランダムな位置に出現（プレイエリア内）
+                this.x = 100 + Math.random() * (canvas.width - 200);
+                this.y = MIN_Y + Math.random() * (MAX_Y - MIN_Y - 50);
+                this.life = 5.0; // 5秒で消滅
+                this.collected = false;
+                this.collectTimer = 0;
+                this.hoverOffset = Math.random() * Math.PI * 2;
+            }
+
+            update(dt) {
+                if (this.collected) {
+                    this.collectTimer -= dt;
+                    return this.collectTimer <= 0; // trueを返すと削除
+                }
+
+                this.life -= dt;
+                this.hoverOffset += dt * 3;
+
+                // プレイヤーとの衝突判定
+                const dx = this.x - player.x;
+                const dy = this.y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 50) {
+                    this.collect();
+                }
+
+                return this.life <= 0; // 時間切れで消滅
+            }
+
+            collect() {
+                this.collected = true;
+                this.collectTimer = 0.3;
+
+                // HP回復
+                const healAmount = 20;
+                health = Math.min(100, health + healAmount);
+                delayedHealth = Math.max(delayedHealth, health);
+
+                // エフェクト
+                Audio.playHeal();
+                createSparks(this.x, this.y, '#0f0', 15);
+                shockwaves.push(new Shockwave(this.x, this.y, '#0f0'));
+                showMsg("+HP!");
+                score += 50;
+            }
+
+            draw(ctx) {
+                if (this.collected) return;
+
+                const scale = getScale(this.y);
+                const hover = Math.sin(this.hoverOffset) * 8;
+                const alpha = this.life < 1.0 ? this.life : 1.0; // 消滅前に点滅
+
+                ctx.save();
+                ctx.translate(this.x, this.y + hover);
+                ctx.scale(scale, scale);
+                ctx.globalAlpha = alpha;
+
+                // グロー
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#0f0';
+
+                // おにぎり本体（三角形）
+                ctx.fillStyle = '#111';
+                ctx.strokeStyle = '#0f0';
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.moveTo(0, -30);
+                ctx.lineTo(-25, 15);
+                ctx.lineTo(25, 15);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // 海苔ライン
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(-15, 0, 30, 12);
+
+                // 中心のドット
+                ctx.beginPath();
+                ctx.arc(0, -8, 4, 0, Math.PI * 2);
+                ctx.fill();
+
                 ctx.restore();
                 ctx.globalAlpha = 1.0;
             }
@@ -2116,6 +2222,17 @@
                 for (let i = shockwaves.length - 1; i >= 0; i--) {
                     shockwaves[i].update(dt); if (shockwaves[i].life <= 0) shockwaves.splice(i, 1);
                 }
+                // 回復アイテム更新
+                if (gameState === 'PLAYING' && health < 100) {
+                    recoverySpawnTimer -= dt;
+                    if (recoverySpawnTimer <= 0 && recoveryItems.length === 0) {
+                        recoveryItems.push(new RecoveryItem());
+                        recoverySpawnTimer = 8 + Math.random() * 7; // 8〜15秒
+                    }
+                }
+                for (let i = recoveryItems.length - 1; i >= 0; i--) {
+                    if (recoveryItems[i].update(dt)) recoveryItems.splice(i, 1);
+                }
                 Background.update(dt, player.x);
                 if (shakeIntensity > 0) shakeIntensity *= 0.9;
                 if (flashIntensity > 0) flashIntensity -= dt * 2;
@@ -2201,6 +2318,8 @@
             // 斬撃トレイル
             trailParticles.forEach(t => t.draw(ctx));
             particles.forEach(p => { if (p.y >= player.y) p.draw(ctx); });
+            // 回復アイテム描画
+            recoveryItems.forEach(item => item.draw(ctx));
             // 衝撃波（最前面）
             shockwaves.forEach(s => s.draw(ctx));
 
@@ -2316,6 +2435,7 @@
             resize(); score = 0; health = 100; enemies = []; enemies.push(new Enemy(0));
             // エフェクト配列リセット
             trailParticles = []; afterimages = []; shockwaves = []; particles = [];
+            recoveryItems = []; recoverySpawnTimer = 10;
             // UI変数リセット
             combo = 0; comboTimer = 0; delayedHealth = 100; lastScore = 0;
             Audio.setComboMultiplier(0);
