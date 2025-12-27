@@ -916,27 +916,150 @@
                 const s = getScale(this.y);
                 ctx.scale(s, s);
 
+                // 呼吸アニメーション（アイドル時のみ）
+                const breathOffset = this.state === 'IDLE' ? Math.sin(Date.now() * 0.005) * 2 : 0;
+                ctx.translate(0, breathOffset);
+
+                // カウンター可能時のオーラ
                 if (this.counterTimer > 0) {
-                    ctx.shadowBlur = 20; ctx.shadowColor = '#ff0'; ctx.strokeStyle = '#ff0'; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.arc(0, -50, 60, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+                    ctx.shadowBlur = 30; ctx.shadowColor = '#ff0';
+                    ctx.strokeStyle = '#ff0'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(0, -50, 70, 0, Math.PI * 2); ctx.stroke();
+                    // 内側リング
+                    ctx.globalAlpha = 0.5;
+                    ctx.beginPath(); ctx.arc(0, -50, 50, 0, Math.PI * 2); ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+                    ctx.shadowBlur = 0;
                 }
 
-                ctx.fillStyle = this.state === 'DODGE' ? '#440022' : this.color;
-                if (this.isWallStun) ctx.fillStyle = '#f04'; // Warn color
+                const bodyColor = this.state === 'DODGE' ? '#220033' : this.color;
+                const accentColor = this.isWallStun ? '#f04' : '#0ff';
 
-                ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+                // === コート/ボディ ===
+                ctx.fillStyle = '#111';
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = accentColor;
 
-                ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-10, -80); ctx.lineTo(10, -80); ctx.lineTo(20, 0); ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, -90, 12, 0, Math.PI * 2); ctx.fill();
+                // メインコート
+                ctx.beginPath();
+                ctx.moveTo(-25, 0);      // 左足元
+                ctx.lineTo(-30, -20);    // 左コート裾
+                ctx.lineTo(-20, -50);    // 左腰
+                ctx.lineTo(-15, -75);    // 左肩
+                ctx.lineTo(0, -80);      // 首元
+                ctx.lineTo(15, -75);     // 右肩
+                ctx.lineTo(20, -50);     // 右腰
+                ctx.lineTo(30, -20);     // 右コート裾
+                ctx.lineTo(25, 0);       // 右足元
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
 
+                // コートの装甲プレート
+                ctx.fillStyle = '#222';
+                ctx.beginPath();
+                ctx.moveTo(-12, -30);
+                ctx.lineTo(-8, -65);
+                ctx.lineTo(8, -65);
+                ctx.lineTo(12, -30);
+                ctx.closePath();
+                ctx.fill();
+
+                // ネオンライン（胸部）
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-8, -60);
+                ctx.lineTo(0, -55);
+                ctx.lineTo(8, -60);
+                ctx.stroke();
+
+                // === ヘルメット ===
+                ctx.fillStyle = '#0a0a0a';
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 2;
+
+                // メインヘルメット
+                ctx.beginPath();
+                ctx.arc(0, -95, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // バイザー（光るライン）
+                ctx.fillStyle = accentColor;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = accentColor;
+                ctx.fillRect(-12, -98, 24, 4);
+
+                // ヘルメットの角（左右）
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(-15, -100);
+                ctx.lineTo(-22, -115);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(15, -100);
+                ctx.lineTo(22, -115);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // === 刀 ===
                 if (this.state === 'ATTACK') {
-                    if (flashColor === '#ff0' && flashIntensity > 0.1) ctx.strokeStyle = '#ff0'; else ctx.strokeStyle = '#0ff';
-                    ctx.lineWidth = 4; ctx.shadowBlur = 15; ctx.shadowColor = ctx.strokeStyle;
-                    ctx.beginPath(); ctx.moveTo(-30, -40); ctx.lineTo(30, -180); ctx.stroke();
-                    ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -100, 100, -Math.PI / 2 - 0.5, -Math.PI / 2 + 0.5); ctx.stroke();
+                    // 攻撃時：振り上げポーズ
+                    const bladeColor = (flashColor === '#ff0' && flashIntensity > 0.1) ? '#ff0' : '#0ff';
+                    ctx.strokeStyle = bladeColor;
+                    ctx.lineWidth = 5;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = bladeColor;
+                    ctx.lineCap = 'round';
+
+                    // エネルギーブレード
+                    ctx.beginPath();
+                    ctx.moveTo(-25, -50);
+                    ctx.lineTo(35, -180);
+                    ctx.stroke();
+
+                    // ブレードのコア（白い芯）
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-25, -50);
+                    ctx.lineTo(35, -180);
+                    ctx.stroke();
+
+                    // 斬撃アーク
+                    ctx.strokeStyle = bladeColor;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, -100, 90, -Math.PI / 2 - 0.6, -Math.PI / 2 + 0.6);
+                    ctx.stroke();
                 } else {
-                    ctx.strokeStyle = '#555'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-15, -60); ctx.lineTo(25, -30); ctx.stroke();
+                    // 待機時：腰に構え
+                    ctx.strokeStyle = '#0ff';
+                    ctx.lineWidth = 4;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#0ff';
+                    ctx.lineCap = 'round';
+
+                    // 鞘に収めた刀
+                    ctx.beginPath();
+                    ctx.moveTo(-20, -40);
+                    ctx.lineTo(30, -25);
+                    ctx.stroke();
+
+                    // 柄
+                    ctx.strokeStyle = '#ff0';
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.moveTo(-20, -40);
+                    ctx.lineTo(-28, -45);
+                    ctx.stroke();
                 }
+
                 ctx.restore();
             }
         }
@@ -1221,6 +1344,10 @@
                 ctx.translate(this.x, this.y);
                 const scale = getScale(this.y); ctx.scale(scale, scale);
 
+                // ホバーアニメーション
+                const hoverOffset = Math.sin(Date.now() * 0.003 + this.index) * 3;
+                ctx.translate(0, hoverOffset);
+
                 // RETICLE
                 if (this.state === 'PREPARE') {
                     const progress = Math.max(0, this.timer / this.maxTimer);
@@ -1230,7 +1357,7 @@
 
                     // Shape diff for Beam
                     if (this.attackType === 'BEAM') {
-                        ctx.strokeRect(-currentRadius / 2, -120, currentRadius, 200); // Rectangular reticle
+                        ctx.strokeRect(-currentRadius / 2, -120, currentRadius, 200);
                     } else {
                         ctx.beginPath(); ctx.arc(0, -60, currentRadius, 0, Math.PI * 2); ctx.stroke();
                     }
@@ -1238,28 +1365,112 @@
                     ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.arc(0, -60, endRadius, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1.0;
                 }
 
+                // === メインボディ ===
+                ctx.fillStyle = '#0a0a0a';
+                ctx.strokeStyle = this.flashColor;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = this.flashing ? 20 : 5;
+                ctx.shadowColor = this.flashColor;
+
+                // 装甲外殻（六角形風）
+                ctx.beginPath();
+                ctx.moveTo(0, -110);      // 頂点
+                ctx.lineTo(-35, -90);     // 左上
+                ctx.lineTo(-45, -50);     // 左中
+                ctx.lineTo(-35, -15);     // 左下
+                ctx.lineTo(35, -15);      // 右下
+                ctx.lineTo(45, -50);      // 右中
+                ctx.lineTo(35, -90);      // 右上
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // 内部装甲プレート
+                ctx.fillStyle = '#151515';
+                ctx.beginPath();
+                ctx.moveTo(0, -100);
+                ctx.lineTo(-25, -85);
+                ctx.lineTo(-30, -50);
+                ctx.lineTo(-20, -25);
+                ctx.lineTo(20, -25);
+                ctx.lineTo(30, -50);
+                ctx.lineTo(25, -85);
+                ctx.closePath();
+                ctx.fill();
+
+                // === バイザー/センサーアイ ===
                 if (this.flashing) {
-                    ctx.fillStyle = this.flashColor; ctx.shadowBlur = 40; ctx.shadowColor = this.flashColor;
-                    ctx.beginPath(); ctx.rect(-25, -100, 50, 8); ctx.fill();
+                    // チャージ中：全体が光る
+                    ctx.fillStyle = this.flashColor;
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = this.flashColor;
+                } else {
+                    ctx.fillStyle = this.flashColor;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.flashColor;
                 }
 
-                ctx.fillStyle = '#111'; ctx.strokeStyle = this.flashColor; ctx.lineWidth = 2; ctx.shadowBlur = 0;
-                ctx.beginPath(); ctx.moveTo(-30, -100); ctx.lineTo(30, -100); ctx.lineTo(40, -20); ctx.lineTo(-40, -20); ctx.closePath(); ctx.fill(); ctx.stroke();
-                if (!this.flashing) { ctx.fillStyle = '#333'; ctx.fillRect(-25, -100, 50, 8); }
+                // メインバイザー（三角形）
+                ctx.beginPath();
+                ctx.moveTo(0, -95);
+                ctx.lineTo(-20, -70);
+                ctx.lineTo(20, -70);
+                ctx.closePath();
+                ctx.fill();
 
+                // センサードット（3つ）
+                ctx.fillStyle = this.flashColor;
+                ctx.beginPath(); ctx.arc(-15, -55, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0, -50, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, -55, 4, 0, Math.PI * 2); ctx.fill();
+
+                // === アクセントライン ===
+                ctx.strokeStyle = this.flashColor;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                // 左ライン
+                ctx.beginPath();
+                ctx.moveTo(-40, -70);
+                ctx.lineTo(-35, -40);
+                ctx.stroke();
+                // 右ライン
+                ctx.beginPath();
+                ctx.moveTo(40, -70);
+                ctx.lineTo(35, -40);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // === 攻撃エフェクト ===
                 if (this.state === 'ATTACKING') {
-                    ctx.strokeStyle = this.flashColor; ctx.lineWidth = 5; ctx.shadowBlur = 20; ctx.shadowColor = this.flashColor;
+                    ctx.strokeStyle = this.flashColor; ctx.lineWidth = 5; ctx.shadowBlur = 25; ctx.shadowColor = this.flashColor;
+                    ctx.lineCap = 'round';
                     ctx.beginPath();
                     if (this.attackType === 'BEAM') {
-                        // Draw Beam upwards to infinity
-                        ctx.moveTo(0, 0); ctx.lineTo(0, -1000);
-                        ctx.lineWidth = 20;
+                        // 太いエネルギービーム
+                        ctx.moveTo(0, -50); ctx.lineTo(0, -1000);
+                        ctx.lineWidth = 25;
+                        ctx.stroke();
+                        // ビームのコア
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 8;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -50); ctx.lineTo(0, -1000);
                     }
-                    else if (this.attackType === 'SLASH') ctx.arc(-50, -50, 100, 0, Math.PI);
-                    else if (this.attackType === 'SMASH') ctx.rect(-50, -120, 100, 120);
-                    else if (this.attackType === 'THRUST') { ctx.moveTo(0, -50); ctx.lineTo(-150, -50); }
+                    else if (this.attackType === 'SLASH') {
+                        ctx.arc(-50, -50, 100, 0, Math.PI);
+                    }
+                    else if (this.attackType === 'SMASH') {
+                        ctx.rect(-60, -130, 120, 140);
+                        ctx.lineWidth = 8;
+                    }
+                    else if (this.attackType === 'THRUST') {
+                        ctx.moveTo(0, -60); ctx.lineTo(-180, -60);
+                        ctx.lineWidth = 8;
+                    }
                     ctx.stroke();
                 }
+
                 ctx.restore();
             }
         }
