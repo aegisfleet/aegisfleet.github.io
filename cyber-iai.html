@@ -583,48 +583,484 @@
     <div id="damage-vignette"></div>
 
     <script>
-        // --- Audio Synth ---
+        // === 強化版オーディオシステム ===
+
+        // --- Audio Synth (Enhanced) ---
         const Audio = {
             ctx: null,
+            masterGain: null,
+            reverbNode: null,
+            filterNode: null,
+            comboMultiplier: 1.0,
+            dangerInterval: null,
+
             init: function () {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 this.ctx = new AudioContext();
+
+                // マスターゲイン
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.7;
+                this.masterGain.connect(this.ctx.destination);
+
+                // ローパスフィルター（スローモ時用）
+                this.filterNode = this.ctx.createBiquadFilter();
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.value = 20000;
+                this.filterNode.connect(this.masterGain);
+
+                // シンプルなリバーブ（コンボルバー用のインパルス）
+                this.createReverb();
             },
-            playTone: function (freq, type, duration, vol = 0.1) {
+
+            createReverb: function () {
+                const sampleRate = this.ctx.sampleRate;
+                const length = sampleRate * 0.5;
+                const impulse = this.ctx.createBuffer(2, length, sampleRate);
+                for (let channel = 0; channel < 2; channel++) {
+                    const data = impulse.getChannelData(channel);
+                    for (let i = 0; i < length; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                    }
+                }
+                this.reverbNode = this.ctx.createConvolver();
+                this.reverbNode.buffer = impulse;
+            },
+
+            // コンボに応じたピッチ倍率を設定
+            setComboMultiplier: function (comboCount) {
+                this.comboMultiplier = 1.0 + Math.min(comboCount * 0.05, 0.5);
+            },
+
+            // スローモーションフィルター
+            enableSlowMoFilter: function (enable) {
+                if (!this.ctx) return;
+                const targetFreq = enable ? 800 : 20000;
+                this.filterNode.frequency.linearRampToValueAtTime(targetFreq, this.ctx.currentTime + 0.1);
+            },
+
+            playTone: function (freq, type, duration, vol = 0.1, useReverb = false) {
                 if (!this.ctx) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(freq * this.comboMultiplier, this.ctx.currentTime);
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+
+                if (useReverb && this.reverbNode) {
+                    const dryGain = this.ctx.createGain();
+                    const wetGain = this.ctx.createGain();
+                    dryGain.gain.value = 0.7;
+                    wetGain.gain.value = 0.3;
+                    gain.connect(dryGain);
+                    gain.connect(this.reverbNode);
+                    this.reverbNode.connect(wetGain);
+                    dryGain.connect(this.filterNode);
+                    wetGain.connect(this.filterNode);
+                } else {
+                    gain.connect(this.filterNode);
+                }
+
                 osc.start();
                 osc.stop(this.ctx.currentTime + duration);
             },
-            playParry: function () { this.playTone(800, 'triangle', 0.5, 0.3); this.playTone(1200, 'sine', 0.3, 0.2); this.playNoise(0.1); },
-            playCounter: function () { this.playTone(600, 'sawtooth', 0.1, 0.3); this.playTone(1500, 'square', 0.3, 0.2); this.playNoise(0.1); },
-            playHit: function () { this.playTone(150, 'sawtooth', 0.3, 0.3); this.playTone(100, 'square', 0.2, 0.3); },
-            playWhoosh: function () { this.playTone(300, 'triangle', 0.1, 0.05); },
-            playCharge: function () {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.5);
-                gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.5);
-            },
-            playNoise: function (duration) {
+
+            playNoise: function (duration, vol = 0.1) {
                 if (!this.ctx) return;
                 const bufferSize = this.ctx.sampleRate * duration;
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
                 const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
-                const gain = this.ctx.createGain(); gain.gain.value = 0.1;
-                noise.connect(gain); gain.connect(this.ctx.destination); noise.start();
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                noise.connect(gain); gain.connect(this.filterNode); noise.start();
+            },
+
+            // === 強化版効果音 ===
+
+            // パリィ（レイヤリング＋リバーブ）
+            playParry: function () {
+                this.playTone(800, 'triangle', 0.4, 0.25, true);
+                this.playTone(1200, 'sine', 0.3, 0.15, true);
+                this.playTone(400, 'sine', 0.2, 0.1);
+                this.playNoise(0.08, 0.15);
+                // 金属的な高音
+                this.playTone(2400, 'square', 0.1, 0.08);
+            },
+
+            // ジャストパリィ（特別な音）
+            playJustParry: function () {
+                this.playTone(1000, 'triangle', 0.5, 0.3, true);
+                this.playTone(1500, 'sine', 0.4, 0.25, true);
+                this.playTone(2000, 'sine', 0.3, 0.2, true);
+                this.playTone(500, 'sine', 0.3, 0.15);
+                this.playNoise(0.1, 0.2);
+                // キラキラ音
+                setTimeout(() => this.playTone(3000, 'sine', 0.2, 0.1), 50);
+                setTimeout(() => this.playTone(3500, 'sine', 0.15, 0.08), 100);
+            },
+
+            // カウンター（より強力な音）
+            playCounter: function () {
+                this.playTone(600, 'sawtooth', 0.15, 0.25, true);
+                this.playTone(1500, 'square', 0.25, 0.2, true);
+                this.playTone(300, 'triangle', 0.2, 0.15);
+                this.playNoise(0.12, 0.18);
+                // 金属的なレゾナンス
+                this.playTone(1800, 'sawtooth', 0.3, 0.1, true);
+                this.playTone(2200, 'square', 0.2, 0.08);
+            },
+
+            // ヒット（低音強化）
+            playHit: function () {
+                this.playTone(80, 'sawtooth', 0.4, 0.35);
+                this.playTone(120, 'square', 0.3, 0.3);
+                this.playTone(60, 'sine', 0.5, 0.25);
+                this.playNoise(0.15, 0.2);
+            },
+
+            // ウォッシュ（ステレオ感）
+            playWhoosh: function () {
+                this.playTone(300, 'triangle', 0.12, 0.06);
+                this.playTone(450, 'sine', 0.1, 0.04);
+                this.playTone(200, 'triangle', 0.08, 0.03);
+            },
+
+            // チャージ（期待感を高める）
+            playCharge: function () {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const gain2 = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
+
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc2.frequency.linearRampToValueAtTime(800, this.ctx.currentTime + 0.5);
+                gain2.gain.setValueAtTime(0.03, this.ctx.currentTime);
+                gain2.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
+
+                osc.connect(gain); gain.connect(this.filterNode);
+                osc2.connect(gain2); gain2.connect(this.filterNode);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.5);
+                osc2.start(); osc2.stop(this.ctx.currentTime + 0.5);
+            },
+
+            // === 新規効果音 ===
+
+            // メニュー選択音
+            playMenuSelect: function () {
+                this.playTone(800, 'sine', 0.1, 0.15);
+                this.playTone(1200, 'sine', 0.15, 0.1);
+            },
+
+            // コンボアップ音（ピッチが上がる）
+            playComboUp: function (comboCount) {
+                const baseFreq = 400 + Math.min(comboCount * 50, 600);
+                this.playTone(baseFreq, 'sine', 0.1, 0.12);
+                this.playTone(baseFreq * 1.5, 'triangle', 0.08, 0.08);
+            },
+
+            // 危険警告音
+            playDanger: function () {
+                this.playTone(200, 'square', 0.15, 0.15);
+                setTimeout(() => this.playTone(150, 'square', 0.15, 0.12), 150);
+            },
+
+            // 危険警告ループ開始
+            startDangerLoop: function () {
+                if (this.dangerInterval) return;
+                this.dangerInterval = setInterval(() => this.playDanger(), 800);
+            },
+
+            // 危険警告ループ停止
+            stopDangerLoop: function () {
+                if (this.dangerInterval) {
+                    clearInterval(this.dangerInterval);
+                    this.dangerInterval = null;
+                }
+            },
+
+            // ゲームオーバー音
+            playGameOver: function () {
+                this.playTone(400, 'sawtooth', 0.5, 0.2);
+                this.playTone(300, 'sawtooth', 0.6, 0.18);
+                this.playTone(200, 'sawtooth', 0.8, 0.15);
+                setTimeout(() => {
+                    this.playTone(100, 'sine', 1.5, 0.2);
+                    this.playTone(50, 'sine', 2.0, 0.15);
+                }, 300);
+            },
+
+            // 敵出現警告音
+            playEnemySpawn: function () {
+                this.playTone(200, 'square', 0.3, 0.15);
+                this.playTone(250, 'square', 0.25, 0.12);
+                setTimeout(() => {
+                    this.playTone(300, 'square', 0.2, 0.1);
+                    this.playTone(350, 'triangle', 0.15, 0.08);
+                }, 150);
+            }
+        };
+
+        // === BGMエンジン ===
+        const BGMEngine = {
+            ctx: null,
+            masterGain: null,
+            isPlaying: false,
+            currentScene: null,
+            oscillators: [],
+            intervals: [],
+
+            // コード進行: Am - F - C - G
+            chordProgression: [
+                [220, 261.63, 329.63],  // Am (A3, C4, E4)
+                [174.61, 220, 261.63],  // F (F3, A3, C4)
+                [130.81, 164.81, 196],  // C (C3, E3, G3)
+                [196, 246.94, 293.66]   // G (G3, B3, D4)
+            ],
+
+            currentChord: 0,
+            beatCount: 0,
+
+            init: function (audioCtx) {
+                this.ctx = audioCtx;
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0;
+                this.masterGain.connect(this.ctx.destination);
+            },
+
+            // シーン切り替え
+            changeScene: function (scene) {
+                if (this.currentScene === scene) return;
+                this.stopAll();
+                this.currentScene = scene;
+
+                switch (scene) {
+                    case 'menu':
+                        this.startMenuBGM();
+                        break;
+                    case 'gameplay':
+                        this.startGameplayBGM();
+                        break;
+                    case 'gameover':
+                        this.startGameOverBGM();
+                        break;
+                }
+            },
+
+            stopAll: function () {
+                this.oscillators.forEach(osc => {
+                    try { osc.stop(); } catch (e) { }
+                });
+                this.oscillators = [];
+                this.intervals.forEach(id => clearInterval(id));
+                this.intervals = [];
+                this.isPlaying = false;
+            },
+
+            fadeIn: function (duration = 1.0) {
+                this.masterGain.gain.linearRampToValueAtTime(0.15, this.ctx.currentTime + duration);
+            },
+
+            fadeOut: function (duration = 1.0) {
+                this.masterGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + duration);
+            },
+
+            // メニューBGM（アンビエント＋スローアルペジオ）
+            startMenuBGM: function () {
+                this.isPlaying = true;
+                this.fadeIn(2.0);
+
+                // アンビエントドローン
+                const drone = this.ctx.createOscillator();
+                const droneGain = this.ctx.createGain();
+                drone.type = 'sine';
+                drone.frequency.value = 55; // A1
+                droneGain.gain.value = 0.1;
+                drone.connect(droneGain);
+                droneGain.connect(this.masterGain);
+                drone.start();
+                this.oscillators.push(drone);
+
+                // スローアルペジオ
+                const arpNotes = [220, 261.63, 329.63, 392, 329.63, 261.63];
+                let noteIndex = 0;
+
+                const arpInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = arpNotes[noteIndex];
+                    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.8);
+                    noteIndex = (noteIndex + 1) % arpNotes.length;
+                }, 600);
+
+                this.intervals.push(arpInterval);
+            },
+
+            // ゲームプレイBGM（アルペジオ＋ベース＋ドラム）
+            startGameplayBGM: function () {
+                this.isPlaying = true;
+                this.currentChord = 0;
+                this.beatCount = 0;
+                this.fadeIn(0.5);
+
+                const bpm = 140;
+                const beatMs = 60000 / bpm;
+                const sixteenthMs = beatMs / 4;
+
+                // コード進行タイマー（4拍ごと）
+                const chordInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    this.currentChord = (this.currentChord + 1) % this.chordProgression.length;
+                }, beatMs * 4);
+                this.intervals.push(chordInterval);
+
+                // アルペジオ（16分音符）
+                const arpInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    const chord = this.chordProgression[this.currentChord];
+                    const noteIndex = this.beatCount % 4;
+                    const freq = noteIndex < 3 ? chord[noteIndex] * 2 : chord[1] * 2;
+
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.1);
+
+                    this.beatCount++;
+                }, sixteenthMs);
+                this.intervals.push(arpInterval);
+
+                // ベースライン（4分音符）
+                const bassInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    const chord = this.chordProgression[this.currentChord];
+                    const bassFreq = chord[0] / 2;
+
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = bassFreq;
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.3);
+                }, beatMs);
+                this.intervals.push(bassInterval);
+
+                // ハイハット（8分音符）
+                const hihatInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    this.playHihat();
+                }, beatMs / 2);
+                this.intervals.push(hihatInterval);
+
+                // キック（4分音符、1拍目と3拍目）
+                let kickBeat = 0;
+                const kickInterval = setInterval(() => {
+                    if (!this.isPlaying) return;
+                    if (kickBeat % 2 === 0) {
+                        this.playKick();
+                    }
+                    kickBeat++;
+                }, beatMs);
+                this.intervals.push(kickInterval);
+            },
+
+            playHihat: function () {
+                const bufferSize = this.ctx.sampleRate * 0.05;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 8000;
+
+                const gain = this.ctx.createGain();
+                gain.gain.value = 0.03;
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+                noise.start();
+            },
+
+            playKick: function () {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            },
+
+            // ゲームオーバーBGM（減衰するドローン）
+            startGameOverBGM: function () {
+                this.isPlaying = true;
+                this.masterGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+
+                // 低いドローン
+                const drone = this.ctx.createOscillator();
+                const droneGain = this.ctx.createGain();
+                drone.type = 'sawtooth';
+                drone.frequency.setValueAtTime(80, this.ctx.currentTime);
+                drone.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 4);
+                droneGain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                droneGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 4);
+                drone.connect(droneGain);
+                droneGain.connect(this.masterGain);
+                drone.start();
+                drone.stop(this.ctx.currentTime + 4);
+                this.oscillators.push(drone);
+
+                // 不協和音
+                const dissonant = this.ctx.createOscillator();
+                const dissonantGain = this.ctx.createGain();
+                dissonant.type = 'sine';
+                dissonant.frequency.value = 123.47; // B2
+                dissonantGain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                dissonantGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 3);
+                dissonant.connect(dissonantGain);
+                dissonantGain.connect(this.masterGain);
+                dissonant.start();
+                dissonant.stop(this.ctx.currentTime + 3);
+                this.oscillators.push(dissonant);
             }
         };
 
@@ -1017,17 +1453,22 @@
                 }
                 if (this.counterTimer > 0) {
                     this.counterTimer -= dt;
+                    if (this.counterTimer <= 0) {
+                        Audio.enableSlowMoFilter(false);
+                    }
                 }
             }
 
             onDodgeSuccess() {
                 this.counterTimer = 0.6;
+                Audio.enableSlowMoFilter(true);
             }
 
             executeCounter() {
                 this.counterTimer = 0;
                 this.state = 'ATTACK';
                 this.animTimer = 0.2;
+                Audio.enableSlowMoFilter(false);
 
                 Audio.playCounter();
                 score += 300;
@@ -1495,9 +1936,14 @@
                     // UI改善: ダメージ効果
                     triggerHPShake();
                     triggerDamageVignette();
-                    combo = 0; updateComboDisplay(); // コンボリセット
+                    combo = 0;
+                    Audio.setComboMultiplier(0);
+                    updateComboDisplay(); // コンボリセット
                     if (health <= 0) {
                         gameState = 'GAMEOVER';
+                        Audio.stopDangerLoop();
+                        Audio.playGameOver();
+                        BGMEngine.changeScene('gameover');
                         document.getElementById('start-screen').style.display = 'flex';
                         document.querySelector('#start-screen h1').innerText = "GAME OVER";
                         document.querySelector('#start-screen .subtitle').innerText = `SCORE: ${score}`;
@@ -1687,6 +2133,7 @@
                     comboTimer -= dt;
                     if (comboTimer <= 0) {
                         combo = 0;
+                        Audio.setComboMultiplier(0);
                         updateComboDisplay();
                     }
                 }
@@ -1702,8 +2149,10 @@
                 const hpContainer = document.getElementById('health-bar-container');
                 if (health <= 30 && !hpContainer.classList.contains('shake')) {
                     hpContainer.classList.add('danger');
+                    Audio.startDangerLoop();
                 } else if (health > 30) {
                     hpContainer.classList.remove('danger');
+                    Audio.stopDangerLoop();
                 }
 
                 document.getElementById('score-display').innerText = score;
@@ -1798,7 +2247,7 @@
         setupInput('#btn-a', 'a');
         setupInput('#btn-b', 'b');
 
-        function spawnEnemy(index) { enemies.push(new Enemy(index)); showMsg("WARNING: REINFORCEMENTS"); Audio.playTone(200, 'square', 0.5, 0.2); }
+        function spawnEnemy(index) { enemies.push(new Enemy(index)); showMsg("WARNING: REINFORCEMENTS"); Audio.playEnemySpawn(); }
         function showMsg(text, isCounter = false) {
             const el = document.getElementById('msg-overlay'); el.innerText = text; el.style.opacity = 1;
             el.className = isCounter ? 'counter-msg' : ''; el.style.transform = "translate(-50%, -50%) scale(1.5)";
@@ -1841,6 +2290,8 @@
         function addCombo() {
             combo++;
             comboTimer = 3.0; // 3秒でリセット
+            Audio.setComboMultiplier(combo);
+            Audio.playComboUp(combo);
             updateComboDisplay();
         }
 
@@ -1858,15 +2309,20 @@
 
         resize();
         document.getElementById('start-btn').addEventListener('click', () => {
-            Audio.init(); document.getElementById('start-screen').style.display = 'none';
+            Audio.init();
+            BGMEngine.init(Audio.ctx);
+            Audio.playMenuSelect();
+            document.getElementById('start-screen').style.display = 'none';
             resize(); score = 0; health = 100; enemies = []; enemies.push(new Enemy(0));
             // エフェクト配列リセット
             trailParticles = []; afterimages = []; shockwaves = []; particles = [];
             // UI変数リセット
             combo = 0; comboTimer = 0; delayedHealth = 100; lastScore = 0;
+            Audio.setComboMultiplier(0);
             updateComboDisplay();
             Background.init();
             gameState = 'TUTORIAL'; tutorialStep = 0;
+            BGMEngine.changeScene('gameplay');
             requestAnimationFrame(gameLoop);
         });
     </script>
