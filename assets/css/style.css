@@ -56,9 +56,6 @@ h1, h2, h3, .step-tagline, .footer-lead,
     word-break: auto-phrase;   /* 日本語を文節単位で折り返す */
     overflow-wrap: anywhere;
 }
-.section-head h2 {
-    text-wrap: pretty;
-}
 .step-tagline, .footer-lead {
     text-wrap: balance;
 }
@@ -551,6 +548,7 @@ em {
     font-weight: 900;
     line-height: 1.25;
     letter-spacing: -.01em;
+    text-wrap: pretty;
 }
 .section-head > p:not(.eyebrow) { color: var(--muted); max-width: 680px; }
 
@@ -574,6 +572,7 @@ em {
     gap: 18px;
 }
 .stage {
+    position: relative;
     border-radius: var(--radius);
     padding: 14px;
     transition: box-shadow .6s;
@@ -592,7 +591,6 @@ em {
     pointer-events: none;
     animation: spin 8s linear infinite;
 }
-.stage { position: relative; }
 @property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 @keyframes spin { to { --angle: 360deg; } }
 
@@ -754,7 +752,7 @@ em {
 }
 .step-highlights li::before {
     content: "\f00c";
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 6 Free", sans-serif;
     font-weight: 900;
     position: absolute;
     left: 0; top: 2px;
@@ -777,7 +775,10 @@ em {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 24px;
+    margin: 0 0 24px;
+    padding: 0;
+    border: 0;
+    min-width: 0;
 }
 .filters button {
     font: inherit;
@@ -907,8 +908,8 @@ em {
     transition: transform 1.2s var(--ease);
 }
 .tile-wide.has-shot:hover .tile-side img { transform: scale(1.05); }
-.tile-wide.has-shot .tile-main { padding: 22px 22px 22px 0; display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
 .tile-main { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.tile-wide.has-shot .tile-main { padding: 22px 22px 22px 0; display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
 
 .tile-icon {
     width: 52px; height: 52px;

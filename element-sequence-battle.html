@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>エレメント・シーケンス・バトル</title>
     <link rel="icon" href="favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
@@ -37,6 +37,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            touch-action: manipulation;
             background-color: var(--color-bg-end);
             background-image: radial-gradient(circle, var(--color-bg-start) 0%, var(--color-bg-end) 70%);
             color: var(--color-text);
@@ -265,6 +266,9 @@
             transition: width 0.5s ease-out;
             border-radius: 6px 0 0 6px;
         }
+        .low-hp .hp-fill {
+            animation: pulse-red 1s infinite;
+        }
         #player-hp .hp-fill { 
             background-color: var(--color-hp-player);
             background-image: linear-gradient(to bottom, #5dd4a8, #27ae60 50%, #2ecc71 51%);
@@ -272,9 +276,6 @@
         #enemy-hp .hp-fill { 
             background-color: var(--color-hp-enemy);
             background-image: linear-gradient(to bottom, #e74c3c, #c0392b 50%, #e74c3c 51%);
-        }
-        .low-hp .hp-fill {
-            animation: pulse-red 1s infinite;
         }
         @keyframes pulse-red {
             0% { opacity: 1; }
@@ -687,21 +688,21 @@
         </div>
 
         <div class="controls-area" id="controls">
-            <button class="control-button" id="skill-button" disabled>スキル: 強攻撃 (0)</button>
-            <button class="control-button" id="btn-fire" data-element="fire">🔥</button>
-            <button class="control-button" id="btn-water" data-element="water">💧</button>
-            <button class="control-button" id="btn-earth" data-element="earth">⛰️</button>
-            <button class="control-button" id="btn-wind" data-element="wind">🍃</button>
+            <button type="button" class="control-button" id="skill-button" disabled>スキル: 強攻撃 (0)</button>
+            <button type="button" class="control-button" id="btn-fire" data-element="fire">🔥</button>
+            <button type="button" class="control-button" id="btn-water" data-element="water">💧</button>
+            <button type="button" class="control-button" id="btn-earth" data-element="earth">⛰️</button>
+            <button type="button" class="control-button" id="btn-wind" data-element="wind">🍃</button>
         </div>
 
         <div id="message-overlay">
             <div id="message-text">メッセージ</div>
             <div id="message-content"></div>
             <div id="message-buttons">
-                <button id="start-button" class="message-btn">ゲーム<br>スタート</button>
-                <button id="how-to-play-button" class="message-btn">遊び方</button>
-                <button id="message-ok-button" class="message-btn" style="display: none;">OK</button>
-                <button id="back-to-title-button" class="message-btn" style="display: none;">戻る</button>
+                <button type="button" id="start-button" class="message-btn">ゲーム<br>スタート</button>
+                <button type="button" id="how-to-play-button" class="message-btn">遊び方</button>
+                <button type="button" id="message-ok-button" class="message-btn" style="display: none;">OK</button>
+                <button type="button" id="back-to-title-button" class="message-btn" style="display: none;">戻る</button>
             </div>
         </div>
 
@@ -844,7 +845,7 @@
                 }
             };
             let currentBgmPattern = BGM_PATTERNS.stage1;
-            let mainVol = new Tone.Volume(-12).toDestination();
+            const mainVol = new Tone.Volume(-12).toDestination();
             const bgmFilter = new Tone.AutoFilter("4n").start();
             const bgmDelay = new Tone.FeedbackDelay("8n", 0.3);
             const bgmSynth = new Tone.PolySynth(Tone.Synth, {
@@ -862,23 +863,24 @@
                 snare: new Tone.NoiseSynth({ volume: -5, noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).connect(mainVol),
                 hihat: new Tone.MetalSynth({ volume: -15, frequency: 300, envelope: { attack: 0.001, decay: 0.1, release: 0.1 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).connect(mainVol)
             };
-            const masterLoop = new Tone.Loop(time => {
+            function playBgmStep(time) {
                 const melodyPattern = currentBgmPattern.melody;
                 const basePattern = currentBgmPattern.base;
-                const step = bgmStepIndex % 16; 
+                const step = bgmStepIndex % 16;
                 if (step % 2 === 0) {
                     const note = melodyPattern[Math.floor(step / 2) % melodyPattern.length];
                     if (note) { bgmSynth.triggerAttackRelease(note, '16n', time); }
+                    drumSynths.hihat.triggerAttackRelease('16n', time, 0.6);
                 }
                 if (step % 4 === 0) {
                     const note = basePattern[Math.floor(step / 4) % basePattern.length];
                     if (note) { baseSynth.triggerAttackRelease(note, '8n', time); }
+                    drumSynths.kick.triggerAttackRelease('C2', '8n', time);
                 }
-                if (step % 4 === 0) { drumSynths.kick.triggerAttackRelease('C2', '8n', time); }
                 if (step % 8 === 4) { drumSynths.snare.triggerAttackRelease('8n', time); }
-                if (step % 2 === 0) { drumSynths.hihat.triggerAttackRelease('16n', time, 0.6); }
                 bgmStepIndex++;
-            }, '16n');
+            }
+            const masterLoop = new Tone.Loop(playBgmStep, '16n');
             const seSynths = {
                 click: new Tone.PluckSynth({ volume: -5, attackNoise: 0.5, dampening: 4000, resonance: 0.8 }).connect(mainVol),
                 sequence: new Tone.Synth({ volume: -10, oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).connect(mainVol),
@@ -941,6 +943,7 @@
                             seSynths.win.triggerAttackRelease(['E4', 'G4', 'C5', 'E5'], '2n', now + 0.2);
                             break;
                         case 'gameOver': seSynths.gameOver.triggerAttackRelease(['A3', 'C#3', 'E2'], '1n', now); break;
+                        default: break;
                     }
                 } catch (e) { console.error("SE再生エラー:", e); }
             }
@@ -1030,7 +1033,9 @@
                 skillGauge = 0;
                 initParticles();
 
-                skillBarContainer.querySelectorAll('.skill-divider').forEach(d => d.remove());
+                for (const d of skillBarContainer.querySelectorAll('.skill-divider')) {
+                    d.remove();
+                }
                 for (let i = 1; i < MAX_SKILL_LEVEL; i++) {
                     const divider = document.createElement('div');
                     divider.className = 'skill-divider';
@@ -1083,12 +1088,12 @@
                 const skillReady = currentSkillLevel >= 1;
                 skillBarContainer.classList.toggle('skill-ready', skillReady);
                 
-                if (!isPlayerTurn) {
-                    skillButton.classList.add('disabled');
-                    skillButton.disabled = true;
-                } else {
+                if (isPlayerTurn) {
                     skillButton.classList.toggle('disabled', !skillReady);
                     skillButton.disabled = !skillReady;
+                } else {
+                    skillButton.classList.add('disabled');
+                    skillButton.disabled = true;
                 }
             }
             
@@ -1162,7 +1167,7 @@
                 inputFeedback.textContent = (type === 'success') ? 'OK!' : 'MISS!';
                 inputFeedback.className = type;
                 inputFeedback.classList.remove('show');
-                void inputFeedback.offsetWidth;
+                inputFeedback.getBoundingClientRect();
                 inputFeedback.classList.add('show');
                 feedbackTimeout = setTimeout(() => {
                     inputFeedback.classList.remove('show');
@@ -1174,7 +1179,7 @@
                 inputFeedback.textContent = 'DANGER!';
                 inputFeedback.className = 'danger';
                 inputFeedback.classList.remove('show');
-                void inputFeedback.offsetWidth;
+                inputFeedback.getBoundingClientRect();
                 inputFeedback.classList.add('show');
                 feedbackTimeout = setTimeout(() => {
                     inputFeedback.classList.remove('show');
@@ -1230,7 +1235,7 @@
                 
                 updateInputIndicator();
 
-                currentSequence.forEach((element, index) => {
+                for (let index = 0; index < currentSequence.length; index++) {
                     setTimeout(() => {
                         const icon = sequenceDisplay.children[index];
                         if (icon) {
@@ -1238,7 +1243,7 @@
                             playSE('sequence');
                         }
                     }, (index + 1) * 600);
-                });
+                }
                 
                 setTimeout(playerTurn, (currentSequenceLength + 1) * 600);
             }
@@ -1246,17 +1251,17 @@
             function playerTurn() {
                 isPlayerTurn = true;
                 setControlsEnabled(true); 
-                Array.from(sequenceDisplay.children).forEach(icon => {
+                for (const icon of Array.from(sequenceDisplay.children)) {
                     icon.classList.remove('visible');
-                });
+                }
                 updateInputIndicator();
             }
 
             function setControlsEnabled(enabled) {
-                controlButtons.forEach(button => {
+                for (const button of controlButtons) {
                     button.disabled = !enabled;
                     button.classList.toggle('disabled', !enabled);
-                });
+                }
                 const currentSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
                 const skillReady = currentSkillLevel >= 1;
                 skillButton.disabled = !(enabled && skillReady);
@@ -1281,9 +1286,10 @@
                 }
             }
 
-            async function handlePlayerInput(e) {
+            function handlePlayerInput(e) {
                 try {
-                    if (!isAudioReady || !isPlayerTurn) return;
+                    const canAct = isAudioReady && isPlayerTurn;
+                    if (!canAct) return;
                     const selectedElement = this.dataset.element; 
                     if (!selectedElement) return;
 
@@ -1338,75 +1344,85 @@
                 }, 400);
             }
             
+            function calculateAffinityDamage() {
+                let affinityDamage = 0;
+                for (const element of playerInputSequence) {
+                    const affinity = AFFINITY[element];
+                    if (affinity.strong === enemyElement) affinityDamage += AFFINITY_BONUS;
+                    else if (affinity.weak === enemyElement) affinityDamage += AFFINITY_PENALTY;
+                }
+                return affinityDamage;
+            }
+
+            function applyPlayerAttackSuccess(oldSkillLevel) {
+                successfulAttacksInARow++;
+                skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_SUCCESS);
+                const baseDamage = BASE_PLAYER_ATTACK + (currentStage * 2);
+                const affinityDamage = calculateAffinityDamage();
+
+                const didCritical = successfulAttacksInARow > 0 && successfulAttacksInARow % 3 === 0;
+                if (didCritical) {
+                    skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_CRITICAL);
+                }
+                const multiplier = didCritical ? CRITICAL_HIT_MULTIPLIER : 1;
+                const totalDamage = Math.max(1, Math.floor((baseDamage + affinityDamage) * multiplier));
+
+                showDamagePopup(totalDamage, 'enemy', didCritical);
+
+                if (didCritical) {
+                    playSE('critical');
+                    playVFX('flash-white');
+                    playVFX('shake-heavy');
+                } else {
+                    playSE('success');
+                    playVFX('shake-light');
+                }
+                enemyHp = Math.max(0, enemyHp - totalDamage);
+                playVFX('hit-flash', enemyHpBarContainer);
+                playVFX('enemy-hit');
+                updateHealthBars();
+
+                const newSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
+                if (newSkillLevel > oldSkillLevel) playSE('skillUp');
+
+                updateSkillBar();
+                setTimeout(() => {
+                    if (enemyHp <= 0) winStage();
+                    else enemyTurn();
+                }, 1000);
+            }
+
+            function applyEnemyCounterAttack() {
+                playSE('failure');
+                successfulAttacksInARow = 0;
+                playVFX('flash-red');
+                playVFX('shake-heavy');
+
+                let damage = BASE_ENEMY_ATTACK + Math.floor(currentStage * 1.5);
+                if (isDangerMode) damage *= DANGER_MODE_MULTIPLIER;
+                damage = Math.floor(damage);
+
+                showDamagePopup(damage, 'player');
+
+                playerHp = Math.max(0, playerHp - damage);
+                playVFX('hit-flash', playerHpBarContainer);
+                updateHealthBars();
+
+                setTimeout(() => {
+                    if (playerHp <= 0) gameOver();
+                    else enemyTurn();
+                }, 1000);
+            }
+
             function checkSequence() {
-                let isCorrect = playerInputSequence.length === currentSequence.length &&
+                const isCorrect = playerInputSequence.length === currentSequence.length &&
                                 playerInputSequence.every((el, i) => el === currentSequence[i]);
-                let didCritical = false;
                 const oldSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
 
                 if (isCorrect) {
-                    successfulAttacksInARow++;
-                    skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_SUCCESS);
-                    let baseDamage = BASE_PLAYER_ATTACK + (currentStage * 2);
-                    let affinityDamage = 0;
-
-                    playerInputSequence.forEach(element => {
-                        const affinity = AFFINITY[element];
-                        if (affinity.strong === enemyElement) affinityDamage += AFFINITY_BONUS;
-                        else if (affinity.weak === enemyElement) affinityDamage += AFFINITY_PENALTY;
-                    });
-
-                    if (successfulAttacksInARow > 0 && successfulAttacksInARow % 3 === 0) {
-                        didCritical = true;
-                        skillGauge = Math.min(SKILL_GAUGE_MAX_TOTAL, skillGauge + SKILL_GAIN_CRITICAL);
-                    }
-                    let totalDamage = baseDamage + affinityDamage;
-                    if (didCritical) totalDamage *= CRITICAL_HIT_MULTIPLIER;
-                    totalDamage = Math.max(1, Math.floor(totalDamage));
-
-                    showDamagePopup(totalDamage, 'enemy', didCritical);
-
-                    if (didCritical) {
-                        playSE('critical');
-                        playVFX('flash-white');
-                        playVFX('shake-heavy');
-                    } else {
-                        playSE('success');
-                        playVFX('shake-light');
-                    }
-                    enemyHp = Math.max(0, enemyHp - totalDamage);
-                    playVFX('hit-flash', enemyHpBarContainer);
-                    playVFX('enemy-hit');
-                    updateHealthBars();
-                    
-                    const newSkillLevel = Math.floor(skillGauge / SKILL_GAUGE_MAX_PER_LEVEL);
-                    if (newSkillLevel > oldSkillLevel) playSE('skillUp');
-                    
-                    updateSkillBar();
-                    setTimeout(() => {
-                        if (enemyHp <= 0) winStage();
-                        else enemyTurn();
-                    }, 1000);
+                    applyPlayerAttackSuccess(oldSkillLevel);
                 } else {
-                    playSE('failure');
-                    successfulAttacksInARow = 0;
-                    playVFX('flash-red');
-                    playVFX('shake-heavy');
-                    
-                    let damage = BASE_ENEMY_ATTACK + Math.floor(currentStage * 1.5);
-                    if (isDangerMode) damage *= DANGER_MODE_MULTIPLIER;
-                    damage = Math.floor(damage); 
-
-                    showDamagePopup(damage, 'player');
-                    
-                    playerHp = Math.max(0, playerHp - damage);
-                    playVFX('hit-flash', playerHpBarContainer);
-                    updateHealthBars();
-                    
-                    setTimeout(() => {
-                        if (playerHp <= 0) gameOver();
-                        else enemyTurn();
-                    }, 1000);
+                    applyEnemyCounterAttack();
                 }
                 updateStats();
                 isDangerMode = false;
@@ -1459,9 +1475,9 @@
             }
 
             // === 6. イベントリスナーの設定 ===
-            controlButtons.forEach(button => {
+            for (const button of controlButtons) {
                 button.addEventListener('click', handlePlayerInput);
-            });
+            }
             skillButton.addEventListener('click', useSkill);
             
             startButton.onclick = async () => {
@@ -1494,10 +1510,8 @@
                     if (Tone.Transport.state === "started") {
                         Tone.Transport.pause(); // BGMを一時停止
                     }
-                } else {
-                    if (isGameActive && Tone.Transport.state === "paused") {
-                        Tone.Transport.start(); // BGMを再開
-                    }
+                } else if (isGameActive && Tone.Transport.state === "paused") {
+                    Tone.Transport.start(); // BGMを再開
                 }
             }
             document.addEventListener('visibilitychange', handleVisibilityChange);

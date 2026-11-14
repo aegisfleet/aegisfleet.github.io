@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Triple Triad: Chain of Fate</title>
     <link rel="icon" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,7 +72,6 @@
         body {
             font-family: 'Rajdhani', 'Noto Sans JP', sans-serif;
             touch-action: manipulation;
-            background-color: #0f172a;
             color: white;
             width: 100%;
             height: 100%;
@@ -80,7 +79,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%) #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -595,7 +594,7 @@
                     <li class="flex items-start"><span class="font-bold text-yellow-400 w-16 shrink-0">UNIQUE:</span><span>全てのカードがユニーク（1枚のみ）です。</span></li>
                 </ul>
             </div>
-            <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 rounded-lg text-white font-bold text-xl shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all transform hover:scale-105 active:scale-95">GAME START</button>
+            <button type="button" id="start-btn" class="w-full py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 rounded-lg text-white font-bold text-xl shadow-[0_0_20px_rgba(234,179,8,0.3)] transition-all transform hover:scale-105 active:scale-95">GAME START</button>
         </div>
 
         <!-- Area 1: Player 2 (Top) - 固定サイズ -->
@@ -603,7 +602,7 @@
             <div id="turn-p2" class="glass-panel flex justify-between items-center p-3 rounded-lg mb-2 transition-all duration-300">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-red-900 flex items-center justify-center border border-red-500 shadow-lg">
-                        <svg class="w-5 h-5 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                        <svg aria-hidden="true" class="w-5 h-5 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                     </div>
                     <div class="flex flex-col leading-none">
                         <span class="font-bold text-red-200 tracking-wider">CPU</span>
@@ -626,7 +625,7 @@
             <div id="turn-p1" class="glass-panel flex justify-between items-center p-3 rounded-lg transition-all duration-300">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center border border-blue-500 shadow-lg">
-                        <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <svg aria-hidden="true" class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </div>
                     <div class="flex flex-col leading-none">
                         <span class="font-bold text-blue-200 tracking-wider">YOU</span>
@@ -639,7 +638,7 @@
     </div>
 
     <!-- Result Modal -->
-    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" style="position: fixed; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;">
+    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" style="position: fixed; width: 100vw; height: 100dvh; overflow: hidden;">
         <div class="glass-panel w-full max-w-xs p-8 rounded-2xl text-center border-t border-white/20">
             <h2 id="result-title" class="text-4xl font-black mb-8 text-white tracking-wider drop-shadow-md">VICTORY</h2>
             <div class="flex justify-center items-end gap-8 mb-8">
@@ -648,7 +647,7 @@
                 <div class="text-center"><p class="text-xs text-red-400 font-bold mb-1">CPU</p><p id="final-score-p2" class="text-6xl font-mono font-bold text-white">3</p></div>
             </div>
             <div id="streak-container" class="min-h-[2rem] mb-6 flex flex-col items-center justify-center gap-1"></div>
-            <button id="restart-btn" class="w-full py-3 bg-white text-slate-900 font-bold rounded hover:bg-slate-200 transition">REMATCH</button>
+            <button type="button" id="restart-btn" class="w-full py-3 bg-white text-slate-900 font-bold rounded hover:bg-slate-200 transition">REMATCH</button>
         </div>
     </div>
 
@@ -779,11 +778,11 @@
             return { ...c, rank, sum };
         });
 
-        window.gameState = {
-            board: Array(9).fill(null),
+        globalThis.gameState = {
+            board: new Array(9).fill(null),
             p1Hand: [], p2Hand: [], turn: 1, isPlayerTurn: false, selectedCard: null, isGameOver: false,
-            streak: parseInt(localStorage.getItem('tt_streak') || '0'),
-            maxStreak: parseInt(localStorage.getItem('tt_maxStreak') || '0'),
+            streak: Number.parseInt(localStorage.getItem('tt_streak') || '0', 10),
+            maxStreak: Number.parseInt(localStorage.getItem('tt_maxStreak') || '0', 10),
             usedCards: new Set() // To track unique cards in current game
         };
 
@@ -805,9 +804,9 @@
 
         // --- AUDIO ENGINE (Adjusted Volumes) ---
         let isAudioStarted = false;
-        let sfx = { place: null, flip: null, alert: null, win: null, lose: null };
-        let music = { bass: null, melody: null, chords: null, drums: null };
-        let effects = { reverb: null, delay: null };
+        const sfx = { place: null, flip: null, alert: null, win: null, lose: null };
+        const music = { bass: null, melody: null, chords: null, drums: null };
+        const effects = { reverb: null, delay: null };
         let parts = [];
         let isBgmPlaying = false;
         // Reduced BGM volumes slightly
@@ -846,7 +845,7 @@
             if(music.chords) music.chords.volume.value = VOL.CHORDS;
             if(music.bass) music.bass.volume.value = VOL.BASS;
             if(music.drums) music.drums.volume.value = VOL.DRUMS;
-            parts.forEach(p => p.start(0));
+            for (const p of parts) { p.start(0); }
             Tone.Transport.start();
             isBgmPlaying = true;
         }
@@ -862,7 +861,7 @@
             setTimeout(() => {
                 Tone.Transport.stop();
                 Tone.Transport.cancel(0);
-                parts.forEach(p => { p.stop(); p.cancel(); });
+                for (const p of parts) { p.stop(); p.cancel(); }
                 if (music.melody) music.melody.releaseAll();
             }, fadeTime * 1000); 
         }
@@ -870,15 +869,27 @@
         function playSound(type) {
             if (!isAudioStarted) return;
             const now = Tone.now();
-            switch(type) {
+            switch (type) {
                 case 'place': 
                     // 優しい低音でカード配置音
                     sfx.place.triggerAttackRelease("C2", "8n", now); 
                     break;
                 case 'flip': sfx.flip.triggerAttackRelease(["C5", "E5"], "16n", now); sfx.flip.triggerAttackRelease(["G5", "B5"], "16n", now + 0.05); break;
                 case 'alert': sfx.alert.triggerAttackRelease(["A5", "C6", "E6"], "16n", now); break;
-                case 'win': ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"].forEach((n, i) => sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1)); break;
-                case 'lose': ["E4", "D4", "C4", "B3", "A3", "G3"].forEach((n, i) => sfx.lose.triggerAttackRelease(n, "8n", now + i * 0.12)); break;
+                case 'win': {
+                    for (const [i, n] of ["C4", "E4", "G4", "C5", "E5", "G5", "C6", "E6"].entries()) {
+                        sfx.win.triggerAttackRelease(n, "8n", now + i * 0.1);
+                    }
+                    break;
+                }
+                case 'lose': {
+                    for (const [i, n] of ["E4", "D4", "C4", "B3", "A3", "G3"].entries()) {
+                        sfx.lose.triggerAttackRelease(n, "8n", now + i * 0.12);
+                    }
+                    break;
+                }
+                default:
+                    break;
             }
         }
 
@@ -932,39 +943,48 @@
             }
         }
 
-        function updateView() {
-            gameState.board.forEach((card, idx) => {
-                const cell = el.board.children[idx];
-                const currentCardWrapper = cell.querySelector('.card-wrapper');
-                
-                if(card) cell.classList.remove('cell-hint', 'cell-empty-hover');
-                else if(gameState.isPlayerTurn) cell.classList.add('cell-empty-hover');
-                else cell.classList.remove('cell-empty-hover');
+        function updateBoardCell(card, idx) {
+            const cell = el.board.children[idx];
+            const currentCardWrapper = cell.querySelector('.card-wrapper');
 
-                if (card && !currentCardWrapper) {
-                    cell.innerHTML = createCardHTML(card, false);
-                } else if (card && currentCardWrapper) {
-                    const inner = currentCardWrapper.querySelector('.card-inner');
-                    const isP1 = inner.classList.contains('owner-p1');
-                    const isP2 = inner.classList.contains('owner-p2');
-                    
-                    if (card.owner === 1 && !isP1) {
-                        inner.classList.remove('owner-p2'); inner.classList.add('owner-p1');
-                    } else if (card.owner === 2 && !isP2) {
-                        inner.classList.remove('owner-p1'); inner.classList.add('owner-p2');
-                    }
-                } else if (!card && currentCardWrapper) {
+            if (!card) {
+                cell.classList.toggle('cell-empty-hover', gameState.isPlayerTurn);
+                if (currentCardWrapper) {
                     cell.innerHTML = '';
                 }
-            });
+                return;
+            }
+
+            cell.classList.remove('cell-hint', 'cell-empty-hover');
+            if (!currentCardWrapper) {
+                cell.innerHTML = createCardHTML(card, false);
+                return;
+            }
+
+            const inner = currentCardWrapper.querySelector('.card-inner');
+            const isP1 = inner.classList.contains('owner-p1');
+            const isP2 = inner.classList.contains('owner-p2');
+            if (card.owner === 1 && !isP1) {
+                inner.classList.remove('owner-p2');
+                inner.classList.add('owner-p1');
+            } else if (card.owner === 2 && !isP2) {
+                inner.classList.remove('owner-p1');
+                inner.classList.add('owner-p2');
+            }
+        }
+
+        function updateView() {
+            for (const [idx, card] of gameState.board.entries()) {
+                updateBoardCell(card, idx);
+            }
 
             updateHandUI(el.h1, gameState.p1Hand, 1);
             updateHandUI(el.h2, gameState.p2Hand, 2);
 
             const p1Score = gameState.board.filter(c => c && c.owner === 1).length;
             const p2Score = gameState.board.filter(c => c && c.owner === 2).length;
-            el.s1.innerText = p1Score;
-            el.s2.innerText = p2Score;
+            el.s1.textContent = p1Score;
+            el.s2.textContent = p2Score;
 
             if (gameState.turn === 1) { el.t1.classList.add('turn-active'); el.t2.classList.remove('turn-active-p2'); }
             else { el.t2.classList.add('turn-active-p2'); el.t1.classList.remove('turn-active'); }
@@ -972,19 +992,18 @@
 
         function updateHandUI(container, handData, owner) {
             const existingWrappers = Array.from(container.children);
-            if (existingWrappers.length !== handData.length) {
+            if (existingWrappers.length === handData.length) {
+                for (const [i, wrap] of existingWrappers.entries()) {
+                    wrap.dataset.idx = i;
+                    const isActive = owner === 1 && gameState.selectedCard?.index === i;
+                    wrap.classList.toggle('selected-card', isActive);
+                }
+            } else {
                 container.innerHTML = handData.map((c, i) => {
                     const isActive = owner === 1 && gameState.selectedCard?.index === i;
                     // Changed: Removed hard pixel max-width, used % and generous max-width
                     return `<div class="hand-card ${isActive ? 'selected-card' : ''}" data-idx="${i}">${createCardHTML(c, true)}</div>`;
                 }).join('');
-            } else {
-                existingWrappers.forEach((wrap, i) => {
-                    wrap.dataset.idx = i; 
-                    const isActive = owner === 1 && gameState.selectedCard?.index === i;
-                    if (isActive) wrap.classList.add('selected-card');
-                    else wrap.classList.remove('selected-card');
-                });
             }
         }
 
@@ -999,11 +1018,11 @@
         }
 
         function showNotice(text) {
-            el.ruleText.innerText = text;
+            el.ruleText.textContent = text;
             el.ruleNotice.classList.remove('show');
             
             // Force reflow
-            void el.ruleNotice.offsetWidth;
+            el.ruleNotice.getBoundingClientRect();
             
             requestAnimationFrame(() => {
                 el.ruleNotice.classList.add('show');
@@ -1017,13 +1036,13 @@
         }
 
         async function flashCells(indices) {
-            indices.forEach(idx => {
+            for (const idx of indices) {
                 if(idx >= 0 && idx < 9) el.board.children[idx]?.querySelector('.card-inner')?.classList.add('trigger-flash');
-            });
+            }
             await new Promise(r => setTimeout(r, 600));
-            indices.forEach(idx => {
+            for (const idx of indices) {
                 if(idx >= 0 && idx < 9) el.board.children[idx]?.querySelector('.card-inner')?.classList.remove('trigger-flash');
-            });
+            }
         }
 
         async function flipCard(idx, newOwner) {
@@ -1041,236 +1060,249 @@
             updateView();
         }
 
-        async function playTurn(boardIdx, handIdx, isPlayer) {
-            // Clear all hints when a card is placed
-            document.querySelectorAll('.cell-hint').forEach(c => c.classList.remove('cell-hint'));
-            
-            let card;
-            if (isPlayer) {
-                card = gameState.p1Hand.splice(handIdx, 1)[0];
-                gameState.selectedCard = null;
-            } else {
-                card = gameState.p2Hand.splice(handIdx, 1)[0];
+        function markSpecialMatches(boardIdx, card, matches, state) {
+            state.involvedIndices.add(boardIdx);
+            for (const m of matches) {
+                state.involvedIndices.add(m.idx);
+                if (m.card.owner !== card.owner) {
+                    state.flips.add(m.idx);
+                    state.specialFlips.add(m.idx);
+                }
             }
-            card.owner = isPlayer ? 1 : 2;
-            gameState.board[boardIdx] = card;
-            
-            updateView();
+        }
 
+        function findPlusGroups(targets, card) {
+            const sums = {};
+            for (const t of targets) {
+                const s = card.stats[t.side] + t.card.stats[t.opp];
+                sums[s] ??= [];
+                sums[s].push(t);
+            }
+            return Object.values(sums).filter(group => group.length >= 2);
+        }
+
+        function evaluatePlacement(boardIdx, card) {
             const targets = getAdjacents(boardIdx).map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
-            let flips = new Set(), specialFlips = new Set(), involvedIndices = new Set();
+            const state = { flips: new Set(), specialFlips: new Set(), involvedIndices: new Set() };
 
             const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
             if (sameMatches.length >= 2) {
                 showNotice('SAME!');
-                involvedIndices.add(boardIdx);
-                sameMatches.forEach(m => {
-                    involvedIndices.add(m.idx);
-                    if (m.card.owner !== card.owner) { flips.add(m.idx); specialFlips.add(m.idx); }
-                });
+                markSpecialMatches(boardIdx, card, sameMatches, state);
             }
 
-            const sums = {};
-            targets.forEach(t => {
-                const s = card.stats[t.side] + t.card.stats[t.opp];
-                if (!sums[s]) sums[s] = [];
-                sums[s].push(t);
-            });
-            let isPlus = false;
-            for (const s in sums) {
-                if (sums[s].length >= 2) {
-                    isPlus = true;
-                    sums[s].forEach(m => {
-                        involvedIndices.add(boardIdx); involvedIndices.add(m.idx);
-                        if (m.card.owner !== card.owner) { flips.add(m.idx); specialFlips.add(m.idx); }
-                    });
+            const plusGroups = findPlusGroups(targets, card);
+            if (plusGroups.length > 0) {
+                for (const group of plusGroups) {
+                    markSpecialMatches(boardIdx, card, group, state);
+                }
+                setTimeout(() => showNotice('PLUS!'), 800);
+            }
+
+            for (const t of targets) {
+                if (t.card.owner !== card.owner && card.stats[t.side] > t.card.stats[t.opp]) {
+                    state.flips.add(t.idx);
                 }
             }
-            if (isPlus) setTimeout(() => showNotice('PLUS!'), 800);
+            return state;
+        }
 
-            targets.forEach(t => {
-                if (t.card.owner !== card.owner && card.stats[t.side] > t.card.stats[t.opp]) flips.add(t.idx);
-            });
+        async function propagateComboFrom(cIdx, owner, comboQueue) {
+            const cCard = gameState.board[cIdx];
+            let comboHappened = false;
+            for (const adj of getAdjacents(cIdx)) {
+                const target = gameState.board[adj.idx];
+                if (target && target.owner !== owner && cCard.stats[adj.side] > target.stats[adj.opp]) {
+                    if (!comboHappened) {
+                        showNotice('COMBO!');
+                        comboHappened = true;
+                    }
+                    await flipCard(adj.idx, owner);
+                    comboQueue.push(adj.idx);
+                }
+            }
+            if (comboHappened) await new Promise(r => setTimeout(r, 500));
+        }
 
+        async function processCombos(specialFlips, owner) {
+            const comboQueue = [...specialFlips];
+            if (comboQueue.length === 0) return;
+            await new Promise(r => setTimeout(r, 400));
+            while (comboQueue.length > 0) {
+                await propagateComboFrom(comboQueue.shift(), owner, comboQueue);
+            }
+        }
+
+        function advanceTurn() {
+            if (gameState.board.every(c => c !== null)) {
+                endGame();
+                return;
+            }
+            gameState.turn = gameState.turn === 1 ? 2 : 1;
+            gameState.isPlayerTurn = gameState.turn === 1;
+            updateView();
+            if (!gameState.isPlayerTurn) setTimeout(cpuMove, 1000);
+        }
+
+        async function playTurn(boardIdx, handIdx, isPlayer) {
+            // Clear all hints when a card is placed
+            for (const c of document.querySelectorAll('.cell-hint')) {
+                c.classList.remove('cell-hint');
+            }
+
+            const hand = isPlayer ? gameState.p1Hand : gameState.p2Hand;
+            const card = hand.splice(handIdx, 1)[0];
+            if (isPlayer) {
+                gameState.selectedCard = null;
+            }
+            card.owner = isPlayer ? 1 : 2;
+            gameState.board[boardIdx] = card;
+            updateView();
+
+            const { flips, specialFlips, involvedIndices } = evaluatePlacement(boardIdx, card);
             if (involvedIndices.size > 0) await flashCells([...involvedIndices]);
 
             const queue = [...flips];
-            let comboQueue = [...specialFlips];
-            
             // 裏返りがない場合のみ配置音を鳴らす
             if (queue.length === 0) {
                 playSound('place');
             }
-            
             for (const idx of queue) await flipCard(idx, card.owner);
 
-            if (comboQueue.length > 0) {
-                await new Promise(r => setTimeout(r, 400));
-                while (comboQueue.length > 0) {
-                    const cIdx = comboQueue.shift();
-                    const cCard = gameState.board[cIdx];
-                    const cAdjs = getAdjacents(cIdx);
-                    let comboHappened = false;
-                    
-                    for (const adj of cAdjs) {
-                        const target = gameState.board[adj.idx];
-                        if (target && target.owner !== card.owner) {
-                            if (cCard.stats[adj.side] > target.stats[adj.opp]) {
-                                if (!comboHappened) { showNotice('COMBO!'); comboHappened = true; }
-                                await flipCard(adj.idx, card.owner); 
-                                comboQueue.push(adj.idx);
-                            }
-                        }
-                    }
-                    if(comboHappened) await new Promise(r => setTimeout(r, 500));
-                }
-            }
+            await processCombos(specialFlips, card.owner);
+            advanceTurn();
+        }
 
-            if (gameState.board.every(c => c !== null)) endGame();
-            else {
-                gameState.turn = gameState.turn === 1 ? 2 : 1;
-                gameState.isPlayerTurn = gameState.turn === 1;
-                updateView(); 
-                if (!gameState.isPlayerTurn) setTimeout(cpuMove, 1000);
+        async function animateCpuThinking() {
+            if (gameState.p2Hand.length <= 1) return;
+            const thinkCount = Math.min(2, gameState.p2Hand.length);
+            const thinkIndices = [];
+            while (thinkIndices.length < thinkCount) {
+                const idx = Math.floor(Math.random() * gameState.p2Hand.length);
+                if (!thinkIndices.includes(idx)) thinkIndices.push(idx);
+            }
+            for (const idx of thinkIndices) {
+                const handEl = el.h2.children[idx];
+                if (!handEl) continue;
+                handEl.classList.add('cpu-thinking');
+                await new Promise(r => setTimeout(r, 250));
+                handEl.classList.remove('cpu-thinking');
+                await new Promise(r => setTimeout(r, 100));
             }
         }
 
-        async function cpuMove() {
-            if (window.gameState.isGameOver) return;
-            const avail = window.gameState.board.map((c, i) => c === null ? i : -1).filter(i => i !== -1);
-            
-            // Phase 1: 複数のカードを検討する演出（2枚程度）
-            if(gameState.p2Hand.length > 1) {
-                const thinkCount = Math.min(2, gameState.p2Hand.length);
-                const thinkIndices = [];
-                
-                // ランダムに2枚のカードを選ぶ
-                while(thinkIndices.length < thinkCount) {
-                    const idx = Math.floor(Math.random() * gameState.p2Hand.length);
-                    if(!thinkIndices.includes(idx)) thinkIndices.push(idx);
-                }
-                
-                // 各カードを順番にハイライト（短縮）
-                for(const idx of thinkIndices) {
-                    const handEl = el.h2.children[idx];
-                    if(handEl) {
-                        handEl.classList.add('cpu-thinking');
-                        await new Promise(r => setTimeout(r, 250));
-                        handEl.classList.remove('cpu-thinking');
-                        await new Promise(r => setTimeout(r, 100));
-                    }
-                }
+        function scoreCpuCandidate(card, cIdx) {
+            let score = 0;
+            let hasSpecial = false;
+            const adjs = getAdjacents(cIdx);
+            const targets = adjs.map(a => ({ ...a, card: globalThis.gameState.board[a.idx] })).filter(t => t.card);
+
+            const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
+            if (sameMatches.length >= 2) {
+                hasSpecial = true;
+                score += 10;
             }
-            
-            // Phase 2: 最適な手を計算（SAME/PLUS判定も含む）
+
+            if (findPlusGroups(targets, card).length > 0) {
+                hasSpecial = true;
+                score += 10;
+            }
+
+            for (const a of adjs) {
+                const t = globalThis.gameState.board[a.idx];
+                if (t && t.owner === 1 && card.stats[a.side] > t.stats[a.opp]) score++;
+            }
+            return { score, hasSpecial };
+        }
+
+        function evaluateCpuMove(avail) {
             let best = { handIdx: 0, cellIdx: avail[0], score: -1, hasSpecial: false };
-            gameState.p2Hand.forEach((card, hIdx) => {
-                avail.forEach(cIdx => {
-                    let score = 0;
-                    let hasSpecial = false;
-                    const adjs = getAdjacents(cIdx);
-                    const targets = adjs.map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
-                    
-                    // SAME判定
-                    const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
-                    if (sameMatches.length >= 2) {
-                        hasSpecial = true;
-                        score += 10;
+            for (const [hIdx, card] of gameState.p2Hand.entries()) {
+                for (const cIdx of avail) {
+                    const res = scoreCpuCandidate(card, cIdx);
+                    if (res.score > best.score) {
+                        best = { handIdx: hIdx, cellIdx: cIdx, score: res.score, hasSpecial: res.hasSpecial };
                     }
-                    
-                    // PLUS判定
-                    const sums = {};
-                    targets.forEach(t => {
-                        const s = card.stats[t.side] + t.card.stats[t.opp];
-                        if (!sums[s]) sums[s] = [];
-                        sums[s].push(t);
-                    });
-                    for (const s in sums) {
-                        if (sums[s].length >= 2) {
-                            hasSpecial = true;
-                            score += 10;
-                            break;
-                        }
-                    }
-                    
-                    // 通常の取れる枚数
-                    adjs.forEach(a => {
-                        const t = gameState.board[a.idx];
-                        if(t && t.owner === 1 && card.stats[a.side] > t.stats[a.opp]) score++;
-                    });
-                    
-                    if(score > best.score) best = { handIdx: hIdx, cellIdx: cIdx, score: score, hasSpecial: hasSpecial };
-                });
-            });
-            if (best.score <= 0) { 
-                 best.handIdx = Math.floor(Math.random() * gameState.p2Hand.length);
-                 best.cellIdx = avail[Math.floor(Math.random() * avail.length)];
+                }
             }
-            
+            if (best.score <= 0) {
+                best.handIdx = Math.floor(Math.random() * gameState.p2Hand.length);
+                best.cellIdx = avail[Math.floor(Math.random() * avail.length)];
+            }
+            return best;
+        }
+
+        async function cpuMove() {
+            if (globalThis.gameState.isGameOver) return;
+            const avail = globalThis.gameState.board.map((c, i) => (c === null ? i : -1)).filter(i => i !== -1);
+
+            await animateCpuThinking();
+            const best = evaluateCpuMove(avail);
+
             // Phase 3: 選んだカードをハイライト
             const finalHandEl = el.h2.children[best.handIdx];
-            if(finalHandEl) {
+            if (finalHandEl) {
                 finalHandEl.classList.add('cpu-thinking');
                 await new Promise(r => setTimeout(r, 300));
             }
-            
+
             // Phase 4: SAME/PLUSが狙える場合のみセルをハイライト
-            if(best.hasSpecial) {
+            if (best.hasSpecial) {
                 const cell = el.board.children[best.cellIdx];
-                if(cell) {
+                if (cell) {
                     cell.classList.add('cell-hint');
                     await new Promise(r => setTimeout(r, 400));
                 }
             } else {
                 await new Promise(r => setTimeout(r, 200));
             }
-            
+
             // カードのハイライトを解除
-            if(finalHandEl) finalHandEl.classList.remove('cpu-thinking');
-            
+            if (finalHandEl) finalHandEl.classList.remove('cpu-thinking');
+
             playTurn(best.cellIdx, best.handIdx, false);
         }
 
         function endGame() {
-            window.gameState.isGameOver = true;
+            globalThis.gameState.isGameOver = true;
             stopBGM(); 
-            const p1 = window.gameState.board.filter(c => c.owner === 1).length;
-            const p2 = window.gameState.board.filter(c => c.owner === 2).length;
+            const p1 = globalThis.gameState.board.filter(c => c.owner === 1).length;
+            const p2 = globalThis.gameState.board.filter(c => c.owner === 2).length;
             if (p1 > p2) {
-                window.gameState.streak++;
-                if(window.gameState.streak > window.gameState.maxStreak) {
-                    window.gameState.maxStreak = window.gameState.streak;
-                    localStorage.setItem('tt_maxStreak', window.gameState.maxStreak);
+                globalThis.gameState.streak++;
+                if(globalThis.gameState.streak > globalThis.gameState.maxStreak) {
+                    globalThis.gameState.maxStreak = globalThis.gameState.streak;
+                    localStorage.setItem('tt_maxStreak', globalThis.gameState.maxStreak);
                 }
             } else {
-                window.gameState.streak = 0;
+                globalThis.gameState.streak = 0;
             }
-            localStorage.setItem('tt_streak', window.gameState.streak);
+            localStorage.setItem('tt_streak', globalThis.gameState.streak);
 
             setTimeout(() => {
-                el.resS1.innerText = p1; el.resS2.innerText = p2;
+                el.resS1.textContent = p1; el.resS2.textContent = p2;
                 el.modal.classList.remove('hidden');
                 // Prevent body scroll on mobile
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.width = '100%';
                 let streakHTML = '';
-                if(window.gameState.streak > 0) {
-                     streakHTML = `<div class="text-xl font-bold text-yellow-300">WIN STREAK: <span class="text-4xl">${window.gameState.streak}</span></div>`;
-                     if(window.gameState.streak === window.gameState.maxStreak && window.gameState.streak > 1) streakHTML += `<div class="text-xs font-bold text-yellow-100 animate-pulse mt-1">NEW RECORD!</div>`;
-                } else if (window.gameState.maxStreak > 0) streakHTML = `<div class="text-sm font-bold text-slate-400">MAX STREAK: ${window.gameState.maxStreak}</div>`;
+                if(globalThis.gameState.streak > 0) {
+                     streakHTML = `<div class="text-xl font-bold text-yellow-300">WIN STREAK: <span class="text-4xl">${globalThis.gameState.streak}</span></div>`;
+                     if(globalThis.gameState.streak === globalThis.gameState.maxStreak && globalThis.gameState.streak > 1) streakHTML += `<div class="text-xs font-bold text-yellow-100 animate-pulse mt-1">NEW RECORD!</div>`;
+                } else if (globalThis.gameState.maxStreak > 0) streakHTML = `<div class="text-sm font-bold text-slate-400">MAX STREAK: ${globalThis.gameState.maxStreak}</div>`;
                 el.streak.innerHTML = streakHTML;
 
                 if(p1 > p2) {
-                    el.resTitle.innerText = "VICTORY"; 
+                    el.resTitle.textContent = "VICTORY"; 
                     el.resTitle.className = "text-4xl font-black mb-8 text-yellow-400 tracking-wider drop-shadow-md";
                     playSound('win');
                 } else if (p1 < p2) {
-                    el.resTitle.innerText = "DEFEAT"; 
+                    el.resTitle.textContent = "DEFEAT"; 
                     el.resTitle.className = "text-4xl font-black mb-8 text-slate-500 tracking-wider drop-shadow-md";
                     playSound('lose');
                 } else {
-                    el.resTitle.innerText = "DRAW";
+                    el.resTitle.textContent = "DRAW";
                     el.resTitle.className = "text-4xl font-black mb-8 text-slate-300 tracking-wider drop-shadow-md";
                     playSound('lose');
                 }
@@ -1283,7 +1315,7 @@
         function pickCards(sourceArray, count) {
             const picked = [];
             // Filter out already used cards
-            let candidates = sourceArray.filter(c => !gameState.usedCards.has(c.name));
+            const candidates = sourceArray.filter(c => !gameState.usedCards.has(c.name));
             
             for(let i=0; i<count; i++) {
                 if(candidates.length === 0) break;
@@ -1320,7 +1352,7 @@
             // Try to build a hand that is close to targetPower
             // Simple approach: Randomly sample hands until one is within range
             let bestHand = [];
-            let minDiff = Infinity;
+            let minDiff = Number.POSITIVE_INFINITY;
             
             // Attempt 50 times to find a balanced hand
             for(let i=0; i<50; i++) {
@@ -1341,11 +1373,11 @@
             }
             
             // Mark chosen cards as used
-            bestHand.forEach(c => gameState.usedCards.add(c.name));
+            for (const c of bestHand) { gameState.usedCards.add(c.name); }
             return bestHand;
         }
 
-        async function startGame() {
+        function startGame() {
             gameState.usedCards = new Set(); // Reset used cards for new game
 
             // 1. Generate Player Hand (Structured)
@@ -1359,10 +1391,10 @@
             const p2Strength = p2Cards.reduce((a, b) => a + b.sum, 0);
 
             // Update UI
-            el.p1Pwr.innerText = `PWR: ${p1Strength}`;
-            el.p2Pwr.innerText = `PWR: ${p2Strength}`;
+            el.p1Pwr.textContent = `PWR: ${p1Strength}`;
+            el.p2Pwr.textContent = `PWR: ${p2Strength}`;
 
-            gameState.board = Array(9).fill(null);
+            gameState.board = new Array(9).fill(null);
             gameState.isGameOver = false; gameState.selectedCard = null;
             gameState.turn = Math.random() < 0.5 ? 1 : 2; gameState.isPlayerTurn = gameState.turn === 1;
             
@@ -1371,7 +1403,7 @@
             startBGM();
             
             // Show turn overlay with better Android compatibility
-            el.turnText.innerText = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
+            el.turnText.textContent = gameState.isPlayerTurn ? "YOUR TURN" : "CPU TURN";
             el.turnOverlay.style.display = 'flex';
             el.turnOverlay.classList.remove('hidden');
             // プレイヤーターンは下側、CPUターンは上側に表示
@@ -1396,7 +1428,7 @@
         }
 
         el.startBtn.addEventListener('click', async () => { await initAudioEngine(); el.overlay.classList.add('hidden'); startGame(); });
-        el.restartBtn.addEventListener('click', async () => { 
+        el.restartBtn.addEventListener('click', () => { 
             el.modal.classList.add('hidden'); 
             // Restore body scroll
             document.body.style.overflow = '';
@@ -1405,45 +1437,48 @@
             startGame(); 
         });
 
+        function updatePlayerCellHints(card) {
+            for (const c of document.querySelectorAll('.cell-hint')) {
+                c.classList.remove('cell-hint');
+            }
+            for (const [i, boardCard] of gameState.board.entries()) {
+                if (boardCard) continue;
+                const targets = getAdjacents(i)
+                    .map(a => ({ ...a, card: gameState.board[a.idx] }))
+                    .filter(t => t.card);
+
+                const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
+                const same = sameMatches.length >= 2 && sameMatches.some(m => m.card.owner !== 1);
+                const plus = findPlusGroups(targets, card).some(arr => arr.some(m => m.card.owner !== 1));
+
+                if (same || plus) {
+                    el.board.children[i]?.classList.add('cell-hint');
+                }
+            }
+        }
+
         el.h1.addEventListener('click', e => {
-            if(!gameState.isPlayerTurn || gameState.isGameOver) return;
-            const t = e.target.closest('[data-idx]'); if(!t) return;
-            const idx = parseInt(t.dataset.idx);
-            
-            if(gameState.selectedCard?.index === idx) {
+            if (!gameState.isPlayerTurn || gameState.isGameOver) return;
+            const t = e.target.closest('[data-idx]');
+            if (!t) return;
+            const idx = Number.parseInt(t.dataset.idx, 10);
+
+            if (gameState.selectedCard?.index === idx) {
                 gameState.selectedCard = null;
                 updateView();
             } else {
                 gameState.selectedCard = { index: idx };
                 updateView();
-                
-                document.querySelectorAll('.cell-hint').forEach(c => c.classList.remove('cell-hint'));
-                const card = gameState.p1Hand[idx];
-                gameState.board.forEach((c, i) => {
-                    if(!c) {
-                        const adjs = getAdjacents(i);
-                        const targets = adjs.map(a => ({ ...a, card: gameState.board[a.idx] })).filter(t => t.card);
-                        
-                        const sameMatches = targets.filter(t => card.stats[t.side] === t.card.stats[t.opp]);
-                        const same = sameMatches.length >= 2 && sameMatches.some(m => m.card.owner !== 1);
-
-                        const sums = {}; targets.forEach(t => { const s = card.stats[t.side] + t.card.stats[t.opp]; if(!sums[s]) sums[s]=[]; sums[s].push(t); });
-                        const plus = Object.values(sums).some(arr => arr.length >= 2 && arr.some(m => m.card.owner !== 1));
-
-                        if(same || plus) {
-                             const cell = el.board.children[i];
-                             if(cell) cell.classList.add('cell-hint');
-                        }
-                    }
-                });
+                updatePlayerCellHints(gameState.p1Hand[idx]);
             }
         });
 
         el.board.addEventListener('click', e => {
-            if(!gameState.isPlayerTurn || !gameState.selectedCard || gameState.isGameOver) return;
+            const canAct = gameState.isPlayerTurn && gameState.selectedCard && !gameState.isGameOver;
+            if (!canAct) return;
             const c = e.target.closest('.cell');
-            if(!c || gameState.board[c.dataset.idx]) return;
-            playTurn(parseInt(c.dataset.idx), gameState.selectedCard.index, true);
+            if (!c || gameState.board[c.dataset.idx]) return;
+            playTurn(Number.parseInt(c.dataset.idx, 10), gameState.selectedCard.index, true);
         });
 
         document.addEventListener("visibilitychange", () => {

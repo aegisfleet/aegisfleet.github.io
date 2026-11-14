@@ -2,27 +2,31 @@
    aegisfleet portfolio — data-driven renderer
    data/projects.json を読み込み、全セクションを描画する。
    ========================================================================== */
-(() => {
-    "use strict";
+const HTML_ESCAPE_RE = /[&<>"']/g;
+const HTML_ESCAPE_MAP = {
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+};
+const EXTERNAL_URL_RE = /^https?:\/\//;
+const TRAILING_SLASH_RE = /\/$/;
+const BSKY_SUFFIX_RE = /\.bsky\.social$/;
 
+(() => {
     const DATA_URL = "data/projects.json";
     const GH_CACHE_KEY = "aegisfleet:gh-repos:v1";
     const GH_CACHE_TTL = 60 * 60 * 1000; // 1時間
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-    const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    })[c]);
+    const esc = (s = "") => String(s).replace(HTML_ESCAPE_RE, (c) => HTML_ESCAPE_MAP[c]);
 
-    const isExternal = (url) => /^https?:\/\//.test(url);
+    const isExternal = (url) => EXTERNAL_URL_RE.test(url);
     const linkAttrs = (url) => isExternal(url) ? ' target="_blank" rel="noopener"' : "";
     const repoUrl = (gh, repo) => `https://github.com/${gh}/${repo}`;
     const chips = (list = []) => `<div class="chips">${list.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>`;
     const fresh = (repo) => repo ? `<span class="fresh" data-repo="${esc(repo)}"></span>` : "";
-    const prettyUrl = (url) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const prettyUrl = (url) => url.replace(EXTERNAL_URL_RE, "").replace(TRAILING_SLASH_RE, "");
 
     /* ---------------- Hero ---------------- */
     function renderHero(data) {
@@ -55,8 +59,8 @@
         const dur = 1400;
         const tick = (now) => {
             const t = Math.min(1, (now - start) / dur);
-            const e = 1 - Math.pow(1 - t, 3);
-            els.forEach((el) => { el.textContent = Math.round(Number(el.dataset.count) * e); });
+            const e = 1 - (1 - t) ** 3;
+            for (const el of els) { el.textContent = Math.round(Number(el.dataset.count) * e); }
             if (t < 1) requestAnimationFrame(tick);
         };
         setTimeout(() => requestAnimationFrame(tick), 500);
@@ -66,10 +70,10 @@
     function startConsole(data) {
         const box = $("#console");
         const lines = [];
-        data.showcase.forEach((p) => {
+        for (const p of data.showcase) {
             lines.push({ type: "run", repo: p.repo, msg: `${p.pipeline[0]} → ${p.pipeline[1]}` });
-            lines.push({ type: "ok", repo: p.repo, msg: `${p.pipeline[2]} 通過 → ${p.pipeline[p.pipeline.length - 1]}` });
-        });
+            lines.push({ type: "ok", repo: p.repo, msg: `${p.pipeline[2]} 通過 → ${p.pipeline.at(-1)}` });
+        }
         lines.push({ type: "run", repo: `trend-bots ×${data.bots.items.length}`, msg: "トレンド収集 → Gemini で要約" });
         lines.push({ type: "ok", repo: "bluesky", msg: `${data.bots.items.map((b) => b.name).join(" / ")} へ投稿完了` });
 
@@ -137,31 +141,73 @@
             if (i === current) return;
             current = i;
             const p = showcase[i];
-            shots.forEach((img, k) => img.classList.toggle("is-active", k === i));
-            dots.forEach((d, k) => d.classList.toggle("is-active", k === i));
-            steps.forEach((s, k) => s.classList.toggle("is-active", k === i));
+            for (const [k, img] of shots.entries()) { img.classList.toggle("is-active", k === i); }
+            for (const [k, d] of dots.entries()) { d.classList.toggle("is-active", k === i); }
+            for (const [k, s] of steps.entries()) { s.classList.toggle("is-active", k === i); }
             $("#stage-url").textContent = prettyUrl(p.url);
             $("#stage-current").textContent = String(i + 1).padStart(2, "0");
             pipe.innerHTML = pipelineHtml(p.pipeline);
             pipe.classList.remove("is-running");
-            void pipe.offsetWidth; // アニメーションを再始動
+            pipe.getBoundingClientRect(); // アニメーションを再始動
             pipe.classList.add("is-running");
             const mobilePipe = $(".step-media .pipeline", steps[i]);
-            mobilePipe && mobilePipe.classList.add("is-running");
+            mobilePipe?.classList.add("is-running");
         };
 
         const io = new IntersectionObserver((entries) => {
-            entries.forEach((en) => { if (en.isIntersecting) activate(Number(en.target.dataset.step)); });
+            for (const en of entries) { if (en.isIntersecting) activate(Number(en.target.dataset.step)); }
         }, { rootMargin: "-45% 0px -45% 0px" });
-        steps.forEach((s) => io.observe(s));
+        for (const s of steps) { io.observe(s); }
 
-        dots.forEach((d) => d.addEventListener("click", () => {
-            steps[Number(d.dataset.goto)].scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-        }));
+        for (const d of dots) {
+            d.addEventListener("click", () => {
+                steps[Number(d.dataset.goto)].scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+            });
+        }
         activate(0);
     }
 
     /* ---------------- 3. Bento ---------------- */
+    function renderTileLinks(p, githubUser) {
+        return `
+            <div class="tile-links">
+                ${p.url ? `<a class="link-btn primary" href="${esc(p.url)}"${linkAttrs(p.url)}>Open<i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}
+                ${p.repo ? `<a class="link-btn" href="${repoUrl(githubUser, p.repo)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>GitHub</a>` : ""}
+                ${fresh(p.repo)}
+            </div>`;
+    }
+
+    function renderTileMain(p, catLabel, githubUser) {
+        const stack = Array.isArray(p.stack) && p.stack.length > 0
+            ? `<ol class="tile-stack">${p.stack.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`
+            : "";
+        return `
+            <div class="tile-meta">
+                <span class="tile-cat">${esc(catLabel[p.category] || p.category)}</span>
+                ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
+            </div>
+            <h3>${esc(p.name)}</h3>
+            <p class="tile-desc">${esc(p.description)}</p>
+            ${p.point ? `<p class="tile-point">${esc(p.point)}</p>` : ""}
+            ${stack}
+            <div class="tile-foot">${chips(p.tech)}${renderTileLinks(p, githubUser)}</div>`;
+    }
+
+    function renderProductTile(p, i, catLabel, githubUser) {
+        const size = p.size || "sm";
+        const hasShot = Boolean(p.shot);
+        const wideShot = size === "wide" && hasShot;
+        const main = renderTileMain(p, catLabel, githubUser);
+        const media = wideShot
+            ? `<div class="tile-side"><img src="${esc(p.shot)}" alt="${esc(p.name)} の画面" width="960" height="600"></div>`
+            : `${hasShot ? `<div class="tile-shot"><img src="${esc(p.shot)}" alt="${esc(p.name)} の画面" width="960" height="600"></div>` : ""}${!hasShot && p.icon ? `<div class="tile-icon"><i class="${esc(p.icon)}"></i></div><i class="tile-bg-glyph ${esc(p.icon)}" aria-hidden="true"></i>` : ""}`;
+
+        return `
+            <article class="tile tile-${esc(size)}${wideShot ? " has-shot" : ""}" data-category="${esc(p.category)}" data-reveal style="--delay:${(i % 4) * 0.06}s">
+                ${media}<div class="tile-main">${main}</div>
+            </article>`;
+    }
+
     function renderProducts(data) {
         const { products, productFilters, profile } = data;
         const catLabel = Object.fromEntries(productFilters.map((f) => [f.id, f.label]));
@@ -169,54 +215,24 @@
         $("#product-filters").innerHTML = productFilters.map((f, i) =>
             `<button type="button" data-filter="${esc(f.id)}" aria-pressed="${i === 0}">${esc(f.label)}</button>`).join("");
 
-        $("#bento").innerHTML = products.map((p, i) => {
-            const size = p.size || "sm";
-            const hasShot = Boolean(p.shot);
-            const wideShot = size === "wide" && hasShot;
-            const shot = hasShot ? `<div class="tile-shot"><img src="${esc(p.shot)}" alt="${esc(p.name)} の画面" width="960" height="600"></div>` : "";
-            const icon = !hasShot && p.icon ? `<div class="tile-icon"><i class="${esc(p.icon)}"></i></div><i class="tile-bg-glyph ${esc(p.icon)}" aria-hidden="true"></i>` : "";
-            const links = `
-                <div class="tile-links">
-                    ${p.url ? `<a class="link-btn primary" href="${esc(p.url)}"${linkAttrs(p.url)}>Open<i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}
-                    ${p.repo ? `<a class="link-btn" href="${repoUrl(profile.github, p.repo)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>GitHub</a>` : ""}
-                    ${fresh(p.repo)}
-                </div>`;
-            const stack = Array.isArray(p.stack) && p.stack.length
-                ? `<ol class="tile-stack">${p.stack.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`
-                : "";
-            const main = `
-                <div class="tile-meta">
-                    <span class="tile-cat">${esc(catLabel[p.category] || p.category)}</span>
-                    ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
-                </div>
-                <h3>${esc(p.name)}</h3>
-                <p class="tile-desc">${esc(p.description)}</p>
-                ${p.point ? `<p class="tile-point">${esc(p.point)}</p>` : ""}
-                ${stack}
-                <div class="tile-foot">${chips(p.tech)}${links}</div>`;
-
-            return `
-                <article class="tile tile-${esc(size)}${wideShot ? " has-shot" : ""}" data-category="${esc(p.category)}" data-reveal style="--delay:${(i % 4) * 0.06}s">
-                    ${wideShot
-                        ? `<div class="tile-side"><img src="${esc(p.shot)}" alt="${esc(p.name)} の画面" width="960" height="600"></div><div class="tile-main">${main}</div>`
-                        : `${shot}${icon}<div class="tile-main">${main}</div>`}
-                </article>`;
-        }).join("");
+        $("#bento").innerHTML = products.map((p, i) => renderProductTile(p, i, catLabel, profile.github)).join("");
 
         // カテゴリフィルタ（View Transitions 対応ブラウザではモーフィング）
         const buttons = $$("#product-filters button");
-        buttons.forEach((btn) => btn.addEventListener("click", () => {
-            const f = btn.dataset.filter;
-            const apply = () => {
-                buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-                $$("#bento .tile").forEach((t) => {
-                    t.classList.toggle("is-hidden", f !== "all" && t.dataset.category !== f);
-                    t.classList.add("is-in");
-                });
-            };
-            if (document.startViewTransition && !reduceMotion) document.startViewTransition(apply);
-            else apply();
-        }));
+        for (const btn of buttons) {
+            btn.addEventListener("click", () => {
+                const f = btn.dataset.filter;
+                const apply = () => {
+                    for (const b of buttons) { b.setAttribute("aria-pressed", String(b === btn)); }
+                    for (const t of $$("#bento .tile")) {
+                        t.classList.toggle("is-hidden", f !== "all" && t.dataset.category !== f);
+                        t.classList.add("is-in");
+                    }
+                };
+                if (document.startViewTransition && !reduceMotion) document.startViewTransition(apply);
+                else apply();
+            });
+        }
 
         // マウス追従スポットライト
         $("#bento").addEventListener("pointermove", (e) => {
@@ -250,7 +266,7 @@
                     </ol>
                     <ul class="bot-pills">
                         ${bots.items.map((b) => {
-                            const handle = (b.url.split("/profile/")[1] || "").replace(/\.bsky\.social$/, "");
+                            const handle = (b.url.split("/profile/")[1] || "").replace(BSKY_SUFFIX_RE, "");
                             return `
                             <li class="bot-pill">
                                 <i class="${esc(b.icon)}"></i>
@@ -288,35 +304,41 @@
         return `${Math.floor(days / 365)}年前に更新`;
     }
 
-    async function syncGitHub(user) {
-        let repos = null;
-        let fetchedAt = null;
+    function loadGitHubCache() {
         try {
             const cached = JSON.parse(localStorage.getItem(GH_CACHE_KEY) || "null");
-            if (cached && Date.now() - cached.at < GH_CACHE_TTL) ({ repos, at: fetchedAt } = cached);
+            if (cached && Date.now() - cached.at < GH_CACHE_TTL) return cached;
         } catch { /* キャッシュ破損は無視 */ }
+        return null;
+    }
 
-        if (!repos) {
-            try {
-                const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=pushed`);
-                if (!res.ok) throw new Error(res.status);
-                const json = await res.json();
-                repos = Object.fromEntries(json.map((r) => [r.name, { pushed: r.pushed_at, stars: r.stargazers_count }]));
-                fetchedAt = Date.now();
-                localStorage.setItem(GH_CACHE_KEY, JSON.stringify({ at: fetchedAt, repos }));
-            } catch {
-                return; // API 制限時は静かに諦める
-            }
+    async function fetchGitHubRepos(user) {
+        try {
+            const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=pushed`);
+            if (!res.ok) throw new Error(res.status);
+            const json = await res.json();
+            const repos = Object.fromEntries(json.map((r) => [r.name, { pushed: r.pushed_at, stars: r.stargazers_count }]));
+            const at = Date.now();
+            localStorage.setItem(GH_CACHE_KEY, JSON.stringify({ at, repos }));
+            return { repos, at };
+        } catch {
+            return null; // API 制限時は静かに諦める
         }
+    }
 
-        $$(".fresh[data-repo]").forEach((el) => {
+    async function syncGitHub(user) {
+        const result = loadGitHubCache() || await fetchGitHubRepos(user);
+        if (!result) return;
+        const { repos, at: fetchedAt } = result;
+
+        for (const el of $$(".fresh[data-repo]")) {
             const r = repos[el.dataset.repo];
-            if (!r) return;
+            if (!r) continue;
             el.textContent = relTime(r.pushed);
             el.title = new Date(r.pushed).toLocaleString("ja-JP");
             const days = (Date.now() - new Date(r.pushed).getTime()) / 86400000;
             el.classList.toggle("is-hot", days < 7);
-        });
+        }
         const t = new Date(fetchedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
         $("#sync-status").innerHTML = `<i class="fa-solid fa-rotate"></i>Data-driven by <code>data/projects.json</code> · GitHub 同期 ${t}`;
     }
@@ -324,16 +346,16 @@
     /* ---------------- 共通インタラクション ---------------- */
     function setupReveal() {
         const targets = $$("[data-reveal]");
-        if (reduceMotion || !("IntersectionObserver" in window)) {
-            targets.forEach((t) => t.classList.add("is-in"));
+        if (reduceMotion || !("IntersectionObserver" in globalThis)) {
+            for (const t of targets) { t.classList.add("is-in"); }
             return;
         }
         const io = new IntersectionObserver((entries) => {
-            entries.forEach((en) => {
+            for (const en of entries) {
                 if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
-            });
+            }
         }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-        targets.forEach((t) => io.observe(t));
+        for (const t of targets) { io.observe(t); }
     }
 
     function setupNav() {
@@ -342,22 +364,22 @@
         const progress = $(".progress");
         const scrollSupported = CSS.supports("animation-timeline: scroll()");
         const onScroll = () => {
-            nav.classList.toggle("is-scrolled", window.scrollY > 12);
+            nav.classList.toggle("is-scrolled", globalThis.scrollY > 12);
             if (!scrollSupported) {
-                const max = document.documentElement.scrollHeight - innerHeight;
-                progress.style.setProperty("--progress", max > 0 ? scrollY / max : 0);
+                const max = document.documentElement.scrollHeight - globalThis.innerHeight;
+                progress.style.setProperty("--progress", max > 0 ? globalThis.scrollY / max : 0);
             }
         };
-        addEventListener("scroll", onScroll, { passive: true });
+        globalThis.addEventListener("scroll", onScroll, { passive: true });
         onScroll();
 
         const io = new IntersectionObserver((entries) => {
-            entries.forEach((en) => {
-                if (!en.isIntersecting) return;
-                links.forEach((l) => l.classList.toggle("is-active", l.getAttribute("href") === `#${en.target.id}`));
-            });
+            for (const en of entries) {
+                if (!en.isIntersecting) continue;
+                for (const l of links) { l.classList.toggle("is-active", l.getAttribute("href") === `#${en.target.id}`); }
+            }
         }, { rootMargin: "-40% 0px -55% 0px" });
-        links.forEach((l) => { const s = $(l.getAttribute("href")); s && io.observe(s); });
+        for (const l of links) { const s = $(l.getAttribute("href")); if (s) io.observe(s); }
     }
 
     /* ---------------- 起動 ---------------- */

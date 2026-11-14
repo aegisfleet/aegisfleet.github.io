@@ -80,10 +80,10 @@
                     </div>
                 </div>
                 <div class="mt-8">
-                    <button id="start-simulation" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md">
+                    <button type="button" id="start-simulation" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md">
                         シミュレーション開始
                     </button>
-                    <button id="reset-simulation" class="w-full mt-3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md hidden">
+                    <button type="button" id="reset-simulation" class="w-full mt-3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-md hidden">
                         リセット
                     </button>
                 </div>
@@ -101,7 +101,7 @@
                 </div>
                 
                 <div id="chart-container" class="w-full h-80 md:h-96 bg-gray-50 rounded-lg p-4 relative">
-                    <svg id="chart" class="w-full h-full" preserveAspectRatio="xMidYMid meet"></svg>
+                    <svg id="chart" role="img" aria-label="資産推移グラフ" class="w-full h-full" preserveAspectRatio="xMidYMid meet"></svg>
                     <div id="chart-tooltip" class="absolute bg-white p-3 rounded-lg shadow-lg text-sm opacity-0 pointer-events-none transition-opacity"></div>
                 </div>
                 <div id="legend-container" class="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2"></div>
@@ -111,7 +111,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', () => {
             // --- DOM要素の取得 ---
             const annualReturnEl = document.getElementById('annual-return');
             const investmentPeriodEl = document.getElementById('investment-period');
@@ -159,7 +159,7 @@
                 const man = Math.floor((num % 100000000) / 10000);
                 const en = num % 10000;
 
-                let parts = [];
+                const parts = [];
                 if (oku > 0) parts.push(`${oku.toLocaleString()}億`);
                 if (man > 0) parts.push(`${man.toLocaleString()}万`);
                 if (en > 0) parts.push(`${en.toLocaleString()}円`);
@@ -167,8 +167,8 @@
                 if (parts.length === 0) return '0円';
                 
                 // 「〇〇万円」のように円単位がなくても成立する場合の調整
-                if (parts.length > 1 && parts[parts.length - 1].includes('円')) {
-                    parts[parts.length - 1] = parts[parts.length - 1].replace('円', '');
+                if (parts.length > 1 && parts.at(-1).includes('円')) {
+                    parts[parts.length - 1] = parts.at(-1).replace('円', '');
                 }
 
                 let result = parts.join('');
@@ -180,6 +180,17 @@
             };
             // ▲▲▲【修正点】▲▲▲
 
+            const buildTooltipContent = (scenariosData, yearIndex) => {
+                let tooltipContent = `<strong class="text-base">${yearIndex}年後</strong>`;
+                for (const scenario of scenariosData) {
+                    const pointData = scenario.fullData[yearIndex];
+                    if (pointData) {
+                        tooltipContent += `<br><div class="legend-item mt-1"><div class="legend-color" style="background-color: ${scenario.color};"></div><span class="text-sm">${formatCurrency(pointData.asset)}</span></div>`;
+                    }
+                }
+                return tooltipContent;
+            };
+
             const drawChart = (scenariosData, periodInYears) => {
                 chartEl.innerHTML = '';
                 const svgWidth = chartEl.clientWidth;
@@ -190,7 +201,7 @@
 
                 if (scenariosData.length === 0 || scenariosData[0].data.length < 2) return;
                 
-                const maxAsset = scenariosData[scenariosData.length - 1].fullData[periodInYears].asset;
+                const maxAsset = scenariosData.at(-1).fullData[periodInYears].asset;
                 const totalYears = periodInYears;
 
                 const xScale = (year) => margin.left + (year / totalYears) * width;
@@ -233,10 +244,10 @@
                 }
                 chartEl.appendChild(xAxis);
                 
-                scenariosData.forEach(scenario => {
+                for (const scenario of scenariosData) {
                     const assetPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     let assetD = `M${xScale(0)} ${yScale(0)}`;
-                    scenario.data.forEach(d => { assetD += ` L${xScale(d.year)} ${yScale(d.asset)}`; });
+                    for (const d of scenario.data) { assetD += ` L${xScale(d.year)} ${yScale(d.asset)}`; }
                     assetPath.setAttribute('d', assetD);
                     assetPath.setAttribute('fill', 'none');
                     assetPath.setAttribute('stroke', scenario.color);
@@ -244,41 +255,34 @@
                     assetPath.setAttribute('stroke-linejoin', 'round');
                     assetPath.setAttribute('stroke-linecap', 'round');
                     chartEl.appendChild(assetPath);
-                });
+                }
 
                 chartContainer.addEventListener('mousemove', (e) => {
                     const rect = chartContainer.getBoundingClientRect();
                     const x = e.clientX - rect.left - margin.left;
-                    if (x >= 0 && x <= width) {
-                        const yearIndex = Math.round((x / width) * totalYears);
-                        if(yearIndex < 0 || yearIndex > totalYears) return;
+                    if (x < 0 || x > width) {
+                        tooltipEl.style.opacity = '0';
+                        return;
+                    }
+                    const yearIndex = Math.round((x / width) * totalYears);
+                    if (yearIndex < 0 || yearIndex > totalYears) return;
 
-                        let tooltipContent = `<strong class="text-base">${yearIndex}年後</strong>`;
-                        scenariosData.forEach(scenario => {
-                           const pointData = scenario.fullData[yearIndex];
-                           if(pointData){
-                             tooltipContent += `<br><div class="legend-item mt-1"><div class="legend-color" style="background-color: ${scenario.color};"></div><span class="text-sm">${formatCurrency(pointData.asset)}</span></div>`;
-                           }
-                        });
-                        
-                        tooltipEl.innerHTML = tooltipContent;
-                        tooltipEl.style.opacity = '1';
-                        tooltipEl.style.left = `${e.clientX - rect.left + 15}px`;
-                        tooltipEl.style.top = `${e.clientY - rect.top + 15}px`;
-
-                    } else { tooltipEl.style.opacity = '0'; }
+                    tooltipEl.innerHTML = buildTooltipContent(scenariosData, yearIndex);
+                    tooltipEl.style.opacity = '1';
+                    tooltipEl.style.left = `${e.clientX - rect.left + 15}px`;
+                    tooltipEl.style.top = `${e.clientY - rect.top + 15}px`;
                 });
                 chartContainer.addEventListener('mouseleave', () => { tooltipEl.style.opacity = '0'; });
             };
 
             const drawLegend = () => {
                 legendContainer.innerHTML = '';
-                investmentScenarios.forEach(scenario => {
+                for (const scenario of investmentScenarios) {
                     const legendItem = document.createElement('div');
                     legendItem.classList.add('legend-item');
                     legendItem.innerHTML = `<div class="legend-color" style="background-color: ${scenario.color};"></div><span>${(scenario.amount / 10000)}万円/月</span>`;
                     legendContainer.appendChild(legendItem);
-                });
+                }
             };
             
             const displayFinalResults = (scenariosData, period) => {
@@ -292,7 +296,7 @@
                 const gridContainer = document.createElement('div');
                 gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
                 
-                scenariosData.forEach(scenario => {
+                for (const scenario of scenariosData) {
                     const finalData = scenario.fullData[period];
                     const finalGain = finalData.asset - finalData.principal;
                     
@@ -322,17 +326,17 @@
                         </div>
                     `;
                     gridContainer.appendChild(card);
-                });
+                }
 
                 resultsContainer.appendChild(gridContainer);
             }
 
             const runSimulation = () => {
                 errorMessageEl.textContent = '';
-                const annualReturn = parseFloat(annualReturnEl.value);
-                const investmentPeriod = parseInt(investmentPeriodEl.value);
+                const annualReturn = Number.parseFloat(annualReturnEl.value);
+                const investmentPeriod = Number.parseInt(investmentPeriodEl.value, 10);
 
-                if (isNaN(annualReturn) || annualReturn < 0 || isNaN(investmentPeriod) || investmentPeriod <= 0) {
+                if (Number.isNaN(annualReturn) || annualReturn < 0 || Number.isNaN(investmentPeriod) || investmentPeriod <= 0) {
                     errorMessageEl.textContent = '有効な数値を入力してください。';
                     return;
                 }
@@ -341,7 +345,7 @@
                 
                 startBtn.classList.add('hidden');
                 resetBtn.classList.remove('hidden');
-                [annualReturnEl, investmentPeriodEl].forEach(el => el.disabled = true);
+                for (const el of [annualReturnEl, investmentPeriodEl]) { el.disabled = true; }
                 resultsContainer.innerHTML = ''; 
                 drawLegend();
 
@@ -375,9 +379,9 @@
                         return;
                     }
                     currentYear++;
-                    allScenariosData.forEach(scenario => {
+                    for (const scenario of allScenariosData) {
                         scenario.data = scenario.fullData.slice(0, currentYear + 1);
-                    });
+                    }
                     elapsedTimeEl.textContent = `${currentYear}年`;
                     drawChart(allScenariosData, investmentPeriod);
                 }, animationSpeed);
@@ -387,7 +391,7 @@
                  clearInterval(simulationInterval);
                  startBtn.classList.remove('hidden');
                  resetBtn.classList.add('hidden');
-                 [annualReturnEl, investmentPeriodEl].forEach(el => el.disabled = false);
+                 for (const el of [annualReturnEl, investmentPeriodEl]) { el.disabled = false; }
                  errorMessageEl.textContent = '';
                  elapsedTimeEl.textContent = '0年';
                  chartEl.innerHTML = '';

@@ -1,2 +1,13 @@
 {
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit"
+  },
+  "sonarlint.rules": {
+    "Web:BoldAndItalicTagsCheck": {
+      "level": "off"
+    },
+    "javascript:S2245": {
+      "level": "off"
+    }
+  }
 }

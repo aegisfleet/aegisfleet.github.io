@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>CYBER IAI - 絶刀 -</title>
+    <link rel="icon" href="favicon.png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@700&display=swap');
 
@@ -91,8 +92,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px 40px 20px;
-            padding-bottom: env(safe-area-inset-bottom, 30px);
+            padding: 0 20px env(safe-area-inset-bottom, 30px);
         }
 
         .d-pad {
@@ -558,19 +558,19 @@
 
         <div id="controls">
             <div class="d-pad">
-                <div class="d-btn d-up" data-key="ArrowUp"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                <div class="d-btn d-up" data-key="ArrowUp"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <path d="M12 19V5M5 12l7-7 7 7" />
                     </svg></div>
-                <div class="d-btn d-left" data-key="ArrowLeft"><svg width="24" height="24" viewBox="0 0 24 24"
+                <div class="d-btn d-left" data-key="ArrowLeft"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg></div>
-                <div class="d-btn d-right" data-key="ArrowRight"><svg width="24" height="24" viewBox="0 0 24 24"
+                <div class="d-btn d-right" data-key="ArrowRight"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg></div>
-                <div class="d-btn d-down" data-key="ArrowDown"><svg width="24" height="24" viewBox="0 0 24 24"
+                <div class="d-btn d-down" data-key="ArrowDown"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M19 12l-7 7-7-7" />
                     </svg></div>
@@ -585,7 +585,7 @@
     <div id="start-screen">
         <h1>絶刀</h1>
         <div class="subtitle">CYBER IAI</div>
-        <button class="start-btn" id="start-btn">INITIATE LINK</button>
+        <button type="button" class="start-btn" id="start-btn">INITIATE LINK</button>
     </div>
 
     <!-- ダメージビネット -->
@@ -604,7 +604,7 @@
             dangerInterval: null,
 
             init: function () {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                globalThis.AudioContext = globalThis.AudioContext || globalThis.webkitAudioContext;
                 this.ctx = new AudioContext();
 
                 // マスターゲイン
@@ -629,7 +629,7 @@
                 for (let channel = 0; channel < 2; channel++) {
                     const data = impulse.getChannelData(channel);
                     for (let i = 0; i < length; i++) {
-                        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                        data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 2;
                     }
                 }
                 this.reverbNode = this.ctx.createConvolver();
@@ -872,15 +872,23 @@
                     case 'gameover':
                         this.startGameOverBGM();
                         break;
+                    default:
+                        break;
                 }
             },
 
             stopAll: function () {
-                this.oscillators.forEach(osc => {
-                    try { osc.stop(); } catch (e) { }
-                });
+                for (const osc of this.oscillators) {
+                    try {
+                        osc.stop();
+                    } catch {
+                        // 停止済みは無視
+                    }
+                }
                 this.oscillators = [];
-                this.intervals.forEach(id => clearInterval(id));
+                for (const id of this.intervals) {
+                    clearInterval(id);
+                }
                 this.intervals = [];
                 this.isPlaying = false;
             },
@@ -1014,7 +1022,7 @@
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+                    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) ** 3;
                 }
                 const noise = this.ctx.createBufferSource();
                 noise.buffer = buffer;
@@ -1082,7 +1090,7 @@
 
         // --- Game Logic ---
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const canvasCtx = canvas.getContext('2d');
 
         let gameState = 'MENU';
         let tutorialStep = 0;
@@ -1246,7 +1254,7 @@
                 this.radius = 20 + (this.maxRadius - 20) * this.easeOut(progress);
             }
             easeOut(t) {
-                return 1 - Math.pow(1 - t, 3);
+                return 1 - (1 - t) ** 3;
             }
             draw(ctx) {
                 const alpha = Math.max(0, this.life / this.maxLife);
@@ -1330,7 +1338,7 @@
 
                 const scale = getScale(this.y);
                 const hover = Math.sin(this.hoverOffset) * 8;
-                const alpha = this.life < 1.0 ? this.life : 1.0; // 消滅前に点滅
+                const alpha = Math.min(this.life, 1.0); // 消滅前に点滅
 
                 ctx.save();
                 ctx.translate(this.x, this.y + hover);
@@ -1416,23 +1424,23 @@
                 const offsetX = (playerX - centerX) * 0.02;
 
                 // 星の更新
-                this.stars.forEach(s => {
+                for (const s of this.stars) {
                     s.twinkle += s.speed;
                     s.x -= offsetX * 0.3;
                     if (s.x < -100) s.x = canvas.width + 100;
                     if (s.x > canvas.width + 100) s.x = -100;
-                });
+                }
 
                 // ネオンラインの更新
-                this.neonLines.forEach(n => {
+                for (const n of this.neonLines) {
                     n.pulse += 0.05;
                     n.x -= offsetX * 0.5;
                     if (n.x < -100) n.x = canvas.width + 100;
                     if (n.x > canvas.width + 100) n.x = -100;
-                });
+                }
 
                 // ホログラム粒子の更新
-                this.holoParticles.forEach(h => {
+                for (const h of this.holoParticles) {
                     h.y += h.vy;
                     h.alpha = 0.3 + Math.sin(Date.now() * 0.003 + h.x) * 0.3;
                     h.x -= offsetX * 0.8;
@@ -1440,21 +1448,21 @@
                         h.y = 300;
                         h.x = Math.random() * canvas.width;
                     }
-                });
+                }
             },
 
             draw(ctx) {
                 // Layer 1: 星空
-                this.stars.forEach(s => {
+                for (const s of this.stars) {
                     const alpha = 0.3 + Math.sin(s.twinkle) * 0.3;
                     ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
                     ctx.beginPath();
                     ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
                     ctx.fill();
-                });
+                }
 
                 // Layer 2: ネオンライン（ビル風）
-                this.neonLines.forEach(n => {
+                for (const n of this.neonLines) {
                     const alpha = 0.3 + Math.sin(n.pulse) * 0.2;
                     ctx.fillStyle = n.color;
                     ctx.globalAlpha = alpha;
@@ -1462,16 +1470,16 @@
                     ctx.shadowColor = n.color;
                     ctx.fillRect(n.x, n.y, n.width, n.height);
                     ctx.shadowBlur = 0;
-                });
+                }
                 ctx.globalAlpha = 1.0;
 
                 // Layer 3: ホログラム粒子
-                this.holoParticles.forEach(h => {
+                for (const h of this.holoParticles) {
                     ctx.fillStyle = `rgba(0, 255, 255, ${h.alpha})`;
                     ctx.beginPath();
                     ctx.arc(h.x, h.y, h.size, 0, Math.PI * 2);
                     ctx.fill();
-                });
+                }
             }
         };
 
@@ -1490,48 +1498,32 @@
                 this.lastInput = { left: false, right: false, up: false, down: false };
             }
 
-            update(dt) {
-                // Movement (X & Y) with initial boost
-                const moveSpeed = 200;
-                const initialBoostSpeed = 350;
+            speedFor(dir, scale = 1) {
+                return (this.moveBoostTimer[dir] > 0 ? 350 : 200) * scale;
+            }
+
+            updateMovement(dt) {
+                if (this.state !== 'IDLE') return;
                 const boostDuration = 0.1;
-
-                if (this.state === 'IDLE') {
-                    // キーが押された瞬間を検出してブーストタイマーを開始
-                    if (input.left && !this.lastInput.left) this.moveBoostTimer.left = boostDuration;
-                    if (input.right && !this.lastInput.right) this.moveBoostTimer.right = boostDuration;
-                    if (input.up && !this.lastInput.up) this.moveBoostTimer.up = boostDuration;
-                    if (input.down && !this.lastInput.down) this.moveBoostTimer.down = boostDuration;
-
-                    // ブーストタイマーを減少
-                    this.moveBoostTimer.left = Math.max(0, this.moveBoostTimer.left - dt);
-                    this.moveBoostTimer.right = Math.max(0, this.moveBoostTimer.right - dt);
-                    this.moveBoostTimer.up = Math.max(0, this.moveBoostTimer.up - dt);
-                    this.moveBoostTimer.down = Math.max(0, this.moveBoostTimer.down - dt);
-
-                    // 移動処理（ブースト中は高速移動）
-                    const leftSpeed = this.moveBoostTimer.left > 0 ? initialBoostSpeed : moveSpeed;
-                    const rightSpeed = this.moveBoostTimer.right > 0 ? initialBoostSpeed : moveSpeed;
-                    const upSpeed = (this.moveBoostTimer.up > 0 ? initialBoostSpeed : moveSpeed) * 0.8;
-                    const downSpeed = (this.moveBoostTimer.down > 0 ? initialBoostSpeed : moveSpeed) * 0.8;
-
-                    if (input.left) this.x -= leftSpeed * dt;
-                    if (input.right) this.x += rightSpeed * dt;
-                    if (input.up) this.y -= upSpeed * dt;
-                    if (input.down) this.y += downSpeed * dt;
-
-                    // 現在の入力状態を保存
-                    this.lastInput.left = input.left;
-                    this.lastInput.right = input.right;
-                    this.lastInput.up = input.up;
-                    this.lastInput.down = input.down;
-
-                    // Bounds
-                    this.x = Math.max(40, Math.min(canvas.width - 40, this.x));
-                    this.y = Math.max(MIN_Y, Math.min(MAX_Y, this.y));
+                for (const dir of ['left', 'right', 'up', 'down']) {
+                    if (input[dir] && !this.lastInput[dir]) {
+                        this.moveBoostTimer[dir] = boostDuration;
+                    }
+                    this.moveBoostTimer[dir] = Math.max(0, this.moveBoostTimer[dir] - dt);
+                    this.lastInput[dir] = input[dir];
                 }
 
-                // Wall Warning Check
+                if (input.left) this.x -= this.speedFor('left') * dt;
+                if (input.right) this.x += this.speedFor('right') * dt;
+                if (input.up) this.y -= this.speedFor('up', 0.8) * dt;
+                if (input.down) this.y += this.speedFor('down', 0.8) * dt;
+
+                // Bounds
+                this.x = Math.max(40, Math.min(canvas.width - 40, this.x));
+                this.y = Math.max(MIN_Y, Math.min(MAX_Y, this.y));
+            }
+
+            updateWallWarning() {
                 const distToWall = MAX_Y - this.y;
                 if (distToWall < 60) {
                     this.isWallStun = true; // Danger zone
@@ -1540,11 +1532,12 @@
                     this.isWallStun = false;
                     document.getElementById('danger-warning').style.opacity = 0;
                 }
+                return distToWall;
+            }
 
-                // Actions
+            handleActions(distToWall) {
                 if (input.bPressed && this.state === 'IDLE') {
                     if (this.isWallStun && distToWall < 10) {
-                        // Fail to dodge if too close to wall
                         Audio.playTone(100, 'sawtooth', 0.2); // Error sound
                         showMsg("BLOCKED!", false);
                     } else {
@@ -1552,47 +1545,37 @@
                         this.dodgeTimer = 0.3; // Short dash
                         Audio.playWhoosh();
                         for (let i = 0; i < 5; i++) particles.push(new Particle(this.x, this.y - 40, '#0ff', 100, 5, 0.5));
-                        // 残像エフェクト追加
                         afterimages.push(new Afterimage(this.x, this.y, getScale(this.y), '#0ff'));
                     }
                 }
 
-                if (input.aPressed) {
-                    if (this.counterTimer > 0) {
-                        this.executeCounter();
-                    } else if (this.state === 'IDLE') {
-                        this.state = 'ATTACK';
-                        this.animTimer = 0.2;
-                        Audio.playWhoosh();
-                        // 斬撃トレイルエフェクト
-                        for (let i = 0; i < 3; i++) {
-                            const angle = -Math.PI / 2 - 0.5 + Math.random() * 1.0;
-                            trailParticles.push(new TrailParticle(this.x, this.y - 60, angle));
-                        }
+                if (!input.aPressed) return;
+                if (this.counterTimer > 0) {
+                    this.executeCounter();
+                } else if (this.state === 'IDLE') {
+                    this.state = 'ATTACK';
+                    this.animTimer = 0.2;
+                    Audio.playWhoosh();
+                    for (let i = 0; i < 3; i++) {
+                        const angle = -Math.PI / 2 - 0.5 + Math.random() * 1.0;
+                        trailParticles.push(new TrailParticle(this.x, this.y - 60, angle));
                     }
                 }
+            }
 
-                // State Timers
+            updateDodgeState(dt) {
+                this.dodgeTimer -= dt;
+                this.y += 400 * dt; // Slide BACK logic
+                if (input.left) this.x -= 200 * dt;
+                if (input.right) this.x += 200 * dt;
+                if (this.y >= MAX_Y) this.y = MAX_Y;
+                if (this.dodgeTimer <= 0) this.state = 'IDLE';
+            }
+
+            updateStateTimers(dt) {
                 if (this.state === 'DODGE') {
-                    this.dodgeTimer -= dt;
-                    // Forced backward movement + slight directional
-                    this.y += 400 * dt; // Slide BACK logic
-
-                    if (input.left) this.x -= 200 * dt;
-                    if (input.right) this.x += 200 * dt;
-
-                    // Hit wall during dodge?
-                    if (this.y >= MAX_Y) {
-                        this.y = MAX_Y;
-                    }
-
-                    if (this.dodgeTimer <= 0) this.state = 'IDLE';
-                }
-                if (this.state === 'ATTACK') {
-                    this.animTimer -= dt;
-                    if (this.animTimer <= 0) this.state = 'IDLE';
-                }
-                if (this.state === 'STUN') {
+                    this.updateDodgeState(dt);
+                } else if (this.state === 'ATTACK' || this.state === 'STUN') {
                     this.animTimer -= dt;
                     if (this.animTimer <= 0) this.state = 'IDLE';
                 }
@@ -1602,6 +1585,13 @@
                         Audio.enableSlowMoFilter(false);
                     }
                 }
+            }
+
+            update(dt) {
+                this.updateMovement(dt);
+                const distToWall = this.updateWallWarning();
+                this.handleActions(distToWall);
+                this.updateStateTimers(dt);
             }
 
             onDodgeSuccess() {
@@ -1637,7 +1627,7 @@
                 let nearestEnemy = null;
                 let minDist = 9999;
 
-                enemies.forEach(e => {
+                for (const e of enemies) {
                     const dx = e.x - this.x;
                     const dy = e.y - this.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1645,7 +1635,7 @@
                         minDist = dist;
                         nearestEnemy = e;
                     }
-                });
+                }
 
                 if (nearestEnemy && gameState === 'PLAYING') {
                     nearestEnemy.getHit(1);
@@ -1679,7 +1669,6 @@
                     ctx.shadowBlur = 0;
                 }
 
-                const bodyColor = this.state === 'DODGE' ? '#220033' : this.color;
                 const accentColor = this.isWallStun ? '#f04' : '#0ff';
 
                 // === コート/ボディ ===
@@ -1831,131 +1820,122 @@
                 this.hp = 3;
             }
 
+            updatePreparePhase(dt) {
+                if (Math.random() < 0.3) {
+                    const scale = getScale(this.y);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = (60 * scale) + Math.random() * 20;
+                    const px = this.x + Math.cos(angle) * dist;
+                    const py = this.y - (60 * scale) + Math.sin(angle) * dist;
+                    const p = new Particle(px, py, this.flashColor, 0, 3 * scale, 0.4);
+                    p.vx = (this.x - px) * 3;
+                    p.vy = (this.y - (60 * scale) - py) * 3;
+                    particles.push(p);
+                }
+                // TRACKING LOGIC FOR BEAM (Lock position 0.4s before firing)
+                if (this.attackType === 'BEAM' && this.timer > 0.4) {
+                    this.x += (player.x - this.x) * 5 * dt;
+                }
+                if (this.timer <= 0.2) this.flashing = true;
+                if (this.timer <= 0) this.executeAttack();
+            }
+
+            updateWaitPhase() {
+                this.x = this.baseX + Math.sin(Date.now() / 500 + this.index * 2) * 10;
+                this.y = this.baseY;
+                if (this.timer > 0) return;
+                if (gameState !== 'TUTORIAL') {
+                    this.prepareAttack();
+                } else if (this.index === 0) {
+                    this.tutorialLogic();
+                }
+            }
+
+            updateAttackingPhase(dt) {
+                this.attackWindow -= dt;
+                if (this.isAttackActive) this.checkHit();
+                if (this.attackWindow <= 0) {
+                    this.state = 'WAIT';
+                    this.timer = gameState === 'TUTORIAL' ? 1.0 : Math.random() * 2.0 + 1.0;
+                    this.x = this.baseX;
+                    this.y = this.baseY;
+                }
+            }
+
             update(dt) {
                 this.timer -= dt;
-
-                if (this.state === 'PREPARE') {
-                    if (Math.random() < 0.3) {
-                        const scale = getScale(this.y);
-                        const angle = Math.random() * Math.PI * 2;
-                        const dist = (60 * scale) + Math.random() * 20;
-                        const px = this.x + Math.cos(angle) * dist;
-                        const py = this.y - (60 * scale) + Math.sin(angle) * dist;
-                        const p = new Particle(px, py, this.flashColor, 0, 3 * scale, 0.4);
-                        p.vx = (this.x - px) * 3; p.vy = (this.y - (60 * scale) - py) * 3;
-                        particles.push(p);
-                    }
-                    // TRACKING LOGIC FOR BEAM
-                    if (this.attackType === 'BEAM') {
-                        // Lock position 0.4s before firing
-                        if (this.timer > 0.4) {
-                            const targetX = player.x;
-                            this.x += (targetX - this.x) * 5 * dt; // Smooth track
+                switch (this.state) {
+                    case 'PREPARE':
+                        this.updatePreparePhase(dt);
+                        break;
+                    case 'WAIT':
+                        this.updateWaitPhase();
+                        break;
+                    case 'ATTACKING':
+                        this.updateAttackingPhase(dt);
+                        break;
+                    case 'STUN':
+                        if (this.timer <= 0) {
+                            this.state = 'WAIT';
+                            this.timer = 2.0;
+                            this.x = this.baseX;
+                            this.y = this.baseY;
                         }
-                    }
+                        break;
+                    default:
+                        break;
                 }
+            }
 
-                if (this.state === 'WAIT') {
-                    this.x = this.baseX + Math.sin(Date.now() / 500 + this.index * 2) * 10;
-                    this.y = this.baseY;
-                    if (this.timer <= 0) {
-                        if (gameState === 'TUTORIAL') { if (this.index === 0) this.tutorialLogic(); }
-                        else { this.prepareAttack(); }
-                    }
-                }
-                else if (this.state === 'PREPARE') {
-                    if (this.timer <= 0.2) this.flashing = true;
-                    if (this.timer <= 0) this.executeAttack();
-                }
-                else if (this.state === 'ATTACKING') {
-                    this.attackWindow -= dt;
-                    if (this.isAttackActive) this.checkHit();
-                    if (this.attackWindow <= 0) {
-                        this.state = 'WAIT'; this.timer = Math.random() * 2.0 + 1.0;
-                        this.x = this.baseX; this.y = this.baseY;
-                        if (gameState === 'TUTORIAL') this.timer = 1.0;
-                    }
-                }
-                else if (this.state === 'STUN') {
-                    if (this.timer <= 0) {
-                        this.state = 'WAIT'; this.timer = 2.0; this.x = this.baseX; this.y = this.baseY;
-                    }
-                }
+            beginTutorialAttack(attackType, telegraphColor, duration) {
+                this.attackType = attackType;
+                this.flashColor = telegraphColor;
+                this.timer = duration;
+                this.maxTimer = duration;
+                this.state = 'PREPARE';
+                Audio.playCharge();
             }
 
             tutorialLogic() {
                 if (tutorialStep === 0) {
                     showTutorial("COMBAT SIMULATION", "奥から来る攻撃に反応せよ。<br>「収束するリング」が合図だ。");
-                    setTimeout(() => { tutorialStep = 1; this.timer = 0.5; }, 4000); this.timer = 999;
-                } else if (tutorialStep === 1 || tutorialStep === 2) {
-                    showTutorial("PHASE 1: PARRY", "<span class='tut-key blue'>青いリング</span>が重なる瞬間に<br><span class='tut-key blue'>Aボタン</span>で弾け。");
-                    this.attackType = 'SLASH'; this.flashColor = '#0ff'; this.timer = 1.2; this.maxTimer = 1.2;
-                    this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 2;
-                } else if (tutorialStep === 2) {
-                    // RETRY
-                    this.attackType = 'SLASH'; this.flashColor = '#0ff';
-                    this.timer = 1.2; this.maxTimer = 1.2;
-                    this.state = 'PREPARE'; Audio.playCharge();
-                } else if (tutorialStep === 3) {
-                    this.timer = 0.5; tutorialStep = 4;
-                } else if (tutorialStep === 4 || tutorialStep === 5) {
-                    showTutorial("PHASE 2: DELAY", "<span class='tut-key yellow'>黄色</span>は遅れてやってくる。<br>リングをよく見て待て。");
-                    this.attackType = 'SMASH'; this.flashColor = '#ff0'; this.timer = 2.0; this.maxTimer = 2.0;
-                    this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 5;
-                } else if (tutorialStep === 5) {
-                    // RETRY
-                    this.attackType = 'SMASH'; this.flashColor = '#ff0';
-                    this.timer = 2.0; this.maxTimer = 2.0;
-                    this.state = 'PREPARE'; Audio.playCharge();
-                } else if (tutorialStep === 6) {
-                    this.timer = 0.5; tutorialStep = 7;
-                } else if (tutorialStep === 7 || tutorialStep === 8) {
-                    showTutorial("PHASE 3: EVASION", "<span class='tut-key red'>赤いリング</span>はガード不能。<br><span class='tut-key red'>Bボタン</span>で回避せよ。<br>回避すると後ろに下がる。");
-                    this.attackType = 'THRUST'; this.flashColor = '#f04'; this.timer = 1.0; this.maxTimer = 1.0;
-                    this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 8;
-                } else if (tutorialStep === 8) {
-                    // RETRY
-                    this.attackType = 'THRUST'; this.flashColor = '#f04';
-                    this.timer = 1.0; this.maxTimer = 1.0;
-                    this.state = 'PREPARE'; Audio.playCharge();
-                } else if (tutorialStep === 9) {
-                    this.timer = 0.5; tutorialStep = 10;
-                } else if (tutorialStep === 10 || tutorialStep === 11) {
-                    showTutorial("PHASE 4: COUNTER", "回避成功直後に<br><span class='tut-key blue'>Aボタン</span>で反撃せよ。");
-                    this.attackType = 'THRUST'; this.flashColor = '#f04'; this.timer = 1.0; this.maxTimer = 1.0;
-                    this.state = 'PREPARE'; Audio.playCharge(); tutorialStep = 11;
-                } else if (tutorialStep === 11) {
-                    // RETRY (Dodged but didn't counter)
-                    showMsg("ATTACK NOW!", true);
-                    this.attackType = 'THRUST'; this.flashColor = '#f04';
-                    this.timer = 1.0; this.maxTimer = 1.0;
-                    this.state = 'PREPARE'; Audio.playCharge();
-                } else if (tutorialStep === 12) {
-                    this.timer = 0.5; tutorialStep = 13;
+                    setTimeout(() => { tutorialStep = 1; this.timer = 0.5; }, 4000);
+                    this.timer = 999;
+                    return;
                 }
-
-                // --- PHASE 5: SIDE STEP (New) ---
-                else if (tutorialStep === 13 || tutorialStep === 14) {
-                    showTutorial("PHASE 5: SIDE STEP", "縦攻撃は<span class='tut-key blue'>十字キー左右</span>でかわせ。<br>回避後に<span class='tut-key blue'>Aボタン</span>で即反撃。");
-                    this.attackType = 'BEAM'; this.flashColor = '#0ff';
-                    this.timer = 1.5; this.maxTimer = 1.5; // Slower for tutorial
-                    this.state = 'PREPARE'; Audio.playCharge();
-                    tutorialStep = 14;
-                } else if (tutorialStep === 14) {
-                    // RETRY Side Step
-                    showMsg("MOVE SIDEWAYS!", true);
-                    this.attackType = 'BEAM'; this.flashColor = '#0ff';
-                    this.timer = 1.5; this.maxTimer = 1.5;
-                    this.state = 'PREPARE'; Audio.playCharge();
-                }
-
-                else if (tutorialStep === 15) {
-                    this.timer = 0.5; tutorialStep = 16;
-                }
-                else if (tutorialStep === 16) {
+                if (tutorialStep === 16) {
                     showTutorial("SYSTEM ONLINE", "全プログラム完了。<br>下がったラインは<span class='tut-key blue'>上キー</span>で回復せよ。");
-                    setTimeout(() => { hideTutorial(); gameState = 'PLAYING'; this.reset(); }, 4000); this.timer = 999;
+                    setTimeout(() => { hideTutorial(); gameState = 'PLAYING'; this.reset(); }, 4000);
+                    this.timer = 999;
+                    return;
                 }
+
+                const restNextStep = { 3: 4, 6: 7, 9: 10, 12: 13, 15: 16 }[tutorialStep];
+                if (restNextStep !== undefined) {
+                    this.timer = 0.5;
+                    tutorialStep = restNextStep;
+                    return;
+                }
+
+                const phases = {
+                    1: { title: "PHASE 1: PARRY", body: "<span class='tut-key blue'>青いリング</span>が重なる瞬間に<br><span class='tut-key blue'>Aボタン</span>で弾け。", type: 'SLASH', color: '#0ff', dur: 1.2, next: 2 },
+                    2: { type: 'SLASH', color: '#0ff', dur: 1.2 },
+                    4: { title: "PHASE 2: DELAY", body: "<span class='tut-key yellow'>黄色</span>は遅れてやってくる。<br>リングをよく見て待て。", type: 'SMASH', color: '#ff0', dur: 2.0, next: 5 },
+                    5: { type: 'SMASH', color: '#ff0', dur: 2.0 },
+                    7: { title: "PHASE 3: EVASION", body: "<span class='tut-key red'>赤いリング</span>はガード不能。<br><span class='tut-key red'>Bボタン</span>で回避せよ。<br>回避すると後ろに下がる。", type: 'THRUST', color: '#f04', dur: 1.0, next: 8 },
+                    8: { type: 'THRUST', color: '#f04', dur: 1.0 },
+                    10: { title: "PHASE 4: COUNTER", body: "回避成功直後に<br><span class='tut-key blue'>Aボタン</span>で反撃せよ。", type: 'THRUST', color: '#f04', dur: 1.0, next: 11 },
+                    11: { msg: "ATTACK NOW!", type: 'THRUST', color: '#f04', dur: 1.0 },
+                    13: { title: "PHASE 5: SIDE STEP", body: "縦攻撃は<span class='tut-key blue'>十字キー左右</span>でかわせ。<br>回避後に<span class='tut-key blue'>Aボタン</span>で即反撃。", type: 'BEAM', color: '#0ff', dur: 1.5, next: 14 },
+                    14: { msg: "MOVE SIDEWAYS!", type: 'BEAM', color: '#0ff', dur: 1.5 }
+                };
+
+                const phase = phases[tutorialStep];
+                if (!phase) return;
+                if (phase.title) showTutorial(phase.title, phase.body);
+                if (phase.msg) showMsg(phase.msg, true);
+                this.beginTutorialAttack(phase.type, phase.color, phase.dur);
+                if (phase.next !== undefined) tutorialStep = phase.next;
             }
 
             prepareAttack() {
@@ -1981,7 +1961,6 @@
                 // Attack Target Logic
                 if (this.attackType === 'BEAM') {
                     // Straight shot, no tracking (locked in prepare)
-                    this.x = this.x;
                     this.y = player.y;
                     this.attackWindow = 0.2;
                 } else {
@@ -1998,40 +1977,31 @@
                 // Hitbox Check
                 const distX = Math.abs(this.x - player.x);
 
-                if (this.attackType === 'BEAM') {
-                    // Narrow hitbox for beam
-                    if (distX > 40) {
-                        // Dodged by moving sideways!
-                        this.isAttackActive = false;
-                        player.onDodgeSuccess(); // Grant counter chance
-                        showMsg("SIDE STEP!");
-
-                        if (gameState === 'TUTORIAL' && tutorialStep === 14) {
-                            // Success logic handled in player.executeCounter, 
-                            // but we can show msg here
-                        }
-                        return;
-                    }
+                if (this.attackType === 'BEAM' && distX > 40) {
+                    // Dodged by moving sideways!
+                    this.isAttackActive = false;
+                    player.onDodgeSuccess(); // Grant counter chance
+                    showMsg("SIDE STEP!");
+                    return;
                 }
 
                 if (player.state === 'ATTACK') {
                     if (this.attackType === 'THRUST' || this.attackType === 'BEAM') this.hitPlayer();
                     else this.getParried();
-                } else if (player.state === 'DODGE') {
-                    if (this.attackType === 'BEAM') {
-                        // Cannot B-dodge beam easily (it's long), but maybe ok?
-                        // Let's say beam penetrates dodge for game balance?
-                        // Or standard dodge works too. Let's make standard dodge work for now.
-                        this.isAttackActive = false;
-                        player.onDodgeSuccess();
-                    } else {
-                        this.isAttackActive = false;
-                        player.onDodgeSuccess();
-                        if (gameState === 'TUTORIAL' && tutorialStep === 8) { showMsg("PERFECT DODGE"); tutorialStep = 9; }
-                    }
-                } else {
-                    this.hitPlayer();
+                    return;
                 }
+
+                if (player.state === 'DODGE') {
+                    this.isAttackActive = false;
+                    player.onDodgeSuccess();
+                    if (this.attackType !== 'BEAM' && gameState === 'TUTORIAL' && tutorialStep === 8) {
+                        showMsg("PERFECT DODGE");
+                        tutorialStep = 9;
+                    }
+                    return;
+                }
+
+                this.hitPlayer();
             }
 
             getHit(damage) {
@@ -2050,7 +2020,7 @@
                 if (gameState === 'TUTORIAL') {
                     if (tutorialStep === 2) { tutorialStep = 3; showMsg("GOOD!"); }
                     else if (tutorialStep === 5) { tutorialStep = 6; showMsg("GOOD!"); }
-                } else { timeScale = 0.1; setTimeout(() => timeScale = 1.0, 300); }
+                } else { timeScale = 0.1; setTimeout(() => { timeScale = 1.0; }, 300); }
 
                 if (gameState === 'PLAYING') score += 100;
                 if (gameState !== 'TUTORIAL') showMsg("JUST PARRY!");
@@ -2090,9 +2060,9 @@
                         Audio.playGameOver();
                         BGMEngine.changeScene('gameover');
                         document.getElementById('start-screen').style.display = 'flex';
-                        document.querySelector('#start-screen h1').innerText = "GAME OVER";
-                        document.querySelector('#start-screen .subtitle').innerText = `SCORE: ${score}`;
-                        document.getElementById('start-btn').innerText = "REBOOT SYSTEM";
+                        document.querySelector('#start-screen h1').textContent = "GAME OVER";
+                        document.querySelector('#start-screen .subtitle').textContent = `SCORE: ${score}`;
+                        document.getElementById('start-btn').textContent = "REBOOT SYSTEM";
                     }
                 }
             }
@@ -2201,35 +2171,42 @@
 
                 // === 攻撃エフェクト ===
                 if (this.state === 'ATTACKING') {
-                    ctx.strokeStyle = this.flashColor; ctx.lineWidth = 5; ctx.shadowBlur = 25; ctx.shadowColor = this.flashColor;
-                    ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    if (this.attackType === 'BEAM') {
-                        // 太いエネルギービーム
-                        ctx.moveTo(0, -50); ctx.lineTo(0, -1000);
-                        ctx.lineWidth = 25;
-                        ctx.stroke();
-                        // ビームのコア
-                        ctx.strokeStyle = '#fff';
-                        ctx.lineWidth = 8;
-                        ctx.beginPath();
-                        ctx.moveTo(0, -50); ctx.lineTo(0, -1000);
-                    }
-                    else if (this.attackType === 'SLASH') {
-                        ctx.arc(-50, -50, 100, 0, Math.PI);
-                    }
-                    else if (this.attackType === 'SMASH') {
-                        ctx.rect(-60, -130, 120, 140);
-                        ctx.lineWidth = 8;
-                    }
-                    else if (this.attackType === 'THRUST') {
-                        ctx.moveTo(0, -60); ctx.lineTo(-180, -60);
-                        ctx.lineWidth = 8;
-                    }
-                    ctx.stroke();
+                    this.drawAttackEffect(ctx);
                 }
 
                 ctx.restore();
+            }
+
+            drawAttackEffect(ctx) {
+                ctx.strokeStyle = this.flashColor;
+                ctx.lineWidth = 5;
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = this.flashColor;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                if (this.attackType === 'BEAM') {
+                    // 太いエネルギービーム
+                    ctx.moveTo(0, -50);
+                    ctx.lineTo(0, -1000);
+                    ctx.lineWidth = 25;
+                    ctx.stroke();
+                    // ビームのコア
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -50);
+                    ctx.lineTo(0, -1000);
+                } else if (this.attackType === 'SLASH') {
+                    ctx.arc(-50, -50, 100, 0, Math.PI);
+                } else if (this.attackType === 'SMASH') {
+                    ctx.rect(-60, -130, 120, 140);
+                    ctx.lineWidth = 8;
+                } else if (this.attackType === 'THRUST') {
+                    ctx.moveTo(0, -60);
+                    ctx.lineTo(-180, -60);
+                    ctx.lineWidth = 8;
+                }
+                ctx.stroke();
             }
         }
 
@@ -2237,143 +2214,151 @@
         const player = new Player();
         function createSparks(x, y, color, count) { for (let i = 0; i < count; i++) { particles.push(new Particle(x, y, color, 400, Math.random() * 5 + 2, Math.random() * 0.5 + 0.2)); } }
 
+        function updateParticleList(list, dt) {
+            for (let i = list.length - 1; i >= 0; i--) {
+                list[i].update(dt);
+                if (list[i].life <= 0) list.splice(i, 1);
+            }
+        }
+
+        function updateSpawns(dt) {
+            if (gameState !== 'PLAYING') return;
+            if (score > 1500 && enemies.length < 2) spawnEnemy(1);
+            if (score > 4000 && enemies.length < 3) spawnEnemy(2);
+            if (health >= 100) return;
+
+            recoverySpawnTimer -= dt;
+            if (recoverySpawnTimer <= 0 && recoveryItems.length === 0) {
+                recoveryItems.push(new RecoveryItem());
+                recoverySpawnTimer = 8 + Math.random() * 7; // 8〜15秒
+            }
+        }
+
+        function updateGameplayHUD(dt) {
+            if (score !== lastScore) {
+                showScorePopup(score - lastScore);
+                lastScore = score;
+            }
+            if (comboTimer > 0) {
+                comboTimer -= dt;
+                if (comboTimer <= 0) {
+                    combo = 0;
+                    Audio.setComboMultiplier(0);
+                    updateComboDisplay();
+                }
+            }
+            if (delayedHealth > health) {
+                delayedHealth = Math.max(health, delayedHealth - dt * 30);
+            }
+            document.getElementById('health-bar-delay').style.width = `${delayedHealth}%`;
+
+            const hpContainer = document.getElementById('health-bar-container');
+            if (health <= 30 && !hpContainer.classList.contains('shake')) {
+                hpContainer.classList.add('danger');
+                Audio.startDangerLoop();
+            } else if (health > 30) {
+                hpContainer.classList.remove('danger');
+                Audio.stopDangerLoop();
+            }
+
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('health-bar').style.width = `${health}%`;
+        }
+
+        function updateGameplay(dt) {
+            player.update(dt);
+            for (const e of enemies) {
+                e.update(dt);
+            }
+            updateSpawns(dt);
+            updateParticleList(particles, dt);
+            updateParticleList(trailParticles, dt);
+            updateParticleList(afterimages, dt);
+            updateParticleList(shockwaves, dt);
+            for (let i = recoveryItems.length - 1; i >= 0; i--) {
+                if (recoveryItems[i].update(dt)) recoveryItems.splice(i, 1);
+            }
+            Background.update(dt, player.x);
+            if (shakeIntensity > 0) shakeIntensity *= 0.9;
+            if (flashIntensity > 0) flashIntensity -= dt * 2;
+            updateGameplayHUD(dt);
+        }
+
         function gameLoop(timestamp) {
-            const dtReal = (timestamp - lastTime) / 1000; lastTime = timestamp;
+            const dtReal = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
             const dt = Math.min(dtReal, 0.1) * timeScale;
 
             if (gameState === 'PLAYING' || gameState === 'TUTORIAL') {
-                player.update(dt);
-                enemies.forEach(e => e.update(dt));
-                if (gameState === 'PLAYING') {
-                    if (score > 1500 && enemies.length < 2) spawnEnemy(1);
-                    if (score > 4000 && enemies.length < 3) spawnEnemy(2);
-                }
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    particles[i].update(dt); if (particles[i].life <= 0) particles.splice(i, 1);
-                }
-                // 新エフェクトの更新
-                for (let i = trailParticles.length - 1; i >= 0; i--) {
-                    trailParticles[i].update(dt); if (trailParticles[i].life <= 0) trailParticles.splice(i, 1);
-                }
-                for (let i = afterimages.length - 1; i >= 0; i--) {
-                    afterimages[i].update(dt); if (afterimages[i].life <= 0) afterimages.splice(i, 1);
-                }
-                for (let i = shockwaves.length - 1; i >= 0; i--) {
-                    shockwaves[i].update(dt); if (shockwaves[i].life <= 0) shockwaves.splice(i, 1);
-                }
-                // 回復アイテム更新
-                if (gameState === 'PLAYING' && health < 100) {
-                    recoverySpawnTimer -= dt;
-                    if (recoverySpawnTimer <= 0 && recoveryItems.length === 0) {
-                        recoveryItems.push(new RecoveryItem());
-                        recoverySpawnTimer = 8 + Math.random() * 7; // 8〜15秒
-                    }
-                }
-                for (let i = recoveryItems.length - 1; i >= 0; i--) {
-                    if (recoveryItems[i].update(dt)) recoveryItems.splice(i, 1);
-                }
-                Background.update(dt, player.x);
-                if (shakeIntensity > 0) shakeIntensity *= 0.9;
-                if (flashIntensity > 0) flashIntensity -= dt * 2;
-
-                // === UI改善: 更新処理 ===
-                // スコアポップアップ
-                if (score !== lastScore) {
-                    const diff = score - lastScore;
-                    showScorePopup(diff);
-                    lastScore = score;
-                }
-
-                // コンボタイマー
-                if (comboTimer > 0) {
-                    comboTimer -= dt;
-                    if (comboTimer <= 0) {
-                        combo = 0;
-                        Audio.setComboMultiplier(0);
-                        updateComboDisplay();
-                    }
-                }
-
-                // 遅延HPバー
-                if (delayedHealth > health) {
-                    delayedHealth -= dt * 30;
-                    if (delayedHealth < health) delayedHealth = health;
-                }
-                document.getElementById('health-bar-delay').style.width = delayedHealth + '%';
-
-                // HP危険時パルス
-                const hpContainer = document.getElementById('health-bar-container');
-                if (health <= 30 && !hpContainer.classList.contains('shake')) {
-                    hpContainer.classList.add('danger');
-                    Audio.startDangerLoop();
-                } else if (health > 30) {
-                    hpContainer.classList.remove('danger');
-                    Audio.stopDangerLoop();
-                }
-
-                document.getElementById('score-display').innerText = score;
-                document.getElementById('health-bar').style.width = health + '%';
+                updateGameplay(dt);
             }
-            draw(dt);
-            input.aPressed = false; input.bPressed = false;
+            draw();
+            input.aPressed = false;
+            input.bPressed = false;
             requestAnimationFrame(gameLoop);
         }
 
-        function draw(dt) {
-            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            if (shakeIntensity > 0) ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity);
-
-            const grd = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 50, canvas.width / 2, canvas.height / 2, 400);
-            grd.addColorStop(0, '#112'); grd.addColorStop(1, '#050505');
-            ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // パララックス背景描画
-            Background.draw(ctx);
-
-            ctx.fillStyle = '#eee'; ctx.shadowBlur = 50; ctx.shadowColor = '#fff';
-            ctx.beginPath(); ctx.arc(canvas.width * 0.5, canvas.height * 0.2, 80, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-
-            const horizonY = canvas.height * 0.25; const bottomY = canvas.height;
-            const floorGrd = ctx.createLinearGradient(0, horizonY, 0, bottomY);
+        function drawFloorGrid(horizonY, bottomY) {
+            const floorGrd = canvasCtx.createLinearGradient(0, horizonY, 0, bottomY);
             floorGrd.addColorStop(0, '#000'); floorGrd.addColorStop(1, '#111');
-            ctx.fillStyle = floorGrd; ctx.fillRect(0, horizonY, canvas.width, bottomY - horizonY);
+            canvasCtx.fillStyle = floorGrd; canvasCtx.fillRect(0, horizonY, canvas.width, bottomY - horizonY);
 
-            ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.beginPath();
+            canvasCtx.strokeStyle = '#333'; canvasCtx.lineWidth = 1; canvasCtx.beginPath();
             for (let i = -5; i <= 15; i++) {
                 const xBottom = i * (canvas.width / 10); const xTop = (canvas.width / 2) + (xBottom - canvas.width / 2) * 0.1;
-                ctx.moveTo(xTop, horizonY); ctx.lineTo(xBottom, bottomY);
+                canvasCtx.moveTo(xTop, horizonY); canvasCtx.lineTo(xBottom, bottomY);
             }
             for (let i = 0; i < 10; i++) {
-                const y = horizonY + Math.pow(i / 10, 2) * (bottomY - horizonY); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+                const y = horizonY + ((i / 10) ** 2) * (bottomY - horizonY); canvasCtx.moveTo(0, y); canvasCtx.lineTo(canvas.width, y);
             }
-            ctx.stroke();
+            canvasCtx.stroke();
+        }
 
+        function drawSceneEntities() {
             const sortedEntities = [...enemies, player].sort((a, b) => a.y - b.y);
             // 残像を先に描画（プレイヤーの後ろ）
-            afterimages.forEach(a => a.draw(ctx));
-            particles.forEach(p => { if (p.y < player.y) p.draw(ctx); });
-            sortedEntities.forEach(e => e.draw(ctx));
+            for (const a of afterimages) { a.draw(canvasCtx); }
+            for (const p of particles) { if (p.y < player.y) p.draw(canvasCtx); }
+            for (const e of sortedEntities) { e.draw(canvasCtx); }
             // 斬撃トレイル
-            trailParticles.forEach(t => t.draw(ctx));
-            particles.forEach(p => { if (p.y >= player.y) p.draw(ctx); });
+            for (const t of trailParticles) { t.draw(canvasCtx); }
+            for (const p of particles) { if (p.y >= player.y) p.draw(canvasCtx); }
             // 回復アイテム描画
-            recoveryItems.forEach(item => item.draw(ctx));
+            for (const item of recoveryItems) { item.draw(canvasCtx); }
             // 衝撃波（最前面）
-            shockwaves.forEach(s => s.draw(ctx));
+            for (const s of shockwaves) { s.draw(canvasCtx); }
+        }
+
+        function draw() {
+            canvasCtx.fillStyle = '#050505'; canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            canvasCtx.save();
+            if (shakeIntensity > 0) canvasCtx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity);
+
+            const grd = canvasCtx.createRadialGradient(canvas.width / 2, canvas.height / 2, 50, canvas.width / 2, canvas.height / 2, 400);
+            grd.addColorStop(0, '#112'); grd.addColorStop(1, '#050505');
+            canvasCtx.fillStyle = grd; canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // パララックス背景描画
+            Background.draw(canvasCtx);
+
+            canvasCtx.fillStyle = '#eee'; canvasCtx.shadowBlur = 50; canvasCtx.shadowColor = '#fff';
+            canvasCtx.beginPath(); canvasCtx.arc(canvas.width * 0.5, canvas.height * 0.2, 80, 0, Math.PI * 2); canvasCtx.fill(); canvasCtx.shadowBlur = 0;
+
+            drawFloorGrid(canvas.height * 0.25, canvas.height);
+            drawSceneEntities();
 
             if (flashIntensity > 0) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
-                if (flashColor === '#ff0') ctx.fillStyle = `rgba(255, 255, 0, ${flashIntensity * 0.5})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                canvasCtx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
+                if (flashColor === '#ff0') canvasCtx.fillStyle = `rgba(255, 255, 0, ${flashIntensity * 0.5})`;
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
             }
             if (shakeIntensity > 10) {
-                ctx.globalCompositeOperation = 'screen';
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; ctx.fillRect(5, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'rgba(0, 0, 255, 0.3)'; ctx.fillRect(-5, 0, canvas.width, canvas.height);
-                ctx.globalCompositeOperation = 'source-over';
+                canvasCtx.globalCompositeOperation = 'screen';
+                canvasCtx.fillStyle = 'rgba(255, 0, 0, 0.3)'; canvasCtx.fillRect(5, 0, canvas.width, canvas.height);
+                canvasCtx.fillStyle = 'rgba(0, 0, 255, 0.3)'; canvasCtx.fillRect(-5, 0, canvas.width, canvas.height);
+                canvasCtx.globalCompositeOperation = 'source-over';
             }
-            ctx.restore();
+            canvasCtx.restore();
         }
 
         function handleBtn(key, pressed) {
@@ -2384,19 +2369,19 @@
             if (key === 'a' || key === 'z' || key === ' ') { input.a = pressed; if (pressed) input.aPressed = true; }
             if (key === 'b' || key === 'x' || key === 'Shift') { input.b = pressed; if (pressed) input.bPressed = true; }
         }
-        window.addEventListener('keydown', e => handleBtn(e.key, true));
-        window.addEventListener('keyup', e => handleBtn(e.key, false));
-        window.addEventListener('keydown', e => { if (['ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault(); });
+        globalThis.addEventListener('keydown', e => handleBtn(e.key, true));
+        globalThis.addEventListener('keyup', e => handleBtn(e.key, false));
+        globalThis.addEventListener('keydown', e => { if (['ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault(); });
 
         const setupInput = (selector, key) => {
             const elements = document.querySelectorAll(selector);
-            elements.forEach(el => {
+            for (const el of elements) {
                 el.addEventListener('touchstart', (e) => { e.preventDefault(); handleBtn(key, true); el.classList.add('active'); }, { passive: false });
                 el.addEventListener('touchend', (e) => { e.preventDefault(); handleBtn(key, false); el.classList.remove('active'); }, { passive: false });
                 el.addEventListener('mousedown', (e) => { handleBtn(key, true); el.classList.add('active'); });
                 el.addEventListener('mouseup', (e) => { handleBtn(key, false); el.classList.remove('active'); });
                 el.addEventListener('mouseleave', (e) => { if (el.classList.contains('active')) { handleBtn(key, false); el.classList.remove('active'); } });
-            });
+            }
         };
         setupInput('.d-up', 'ArrowUp');
         setupInput('.d-down', 'ArrowDown');
@@ -2408,7 +2393,7 @@
         function spawnEnemy(index) { enemies.push(new Enemy(index)); showMsg("WARNING: REINFORCEMENTS"); Audio.playEnemySpawn(); }
         function showMsg(text, isCounter = false) {
             const el = document.getElementById('msg-overlay');
-            el.innerText = text;
+            el.textContent = text;
             el.style.opacity = 1;
             // 長いメッセージには改行クラスを追加
             const wrapClass = text.length > 15 ? 'wrap-text' : '';
@@ -2422,14 +2407,14 @@
         }
         function showTutorial(title, text) {
             const el = document.getElementById('tutorial-overlay');
-            document.getElementById('tut-title').innerText = title; document.getElementById('tut-text').innerHTML = text; el.style.display = 'block';
+            document.getElementById('tut-title').textContent = title; document.getElementById('tut-text').innerHTML = text; el.style.display = 'block';
         }
         function hideTutorial() { document.getElementById('tutorial-overlay').style.display = 'none'; }
 
         // === UI改善: ヘルパー関数 ===
         function showScorePopup(amount) {
             const el = document.getElementById('score-popup');
-            el.innerText = '+' + amount;
+            el.textContent = `+${amount}`;
             el.classList.add('show');
             setTimeout(() => { el.classList.remove('show'); }, 400);
         }
@@ -2440,7 +2425,7 @@
 
             if (combo > 0) {
                 counter.classList.add('active');
-                countEl.innerText = combo;
+                countEl.textContent = combo;
 
                 // 色変化
                 counter.classList.remove('combo-high', 'combo-max');

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 4,
+    "lineWidth": 120
+  },
+  "json": {
+    "formatter": {
+      "indentWidth": 2
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": {
+        "noSvgWithoutTitle": "error",
+        "useButtonType": "error",
+        "useGenericFontNames": "error",
+        "useSemanticElements": "error"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 15
+          }
+        },
+        "noForEach": "warn",
+        "noImportantStyles": "off",
+        "noUselessCatchBinding": "warn",
+        "noVoid": "warn",
+        "useArrowFunction": "warn",
+        "useMathMinMax": "warn",
+        "useOptionalChain": "warn",
+        "useSimplifiedLogicExpression": "warn"
+      },
+      "correctness": {
+        "noUnusedVariables": "error",
+        "useParseIntRadix": "error"
+      },
+      "performance": {
+        "useDomNodeTextContent": "warn",
+        "useTopLevelRegex": "warn"
+      },
+      "style": {
+        "noDescendingSpecificity": "off",
+        "noNegationElse": "warn",
+        "useAtIndex": "warn",
+        "useCollapsedElseIf": "warn",
+        "useCollapsedIf": "warn",
+        "useConsistentBuiltinInstantiation": "warn",
+        "useConst": "warn",
+        "useDefaultSwitchClause": "warn",
+        "useExplicitLengthCheck": "warn",
+        "useExponentiationOperator": "warn",
+        "useGlobalThis": "warn",
+        "useNumberNamespace": "warn",
+        "useTemplate": "warn"
+      },
+      "suspicious": {
+        "noDuplicateElseIf": "error",
+        "noDuplicateSelectors": "error",
+        "noEmptyBlockStatements": "warn",
+        "noForIn": "warn",
+        "noGlobalIsNan": "error",
+        "noRedundantUseStrict": "warn",
+        "noReturnAssign": "error",
+        "noShadow": "warn",
+        "noShorthandPropertyOverrides": "error",
+        "noUnusedExpressions": "error",
+        "useAwait": "error",
+        "useIterableCallbackReturn": "error"
+      }
+    }
+  }
+}
