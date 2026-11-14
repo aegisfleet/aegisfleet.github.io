@@ -1,0 +1,267 @@
+{
+  "$comment": "ポートフォリオの全掲載データ。プロジェクトを追加する場合はこのファイルにオブジェクトを1件追加するだけでよい。kind: media | tool | game | infra | studio",
+  "profile": {
+    "name": "ポち",
+    "handle": "aegisfleet",
+    "github": "aegisfleet",
+    "socials": [
+      { "label": "GitHub", "url": "https://github.com/aegisfleet", "icon": "fa-brands fa-github" },
+      { "label": "X", "url": "https://x.com/aegisfleet", "icon": "fa-brands fa-x-twitter" },
+      { "label": "note", "url": "https://note.com/aegisfleet", "icon": "fa-solid fa-note-sticky" },
+      { "label": "Instagram", "url": "https://www.instagram.com/aegisfleet", "icon": "fa-brands fa-instagram" }
+    ]
+  },
+
+  "showcase": [
+    {
+      "id": "amazon-hikaku",
+      "repo": "amazon-product-article",
+      "kind": "media",
+      "name": "Amazon商品徹底比較",
+      "eyebrow": "Flagship 01 / Autonomous Commerce Media",
+      "tagline": "AIエージェントが商品を調べ、比べ、記事にする。",
+      "description": "Amazon Creators API で取得した商品データをもとに、Antigravity CLI（AIエージェント）が徹底調査レポートを作成し、レビュー記事を自動生成・公開する比較メディア。個別記事に留まらず、購買判断を多角的に支える導線を備える。",
+      "highlights": [
+        "カテゴリ階層・ブランド別・セール・ワーストバイ調査・商品比較・お気に入りまで自動整備",
+        "生成 JSON をスキーマ・リンク・単位の観点でバリデーションする品質ゲート",
+        "GCP Always Free の e2-micro 上のセルフホステッドランナーで自律的に PR を作成"
+      ],
+      "pipeline": ["Creators API", "agy 調査", "品質検証", "Hugo 生成", "Pages 公開"],
+      "tech": ["TypeScript", "Python", "Hugo", "Antigravity CLI", "GitHub Actions"],
+      "url": "https://www.amazon-hikaku.com/",
+      "shot": "assets/img/shots/amazon-hikaku.webp"
+    },
+    {
+      "id": "tool-survey-report",
+      "repo": "tool-survey-report",
+      "kind": "media",
+      "name": "Tool Survey Report",
+      "eyebrow": "Flagship 02 / AI Research Pipeline",
+      "tagline": "開発ツールの調査を、毎日AIが書き足していく。",
+      "description": "AIエージェントが開発ツールを調査し、レポートとして蓄積・公開する Jekyll サイト。調査の実行から Pull Request 作成、ビルド検証、自動マージまでをワークフローとして無人運用している。",
+      "highlights": [
+        "検索・タグフィルタリングを備えたレスポンシブ UI と SEO 対応",
+        "調査 → PR 作成 → ビルド検証 → 自動マージの完全自動ループ",
+        "Jules 終了後は Antigravity CLI ＋ GCP セルフホステッドランナーへ移行"
+      ],
+      "pipeline": ["Schedule", "agy 調査", "Pull Request", "ビルド検証", "自動マージ"],
+      "tech": ["Jekyll", "Sass", "Antigravity CLI", "GitHub Actions"],
+      "url": "https://aegisfleet.github.io/tool-survey-report/",
+      "shot": "assets/img/shots/tool-survey-report.webp"
+    },
+    {
+      "id": "chugoku-odekake-guide",
+      "repo": "chugoku-odekake-guide",
+      "kind": "media",
+      "name": "中国地方おでかけガイド",
+      "eyebrow": "Flagship 03 / Local Media Operated by AI",
+      "tagline": "広島発、AIが毎日歩き回る地域メディア。",
+      "description": "広島を中心に中国地方5県のおでかけ情報を紹介するガイドサイト。AIエージェント「Muse」が情報収集・検証・データ作成・サイト生成と日次〜月次の運用を担い、運営者は方針と判断に専念する。",
+      "highlights": [
+        "検証ゲートを通過した情報のみを日次で自動掲載し、結果を事後報告",
+        "写真は転載せず出典投稿へのリンクで紹介、施設詳細は Google マップに委譲",
+        "大分類を5ジャンルに固定し、細分類はタグで扱うデータ設計"
+      ],
+      "pipeline": ["IG / Threads", "Muse 収集", "検証ゲート", "YAML 描画", "Pages 公開"],
+      "tech": ["Muse", "YAML", "GitHub Pages", "Google Maps"],
+      "url": "https://aegisfleet.github.io/chugoku-odekake-guide/",
+      "shot": "assets/img/shots/chugoku-odekake-guide.webp"
+    }
+  ],
+
+  "products": [
+    {
+      "id": "kotoba-pass",
+      "repo": "kotoba-pass",
+      "kind": "tool",
+      "size": "feature",
+      "category": "webapp",
+      "name": "コトバパス",
+      "badge": "Stateless",
+      "description": "日本語の秘密のフレーズから、24文字のパスワードを決定論的に導出するジェネレーター。",
+      "point": "Web Crypto API による完全クライアント計算。サイトが消えても PowerShell / Bash の1行で同じ値を再現できる。",
+      "tech": ["Vanilla JS", "Web Crypto API"],
+      "url": "https://aegisfleet.github.io/kotoba-pass/",
+      "shot": "assets/img/shots/kotoba-pass.webp"
+    },
+    {
+      "id": "share-deepresearch",
+      "repo": "share-deepresearch",
+      "kind": "media",
+      "size": "wide",
+      "category": "knowledge",
+      "name": "Share DeepResearch",
+      "badge": "Knowledge",
+      "description": "Gemini DeepResearch による調査結果を公開するレポートサイト。",
+      "point": "GitHub Actions で GA4 のメトリクスを自動更新し、記事の人気度を可視化。",
+      "tech": ["Jekyll", "Gemini", "GA4", "GitHub Actions"],
+      "url": "https://aegisfleet.github.io/share-deepresearch/",
+      "shot": "assets/img/shots/share-deepresearch.webp"
+    },
+    {
+      "id": "voice-visual-novel",
+      "repo": "voice-visual-novel",
+      "kind": "media",
+      "size": "feature",
+      "category": "studio",
+      "name": "VOICE VISUAL NOVELS",
+      "badge": "Full Voice",
+      "description": "AI 音声モデルによるフルボイスのサイバー捜査ノベル。『PROJECT EVE』『BOX WORM』『GHOST PROTOCOL』の3作品を公開中。",
+      "point": "HTML5 / CSS3 / Web Audio API のみで構築し、サーバーやインストール不要でブラウザから即座に動作。",
+      "tech": ["JavaScript", "Web Audio API", "AI Voice"],
+      "url": "https://aegisfleet.github.io/voice-visual-novel/",
+      "shot": "assets/img/shots/voice-visual-novel.webp"
+    },
+    {
+      "id": "antigravity-on-android",
+      "repo": "antigravity-on-android",
+      "kind": "infra",
+      "size": "tall",
+      "category": "infra",
+      "name": "Antigravity on Android",
+      "badge": "R&D",
+      "icon": "fa-solid fa-mobile-screen-button",
+      "description": "Termux ＋ proot Ubuntu 上で T3 Code と Antigravity CLI を連携させ、Android 端末単体で自律型 AI コーディング環境をワンライナー構築する。",
+      "point": "ARM64 の 39-bit VA 制約を回避するため、軽量な Python 製 ACP ブリッジを自作。",
+      "stack": [
+        "Termux / proot Ubuntu (ARM64)",
+        "T3 Code チャット UI",
+        "agy_acp_bridge.py (自作ブリッジ)",
+        "Google Antigravity CLI (agy)"
+      ],
+      "tech": ["Python", "Termux", "ACP"]
+    },
+    {
+      "id": "mermaid-editor",
+      "repo": "mermaid-editor-genai",
+      "kind": "tool",
+      "size": "sm",
+      "category": "webapp",
+      "name": "Mermaid Editor GenAI",
+      "description": "自然言語の指示で Mermaid 図を生成・編集。",
+      "point": "既存ダイアグラムのアップロード解析・更新に対応。",
+      "tech": ["Next.js", "TypeScript", "Gemini API"],
+      "url": "https://mermaid-editor-genai.vercel.app/",
+      "shot": "assets/img/shots/mermaid-editor.webp"
+    },
+    {
+      "id": "svg-editor",
+      "repo": "svg-editor-genai",
+      "kind": "tool",
+      "size": "sm",
+      "category": "webapp",
+      "name": "SVG Editor GenAI",
+      "description": "自然言語の指示で SVG 画像を生成・編集。",
+      "point": "CodeMirror 連携でリアルタイム編集とプレビュー。",
+      "tech": ["Next.js", "TypeScript", "Gemini API"],
+      "url": "https://svg-editor-genai.vercel.app/",
+      "shot": "assets/img/shots/svg-editor.webp"
+    },
+    {
+      "id": "cloud-genai-studio",
+      "repo": "cloud-genai-studio",
+      "kind": "studio",
+      "size": "wide",
+      "category": "studio",
+      "name": "Cloud GenAI Studio",
+      "badge": "GPU Orchestration",
+      "icon": "fa-solid fa-music",
+      "description": "GCP の NVIDIA L4 Spot インスタンスで YuE2（音楽）や Wan2.2（音声駆動動画）など重量級モデルを運用するオーケストレーター。",
+      "point": "起動 → 転送 → 生成 → 回収 → 自動停止をワンコマンド化し、1曲あたり数円〜数十円で生成。",
+      "stack": [
+        "PowerShell ワンコマンド起動",
+        "GCP L4 24GB Spot インスタンス",
+        "YuE2 / Wan2.2 モデル推論",
+        "成果物回収 → 自動停止"
+      ],
+      "tech": ["Python", "PowerShell", "GCP", "YuE2"]
+    },
+    {
+      "id": "antigravity-on-gcp",
+      "repo": "antigravity-on-gcp",
+      "kind": "infra",
+      "size": "sm",
+      "category": "infra",
+      "name": "Antigravity on GCP",
+      "icon": "fa-solid fa-server",
+      "description": "Always Free の e2-micro に Antigravity CLI と Actions ランナーを自動構築。",
+      "point": "Cloud IAP で SSH を外部非公開にし、主力メディアの定期実行を支える。",
+      "tech": ["GCP", "GitHub Actions"]
+    },
+    {
+      "id": "shared-notebook",
+      "repo": "shared-notebook",
+      "kind": "media",
+      "size": "sm",
+      "category": "knowledge",
+      "name": "Shared Notebook",
+      "description": "Hugo ＋ Hextra による個人ノート共有サイト。",
+      "point": "FlexSearch / Pagefind の全文検索と Mermaid に対応。",
+      "tech": ["Hugo", "Hextra"],
+      "url": "https://aegisfleet.github.io/shared-notebook/",
+      "shot": "assets/img/shots/shared-notebook.webp"
+    },
+    {
+      "id": "muse-movie-edit-studio",
+      "repo": "muse-movie-edit-studio",
+      "kind": "studio",
+      "size": "sm",
+      "category": "studio",
+      "name": "Muse Movie Edit Studio",
+      "icon": "fa-solid fa-clapperboard",
+      "description": "写真・動画素材から縦型ショート動画を自動編集するパイプライン。",
+      "point": "YAML を唯一の真実とし、ffmpeg ＋ Remotion ＋ YOLOv8 で合成・品質検証。",
+      "tech": ["Python", "Remotion", "ffmpeg"]
+    },
+    {
+      "id": "voicevox2video",
+      "repo": "voicevox2video",
+      "kind": "studio",
+      "size": "sm",
+      "category": "studio",
+      "name": "Voicevox2Video",
+      "icon": "fa-solid fa-film",
+      "description": "URL やテキストから対話シナリオを生成し、音声・字幕付き動画を自動生成。",
+      "point": "対話の雰囲気や絵文字に応じて BGM とエフェクトを自動適用。",
+      "tech": ["Python", "Gemini API", "VOICEVOX"]
+    }
+  ],
+
+  "productFilters": [
+    { "id": "all", "label": "すべて" },
+    { "id": "webapp", "label": "Webアプリ" },
+    { "id": "knowledge", "label": "ナレッジ" },
+    { "id": "infra", "label": "AI開発基盤" },
+    { "id": "studio", "label": "メディア生成" }
+  ],
+
+  "bots": {
+    "name": "Autonomous Trend BOT Network",
+    "description": "各種技術サイトや市場のトレンドを AI が日本語で要約し、Bluesky へ自動投稿する BOT 群。すべて同一アーキテクチャで独立稼働し、人手を介さず毎日配信を続けている。",
+    "pipeline": [
+      { "label": "Collect", "detail": "トレンド収集", "icon": "fa-solid fa-satellite-dish" },
+      { "label": "Summarize", "detail": "Gemini で要約", "icon": "fa-solid fa-wand-magic-sparkles" },
+      { "label": "Schedule", "detail": "Actions で定期実行", "icon": "fa-solid fa-clock-rotate-left" },
+      { "label": "Post", "detail": "Bluesky API", "icon": "fa-solid fa-paper-plane" }
+    ],
+    "tech": ["Python", "Gemini API", "GitHub Actions", "Bluesky API"],
+    "items": [
+      { "name": "GitHub", "icon": "fa-brands fa-github", "url": "https://bsky.app/profile/dailygithubtrends.bsky.social", "repo": "github-trending-to-bluesky" },
+      { "name": "Qiita", "icon": "fa-solid fa-q", "url": "https://bsky.app/profile/dailyqiitatrends.bsky.social", "repo": "qiita-trending-to-bluesky" },
+      { "name": "Zenn", "icon": "fa-solid fa-z", "url": "https://bsky.app/profile/dailyzenntrends.bsky.social", "repo": "zenn-trending-to-bluesky" },
+      { "name": "GenAI", "icon": "fa-solid fa-robot", "url": "https://bsky.app/profile/dailygenaitrends.bsky.social", "repo": "genai-trending-to-bluesky" },
+      { "name": "Hugging Face", "icon": "fa-solid fa-face-smile", "url": "https://bsky.app/profile/huggingfacetrends.bsky.social", "repo": "hugging-face-trending-to-bluesky" },
+      { "name": "Markets", "icon": "fa-solid fa-chart-line", "url": "https://bsky.app/profile/dailymarkettrends.bsky.social", "repo": "markets-trending-to-bluesky" }
+    ]
+  },
+
+  "archive": [
+    {
+      "id": "live-stream-summarizer",
+      "repo": "live-stream-summarizer",
+      "name": "Live Stream Summarizer",
+      "description": "YouTube ライブ配信を AI が自動要約するサイト。無料サービスのみで全処理を構成。",
+      "tech": ["Gemini API", "GitHub Actions"]
+    }
+  ]
+}
