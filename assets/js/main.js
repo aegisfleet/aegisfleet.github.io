@@ -391,6 +391,43 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
         globalThis.addEventListener("scroll", onScroll, { passive: true });
         globalThis.addEventListener("resize", onScroll, { passive: true });
         update();
+
+        if (!reduceMotion) setupSpotlight(bg);
+    }
+
+    /* グリッドのスポットライト：マウス環境ではポインタ追従、無い環境ではスクロールで緩やかに下へ */
+    function setupSpotlight(bg) {
+        const finePointer = globalThis.matchMedia("(hover: hover) and (pointer: fine)").matches;
+        let mx = globalThis.innerWidth * .5;
+        let my = globalThis.innerHeight * .35;
+        let pending = false;
+
+        const paint = () => {
+            pending = false;
+            bg.style.setProperty("--bg-mx", `${mx}px`);
+            bg.style.setProperty("--bg-my", `${my}px`);
+        };
+        const schedule = () => {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(paint);
+        };
+
+        if (finePointer) {
+            globalThis.addEventListener("pointermove", (e) => {
+                if (e.pointerType === "touch") return;
+                mx = e.clientX;
+                my = e.clientY;
+                schedule();
+            }, { passive: true });
+        } else {
+            const trackScroll = () => {
+                my = globalThis.innerHeight * .35 + Math.min(globalThis.scrollY * .05, globalThis.innerHeight * .3);
+                schedule();
+            };
+            globalThis.addEventListener("scroll", trackScroll, { passive: true });
+        }
+        paint();
     }
 
     function setupNav() {

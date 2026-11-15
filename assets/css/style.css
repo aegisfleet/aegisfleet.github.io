@@ -100,42 +100,157 @@ code { font-family: var(--font-mono); font-size: .9em; color: var(--accent-2); }
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
+    background: radial-gradient(ellipse 90% 70% at 50% -20%, rgba(255,119,51,.07), transparent 70%);
 }
 /* セクションごとに濃淡が変わる暖色のベール */
 .site-bg::after {
     content: "";
     position: absolute;
     inset: -20%;
+    z-index: 1;
     background: radial-gradient(ellipse 55% 50% at 72% 12%, rgba(255,119,51,.2), transparent 68%);
     opacity: .45;
     transition: opacity 1.4s var(--ease);
     will-change: opacity;
 }
+/* 極薄フィルムグレイン（SVG Data URI）。暗い面の「のっぺり感」を消す */
+.site-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    mix-blend-mode: overlay;
+}
 .orb {
     position: absolute;
+    z-index: 0;
     border-radius: 50%;
-    filter: blur(90px);
+    filter: blur(90px) saturate(140%);
     opacity: .55;
     transition: opacity 1.4s var(--ease);
     will-change: transform, translate, opacity;
 }
-/* スクロール量（--sy）でゆっくり視差移動。transform の drift とは独立して合成される */
-.orb-a { width: 620px; height: 620px; top: -220px; right: -120px; background: radial-gradient(circle, rgba(255,119,51,.45), transparent 65%); animation: drift 22s ease-in-out infinite alternate; translate: calc(var(--sy, 0) * -.012px) calc(var(--sy, 0) * .035px); }
-.orb-b { width: 540px; height: 540px; top: 40%; left: -220px; background: radial-gradient(circle, rgba(94,120,255,.28), transparent 65%); animation: drift 28s ease-in-out infinite alternate-reverse; translate: calc(var(--sy, 0) * .01px) calc(var(--sy, 0) * -.02px); }
-.orb-c { width: 480px; height: 480px; bottom: -200px; right: 10%; background: radial-gradient(circle, rgba(255,179,107,.22), transparent 65%); animation: drift 34s ease-in-out infinite alternate; translate: calc(var(--sy, 0) * -.008px) calc(var(--sy, 0) * .045px); }
+/* スクロール量（--sy）でゆっくり視差移動。transform の drift / sway とは独立して合成される */
+.orb-a {
+    width: 780px; height: 520px;
+    top: -240px; right: -140px;
+    background: conic-gradient(from 120deg at 50% 50%,
+        rgba(255,119,51,.42) 0deg,
+        rgba(255,179,107,.18) 90deg,
+        transparent 170deg,
+        transparent 260deg,
+        rgba(94,225,255,.16) 320deg,
+        rgba(255,119,51,.42) 360deg);
+    animation: aurora-sway 20s ease-in-out infinite alternate;
+    translate: calc(var(--sy, 0) * -.012px) calc(var(--sy, 0) * .035px);
+}
+.orb-b {
+    width: 720px; height: 480px;
+    top: 38%; left: -240px;
+    background: conic-gradient(from 300deg at 50% 50%,
+        rgba(94,120,255,.28) 0deg,
+        rgba(255,119,51,.15) 130deg,
+        transparent 230deg,
+        rgba(94,225,255,.18) 320deg,
+        rgba(94,120,255,.28) 360deg);
+    animation: aurora-sway 26s ease-in-out 2s infinite alternate-reverse;
+    translate: calc(var(--sy, 0) * .01px) calc(var(--sy, 0) * -.02px);
+}
+.orb-c {
+    width: 660px; height: 440px;
+    bottom: -200px; right: 8%;
+    background: radial-gradient(circle at 50% 50%, rgba(255,179,107,.24), transparent 68%);
+    animation: drift 34s ease-in-out infinite alternate;
+    translate: calc(var(--sy, 0) * -.008px) calc(var(--sy, 0) * .045px);
+}
+@keyframes aurora-sway {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    50%  { transform: translate3d(-50px, 40px, 0) rotate(12deg) scale(1.12, .92); }
+    100% { transform: translate3d(60px, 80px, 0) rotate(-8deg) scale(.95, 1.15); }
+}
 @keyframes drift {
     to { transform: translate3d(60px, 80px, 0) scale(1.12); }
 }
 .grid-lines {
     position: absolute;
     inset: 0;
+    z-index: 2;
     background-image:
         linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
     background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    /* 画面全体にうっすら広がるベースグリッド。動きはスポットライト層が担う */
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 8%, #000 22%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 8%, #000 22%, transparent 78%);
     transition: opacity 1.4s var(--ease);
+}
+
+/* カーソル（タッチ環境では画面中央）の周囲だけオレンジに浮かぶグリッド層 */
+.grid-spotlight {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background-image:
+        linear-gradient(rgba(255,119,51,.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,119,51,.2) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(480px circle at var(--bg-mx, 50%) var(--bg-my, 35%), #000 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(480px circle at var(--bg-mx, 50%) var(--bg-my, 35%), #000 0%, transparent 75%);
+    opacity: .8;
+    transition: opacity 1.4s var(--ease);
+}
+/* 64px グリッドのライン上を走るシャープなデータパルス */
+.grid-beams {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    overflow: hidden;
+    transition: opacity 1.4s var(--ease);
+}
+.beam {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+/* 横方向のパルス（64px の倍数位置に配置） */
+.beam-h1, .beam-h2 {
+    left: 0;
+    width: 220px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+    box-shadow: 0 0 12px var(--glow);
+}
+.beam-h1 { top: 192px; animation: beam-x 9s cubic-bezier(.4, 0, .2, 1) infinite; }
+.beam-h2 { top: 448px; width: 180px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: beam-x 13s cubic-bezier(.4, 0, .2, 1) 3.5s infinite reverse; }
+/* 縦方向のパルス（64px の倍数位置に配置） */
+.beam-v1, .beam-v2 {
+    top: 0;
+    width: 1px;
+    height: 200px;
+    background: linear-gradient(180deg, transparent, var(--accent), var(--accent-2), transparent);
+    box-shadow: 0 0 12px var(--glow);
+}
+.beam-v1 { left: 256px; animation: beam-y 11s cubic-bezier(.4, 0, .2, 1) 1.2s infinite; }
+.beam-v2 { left: calc(100% - 320px); animation: beam-y 14s cubic-bezier(.4, 0, .2, 1) 5s infinite; }
+/* animation ショートハンドが fill-mode をリセットするため、後段で上書き。
+   遅延中も 0% キーフレーム（画面外・透明）を適用し、静止した光線が見えないようにする */
+.grid-beams .beam { animation-fill-mode: both; }
+
+@keyframes beam-x {
+    0%   { transform: translate3d(-260px, 0, 0); opacity: 0; }
+    15%  { opacity: .95; }
+    75%  { opacity: .95; }
+    100% { transform: translate3d(105vw, 0, 0); opacity: 0; }
+}
+@keyframes beam-y {
+    0%   { transform: translate3d(0, -240px, 0); opacity: 0; }
+    15%  { opacity: .85; }
+    75%  { opacity: .85; }
+    100% { transform: translate3d(0, 105vh, 0); opacity: 0; }
 }
 
 /* セクションごとの背景プリセット（オレンジ基調のまま濃淡を変化） */
@@ -174,6 +289,16 @@ body[data-section="footer"] .orb-b { opacity: .22; }
 body[data-section="footer"] .orb-c { opacity: .95; }
 body[data-section="footer"] .site-bg::after { opacity: .8; }
 body[data-section="footer"] .grid-lines { opacity: .65; }
+
+/* スポットライトとデータパルスはセクションごとに強弱をつける */
+body[data-section="showcase"] .grid-spotlight { opacity: .85; }
+body[data-section="products"] .grid-spotlight { opacity: .7; }
+body[data-section="bots"] .grid-spotlight { opacity: 1; }
+body[data-section="archive"] .grid-spotlight { opacity: .35; }
+body[data-section="footer"] .grid-spotlight { opacity: .9; }
+
+body[data-section="archive"] .grid-beams { opacity: .3; }
+body[data-section="products"] .grid-beams { opacity: .8; }
 
 /* ---------- Navigation ---------- */
 .nav {
