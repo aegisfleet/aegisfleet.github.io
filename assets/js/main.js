@@ -12,8 +12,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
 
 (() => {
     const DATA_URL = "data/projects.json";
-    const GH_CACHE_KEY = "aegisfleet:gh-repos:v1";
-    const GH_CACHE_TTL = 60 * 60 * 1000; // 1時間
     const reduceMotion = globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const $ = (sel, root = document) => root.querySelector(sel);
@@ -25,7 +23,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
     const linkAttrs = (url) => isExternal(url) ? ' target="_blank" rel="noopener"' : "";
     const repoUrl = (gh, repo) => `https://github.com/${gh}/${repo}`;
     const chips = (list = []) => `<div class="chips">${list.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>`;
-    const fresh = (repo) => repo ? `<span class="fresh" data-repo="${esc(repo)}"></span>` : "";
     const prettyUrl = (url) => url.replace(EXTERNAL_URL_RE, "").replace(TRAILING_SLASH_RE, "");
 
     /* ---------------- Hero ---------------- */
@@ -127,7 +124,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
                 <div class="step-actions">
                     <a class="btn btn-primary" href="${esc(p.url)}"${linkAttrs(p.url)}>サイトを見る<i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                     <a class="btn btn-ghost" href="${repoUrl(profile.github, p.repo)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>Source</a>
-                    ${fresh(p.repo)}
                 </div>
             </article>`).join("");
 
@@ -173,7 +169,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
             <div class="tile-links">
                 ${p.url ? `<a class="link-btn primary" href="${esc(p.url)}"${linkAttrs(p.url)}>Open<i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}
                 ${p.repo ? `<a class="link-btn" href="${repoUrl(githubUser, p.repo)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>GitHub</a>` : ""}
-                ${fresh(p.repo)}
             </div>`;
     }
 
@@ -293,54 +288,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
                 ${chips(a.tech)}
                 <a class="link-btn" href="${repoUrl(profile.github, a.repo)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>GitHub</a>
             </li>`).join("");
-    }
-
-    /* ---------------- GitHub API 同期（最終更新日の自動表示） ---------------- */
-    function relTime(iso) {
-        const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-        if (days <= 0) return "今日更新";
-        if (days < 30) return `${days}日前に更新`;
-        if (days < 365) return `${Math.floor(days / 30)}か月前に更新`;
-        return `${Math.floor(days / 365)}年前に更新`;
-    }
-
-    function loadGitHubCache() {
-        try {
-            const cached = JSON.parse(localStorage.getItem(GH_CACHE_KEY) || "null");
-            if (cached && Date.now() - cached.at < GH_CACHE_TTL) return cached;
-        } catch { /* キャッシュ破損は無視 */ }
-        return null;
-    }
-
-    async function fetchGitHubRepos(user) {
-        try {
-            const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=pushed`);
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
-            const repos = Object.fromEntries(json.map((r) => [r.name, { pushed: r.pushed_at, stars: r.stargazers_count }]));
-            const at = Date.now();
-            localStorage.setItem(GH_CACHE_KEY, JSON.stringify({ at, repos }));
-            return { repos, at };
-        } catch {
-            return null; // API 制限時は静かに諦める
-        }
-    }
-
-    async function syncGitHub(user) {
-        const result = loadGitHubCache() || await fetchGitHubRepos(user);
-        if (!result) return;
-        const { repos, at: fetchedAt } = result;
-
-        for (const el of $$(".fresh[data-repo]")) {
-            const r = repos[el.dataset.repo];
-            if (!r) continue;
-            el.textContent = relTime(r.pushed);
-            el.title = new Date(r.pushed).toLocaleString("ja-JP");
-            const days = (Date.now() - new Date(r.pushed).getTime()) / 86400000;
-            el.classList.toggle("is-hot", days < 7);
-        }
-        const t = new Date(fetchedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-        $("#sync-status").innerHTML = `<i class="fa-solid fa-rotate"></i>Data-driven by <code>data/projects.json</code> · GitHub 同期 ${t}`;
     }
 
     /* ---------------- 共通インタラクション ---------------- */
@@ -469,7 +416,6 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
             renderBots(data);
             renderArchive(data);
             setupReveal();
-            syncGitHub(data.profile.github);
         } catch (err) {
             console.error(err);
             setupReveal();

@@ -477,24 +477,6 @@ em {
     white-space: nowrap;
 }
 
-.fresh {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--dim);
-}
-.fresh:empty { display: none; }
-.fresh.is-hot { color: #6ee7a0; }
-.fresh.is-hot::before {
-    content: "";
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    box-shadow: 0 0 8px currentColor;
-}
-
 /* ---------- Reveal (IntersectionObserver) ---------- */
 [data-reveal] {
     opacity: 0;
@@ -1154,7 +1136,6 @@ em {
 .link-btn.primary { background: var(--text); color: #111; border-color: transparent; }
 .link-btn.primary:hover { background: var(--accent); color: #1a0d05; }
 .link-btn i { font-size: 11px; }
-.tile-links .fresh { margin-left: auto; }
 
 /* ==========================================================================
    4. BOT network
