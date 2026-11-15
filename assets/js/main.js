@@ -358,6 +358,41 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
         for (const t of targets) { io.observe(t); }
     }
 
+    /* ---------------- 背景（セクション連動＋スクロール視差） ---------------- */
+    function setupBackground() {
+        const bg = $(".site-bg");
+        if (!bg) return;
+        const sections = $$("#top, #showcase, #products, #bots, #archive, .footer");
+        let raf = 0;
+
+        const update = () => {
+            raf = 0;
+            const y = globalThis.scrollY;
+            // 視差は序盤だけ効かせて、深いスクロールでオーブが画面外へ流れすぎないようにする
+            if (!reduceMotion) bg.style.setProperty("--sy", String(Math.min(y, 2800)));
+
+            // 画面中央のライン上にあるセクションを現在位置とする（最下部はフッター扱い）
+            const max = document.documentElement.scrollHeight - globalThis.innerHeight;
+            const line = y + globalThis.innerHeight * .5;
+            let current = "top";
+            if (y >= max - 2) {
+                current = "footer";
+            } else {
+                for (const s of sections) {
+                    if (s.getBoundingClientRect().top + y <= line) current = s.id || "footer";
+                }
+            }
+            if (document.body.dataset.section !== current) document.body.dataset.section = current;
+        };
+        const onScroll = () => {
+            if (!raf) raf = requestAnimationFrame(update);
+        };
+
+        globalThis.addEventListener("scroll", onScroll, { passive: true });
+        globalThis.addEventListener("resize", onScroll, { passive: true });
+        update();
+    }
+
     function setupNav() {
         const nav = $("#nav");
         const links = $$("[data-nav]");
@@ -385,6 +420,7 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
     /* ---------------- 起動 ---------------- */
     async function init() {
         $("#year").textContent = new Date().getFullYear();
+        setupBackground();
         setupNav();
         try {
             const res = await fetch(DATA_URL, { cache: "no-cache" });

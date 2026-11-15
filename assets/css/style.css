@@ -45,6 +45,7 @@ body {
     line-height: 1.75;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    transition: background-color 1.4s var(--ease);
 }
 
 img { max-width: 100%; height: auto; display: block; }
@@ -100,16 +101,28 @@ code { font-family: var(--font-mono); font-size: .9em; color: var(--accent-2); }
     overflow: hidden;
     pointer-events: none;
 }
+/* セクションごとに濃淡が変わる暖色のベール */
+.site-bg::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(ellipse 55% 50% at 72% 12%, rgba(255,119,51,.2), transparent 68%);
+    opacity: .45;
+    transition: opacity 1.4s var(--ease);
+    will-change: opacity;
+}
 .orb {
     position: absolute;
     border-radius: 50%;
     filter: blur(90px);
     opacity: .55;
-    will-change: transform;
+    transition: opacity 1.4s var(--ease);
+    will-change: transform, translate, opacity;
 }
-.orb-a { width: 620px; height: 620px; top: -220px; right: -120px; background: radial-gradient(circle, rgba(255,119,51,.45), transparent 65%); animation: drift 22s ease-in-out infinite alternate; }
-.orb-b { width: 540px; height: 540px; top: 40%; left: -220px; background: radial-gradient(circle, rgba(94,120,255,.28), transparent 65%); animation: drift 28s ease-in-out infinite alternate-reverse; }
-.orb-c { width: 480px; height: 480px; bottom: -200px; right: 10%; background: radial-gradient(circle, rgba(255,179,107,.22), transparent 65%); animation: drift 34s ease-in-out infinite alternate; }
+/* スクロール量（--sy）でゆっくり視差移動。transform の drift とは独立して合成される */
+.orb-a { width: 620px; height: 620px; top: -220px; right: -120px; background: radial-gradient(circle, rgba(255,119,51,.45), transparent 65%); animation: drift 22s ease-in-out infinite alternate; translate: calc(var(--sy, 0) * -.012px) calc(var(--sy, 0) * .035px); }
+.orb-b { width: 540px; height: 540px; top: 40%; left: -220px; background: radial-gradient(circle, rgba(94,120,255,.28), transparent 65%); animation: drift 28s ease-in-out infinite alternate-reverse; translate: calc(var(--sy, 0) * .01px) calc(var(--sy, 0) * -.02px); }
+.orb-c { width: 480px; height: 480px; bottom: -200px; right: 10%; background: radial-gradient(circle, rgba(255,179,107,.22), transparent 65%); animation: drift 34s ease-in-out infinite alternate; translate: calc(var(--sy, 0) * -.008px) calc(var(--sy, 0) * .045px); }
 @keyframes drift {
     to { transform: translate3d(60px, 80px, 0) scale(1.12); }
 }
@@ -122,7 +135,45 @@ code { font-family: var(--font-mono); font-size: .9em; color: var(--accent-2); }
     background-size: 64px 64px;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
     -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    transition: opacity 1.4s var(--ease);
 }
+
+/* セクションごとの背景プリセット（オレンジ基調のまま濃淡を変化） */
+body[data-section="showcase"] { background-color: #121013; }
+body[data-section="products"] { background-color: #101114; }
+body[data-section="bots"] { background-color: #131011; }
+body[data-section="archive"] { background-color: #0c0e11; }
+body[data-section="footer"] { background-color: #140f0d; }
+
+body[data-section="showcase"] .orb-a { opacity: .78; }
+body[data-section="showcase"] .orb-b { opacity: .32; }
+body[data-section="showcase"] .orb-c { opacity: .42; }
+body[data-section="showcase"] .site-bg::after { opacity: .62; }
+body[data-section="showcase"] .grid-lines { opacity: .85; }
+
+body[data-section="products"] .orb-a { opacity: .5; }
+body[data-section="products"] .orb-b { opacity: .62; }
+body[data-section="products"] .orb-c { opacity: .5; }
+body[data-section="products"] .site-bg::after { opacity: .5; }
+body[data-section="products"] .grid-lines { opacity: .7; }
+
+body[data-section="bots"] .orb-a { opacity: .4; }
+body[data-section="bots"] .orb-b { opacity: .3; }
+body[data-section="bots"] .orb-c { opacity: .85; }
+body[data-section="bots"] .site-bg::after { opacity: .75; }
+body[data-section="bots"] .grid-lines { opacity: .55; }
+
+body[data-section="archive"] .orb-a { opacity: .3; }
+body[data-section="archive"] .orb-b { opacity: .3; }
+body[data-section="archive"] .orb-c { opacity: .28; }
+body[data-section="archive"] .site-bg::after { opacity: .25; }
+body[data-section="archive"] .grid-lines { opacity: .5; }
+
+body[data-section="footer"] .orb-a { opacity: .5; }
+body[data-section="footer"] .orb-b { opacity: .22; }
+body[data-section="footer"] .orb-c { opacity: .95; }
+body[data-section="footer"] .site-bg::after { opacity: .8; }
+body[data-section="footer"] .grid-lines { opacity: .65; }
 
 /* ---------- Navigation ---------- */
 .nav {
