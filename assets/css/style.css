@@ -335,7 +335,8 @@ em {
     position: relative;
     min-height: 100svh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    /* 縦方向は中央寄せにしない：背の高いウィンドウで上部に大きな余白ができるのを防ぐ */
     padding: calc(var(--nav-h) + 48px) 0 96px;
 }
 .hero-grid {
