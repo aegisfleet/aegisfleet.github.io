@@ -339,12 +339,11 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
         globalThis.addEventListener("resize", onScroll, { passive: true });
         update();
 
-        if (!reduceMotion) setupSpotlight(bg);
+        if (!reduceMotion && globalThis.matchMedia("(hover: hover) and (pointer: fine)").matches) setupSpotlight(bg);
     }
 
-    /* グリッドのスポットライト：マウス環境ではポインタ追従、無い環境ではスクロールで緩やかに下へ */
+    /* グリッドのスポットライト：ポインタ追従（fine pointer 環境のみで呼ばれる） */
     function setupSpotlight(bg) {
-        const finePointer = globalThis.matchMedia("(hover: hover) and (pointer: fine)").matches;
         let mx = globalThis.innerWidth * .5;
         let my = globalThis.innerHeight * .35;
         let pending = false;
@@ -360,20 +359,12 @@ const BSKY_SUFFIX_RE = /\.bsky\.social$/;
             requestAnimationFrame(paint);
         };
 
-        if (finePointer) {
-            globalThis.addEventListener("pointermove", (e) => {
-                if (e.pointerType === "touch") return;
-                mx = e.clientX;
-                my = e.clientY;
-                schedule();
-            }, { passive: true });
-        } else {
-            const trackScroll = () => {
-                my = globalThis.innerHeight * .35 + Math.min(globalThis.scrollY * .05, globalThis.innerHeight * .3);
-                schedule();
-            };
-            globalThis.addEventListener("scroll", trackScroll, { passive: true });
-        }
+        globalThis.addEventListener("pointermove", (e) => {
+            if (e.pointerType === "touch") return;
+            mx = e.clientX;
+            my = e.clientY;
+            schedule();
+        }, { passive: true });
         paint();
     }
 

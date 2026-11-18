@@ -1355,6 +1355,29 @@ em {
     .hero-cta .btn { width: 100%; justify-content: center; }
 }
 
+/* ==========================================================================
+   タッチ端末向け軽量化
+   巨大ブラーの常時アニメーション・backdrop-filter・全面マスク/ブレンドは
+   モバイルGPUでフレーム落ちの主因になるため、静止画として残して動きを止める。
+   ========================================================================== */
+@media (pointer: coarse) {
+    .orb { animation: none; will-change: auto; }
+    .grid-beams { display: none; }
+    .grid-spotlight { display: none; }
+    .site-bg::before { display: none; }
+    .flow::before { animation: none; }
+    .nav {
+        background: rgba(13, 15, 18, .88);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+    .glass,
+    .float-chip {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: .001ms !important;
